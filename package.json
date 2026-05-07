@@ -1,0 +1,12 @@
+{
+  "name": "llm-chat-interface",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal chat interface for querying a configurable LLM endpoint.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

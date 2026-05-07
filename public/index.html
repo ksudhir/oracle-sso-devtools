@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM Chat Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="app-shell">
+      <aside class="control-rail">
+        <div class="brand-block">
+          <p class="eyebrow">LLM Workspace</p>
+          <h1>Modern chat UI for your local model gateway.</h1>
+          <p class="intro-copy">
+            Query your endpoint through a crisp interface that keeps secrets on
+            the backend and puts the active model configuration front and center.
+          </p>
+        </div>
+
+        <section class="panel settings-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Connection</p>
+              <h2>Endpoint Settings</h2>
+            </div>
+            <span id="settingsSource" class="status-pill">Loading</span>
+          </div>
+
+          <div class="field-stack">
+            <label class="field-label" for="endpointInput">Endpoint base URL</label>
+            <input
+              id="endpointInput"
+              class="field-input"
+              type="text"
+              placeholder="https://api.example.com/v1"
+            />
+
+            <label class="field-label" for="modelInput">Model</label>
+            <input
+              id="modelInput"
+              class="field-input"
+              type="text"
+              placeholder="gpt-4.1-mini"
+            />
+
+            <label class="field-label" for="wireApiSelect">Wire API</label>
+            <select id="wireApiSelect" class="field-input">
+              <option value="chat_completions">Chat Completions</option>
+              <option value="responses">Responses</option>
+            </select>
+          </div>
+
+          <p id="settingsNote" class="settings-note">
+            Loading local defaults from the backend.
+          </p>
+        </section>
+
+        <section class="panel insights-panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Session</p>
+              <h2>Active Context</h2>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-label">Provider</span>
+              <strong id="providerBadge" class="metric-value">Loading</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Model</span>
+              <strong id="modelBadge" class="metric-value">Loading</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Protocol</span>
+              <strong id="apiBadge" class="metric-value">Loading</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Messages</span>
+              <strong id="conversationCount" class="metric-value">0</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel status-panel">
+          <p class="eyebrow">Status</p>
+          <strong id="statusText" class="status-copy">Ready for your first prompt.</strong>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Conversation</p>
+            <h2>Command Center</h2>
+          </div>
+
+          <div class="header-actions">
+            <span class="header-chip">Backend Proxy</span>
+            <button id="clearButton" class="ghost-button" type="button">
+              Clear chat
+            </button>
+          </div>
+        </header>
+
+        <section class="hero-strip">
+          <div class="hero-copy-block">
+            <span class="hero-kicker">Live Interface</span>
+            <p>
+              Use the left rail to verify which endpoint and model are active,
+              then send prompts below. Responses stay readable, and the server
+              keeps the credential flow off the client.
+            </p>
+          </div>
+          <div class="hero-tags">
+            <span class="hero-tag">Responsive</span>
+            <span class="hero-tag">Codex Defaults</span>
+            <span class="hero-tag">Endpoint Override</span>
+          </div>
+        </section>
+
+        <section id="messages" class="messages" aria-live="polite">
+          <article class="message assistant intro-message">
+            <div class="message-meta">
+              <span>Assistant</span>
+              <span>Boot</span>
+            </div>
+            <p>
+              Ask a question to test your endpoint. The server will forward the
+              conversation history and return the assistant response here.
+            </p>
+          </article>
+        </section>
+
+        <form id="chatForm" class="composer-panel">
+          <label class="composer-label" for="promptInput">Message</label>
+          <div class="composer-shell">
+            <textarea
+              id="promptInput"
+              name="prompt"
+              rows="1"
+              placeholder="Ask the model to explain, summarize, generate, or troubleshoot..."
+              required
+            ></textarea>
+            <div class="composer-toolbar">
+              <p class="composer-hint">Enter to send. Shift + Enter for a new line.</p>
+              <button id="sendButton" class="send-button" type="submit">
+                Send message
+              </button>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

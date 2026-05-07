@@ -1,0 +1,544 @@
+:root {
+  --bg: #07111f;
+  --bg-top: #10233a;
+  --panel: rgba(9, 20, 35, 0.76);
+  --panel-strong: rgba(11, 24, 42, 0.9);
+  --panel-soft: rgba(255, 255, 255, 0.04);
+  --line: rgba(184, 207, 255, 0.12);
+  --line-strong: rgba(184, 207, 255, 0.2);
+  --text: #f4f8ff;
+  --muted: #96abc9;
+  --accent: #7bf7d4;
+  --accent-strong: #2ed8ff;
+  --accent-warm: #ff8d66;
+  --assistant-bubble: linear-gradient(180deg, rgba(15, 31, 54, 0.94), rgba(10, 22, 40, 0.94));
+  --user-bubble: linear-gradient(135deg, #7bf7d4 0%, #2ed8ff 100%);
+  --user-text: #04101f;
+  --error-bubble: rgba(255, 128, 117, 0.12);
+  --shadow: 0 30px 90px rgba(1, 9, 18, 0.42);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  position: relative;
+  overflow: hidden;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 10% 20%, rgba(46, 216, 255, 0.16), transparent 0 24%),
+    radial-gradient(circle at 80% 12%, rgba(123, 247, 212, 0.12), transparent 0 20%),
+    radial-gradient(circle at 72% 84%, rgba(255, 141, 102, 0.1), transparent 0 18%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 48%, #050c17 100%);
+}
+
+button,
+textarea,
+input,
+select {
+  font: inherit;
+}
+
+.ambient,
+.grid-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+}
+
+.ambient-one {
+  background: radial-gradient(circle at 18% 18%, rgba(46, 216, 255, 0.12), transparent 0 30%);
+  filter: blur(40px);
+}
+
+.ambient-two {
+  background: radial-gradient(circle at 82% 30%, rgba(123, 247, 212, 0.1), transparent 0 28%);
+  filter: blur(60px);
+}
+
+.grid-overlay {
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 96%);
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 22px;
+  height: 100dvh;
+  padding: 22px;
+}
+
+.control-rail,
+.workspace,
+.panel,
+.hero-strip,
+.composer-shell,
+.message {
+  backdrop-filter: blur(20px);
+}
+
+.control-rail,
+.workspace {
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+  min-height: 0;
+}
+
+.control-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  background:
+    linear-gradient(180deg, rgba(13, 27, 46, 0.95), rgba(6, 16, 30, 0.92)),
+    var(--panel);
+}
+
+.brand-block {
+  padding: 8px 2px 6px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brand-block h1,
+.workspace-header h2,
+.panel-header h2 {
+  margin: 0;
+}
+
+.brand-block h1 {
+  max-width: 10ch;
+  font-size: clamp(2.5rem, 5vw, 4.4rem);
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+}
+
+.intro-copy {
+  max-width: 30ch;
+  margin: 18px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+  font-size: 1rem;
+}
+
+.panel {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    var(--panel-soft);
+}
+
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.panel-header h2 {
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.status-pill,
+.header-chip,
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(123, 247, 212, 0.22);
+  background: rgba(123, 247, 212, 0.08);
+  color: var(--accent);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.field-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.field-label {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.field-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(4, 12, 22, 0.58);
+  color: var(--text);
+  outline: none;
+}
+
+.field-input:focus,
+.composer-shell textarea:focus {
+  border-color: rgba(46, 216, 255, 0.5);
+  box-shadow: 0 0 0 4px rgba(46, 216, 255, 0.12);
+}
+
+.settings-note,
+.status-copy,
+.hero-copy-block p,
+.composer-hint {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.metric-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.metric-value {
+  display: block;
+  font-size: 1rem;
+  letter-spacing: -0.03em;
+}
+
+.status-panel {
+  background:
+    linear-gradient(135deg, rgba(46, 216, 255, 0.12), rgba(123, 247, 212, 0.06)),
+    rgba(7, 18, 31, 0.78);
+}
+
+.workspace {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(11, 23, 40, 0.92), rgba(6, 15, 27, 0.98)),
+    var(--panel-strong);
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.workspace-header h2 {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  letter-spacing: -0.05em;
+}
+
+.header-actions,
+.hero-tags,
+.composer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 0 22px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(123, 247, 212, 0.08), rgba(46, 216, 255, 0.06)),
+    rgba(255, 255, 255, 0.02);
+}
+
+.hero-copy-block {
+  max-width: 60ch;
+}
+
+.hero-kicker {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--accent-warm);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 22px 22px 16px;
+  overflow-y: auto;
+}
+
+.message {
+  max-width: min(82%, 860px);
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  animation: message-rise 220ms ease;
+}
+
+.message p {
+  margin: 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  background: var(--assistant-bubble);
+}
+
+.message.user {
+  align-self: flex-end;
+  border-color: rgba(123, 247, 212, 0.18);
+  background: var(--user-bubble);
+  color: var(--user-text);
+  box-shadow: 0 18px 40px rgba(46, 216, 255, 0.18);
+}
+
+.message.user .message-meta {
+  color: rgba(4, 16, 31, 0.72);
+}
+
+.message.error {
+  align-self: center;
+  width: min(100%, 820px);
+  background: var(--error-bubble);
+  border-color: rgba(255, 128, 117, 0.26);
+}
+
+.intro-message {
+  background:
+    linear-gradient(135deg, rgba(255, 141, 102, 0.08), rgba(46, 216, 255, 0.08)),
+    var(--assistant-bubble);
+}
+
+.composer-panel {
+  padding: 18px 22px 22px;
+  border-top: 1px solid var(--line);
+}
+
+.composer-label {
+  display: block;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.composer-shell {
+  padding: 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    rgba(5, 14, 25, 0.9);
+}
+
+.composer-shell textarea {
+  width: 100%;
+  min-height: 70px;
+  max-height: 220px;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  outline: none;
+}
+
+.composer-toolbar {
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.ghost-button,
+.send-button {
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.ghost-button {
+  padding: 12px 18px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.send-button {
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #7bf7d4 0%, #2ed8ff 100%);
+  color: #07111f;
+  font-weight: 700;
+  box-shadow: 0 18px 36px rgba(46, 216, 255, 0.2);
+}
+
+.ghost-button:hover,
+.send-button:hover {
+  transform: translateY(-1px);
+}
+
+.ghost-button:disabled,
+.send-button:disabled,
+.field-input:disabled,
+.composer-shell textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes message-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1080px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  body {
+    overflow-y: auto;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .brand-block h1 {
+    max-width: 12ch;
+  }
+
+  .control-rail {
+    overflow: visible;
+  }
+
+  .workspace {
+    min-height: 72vh;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .control-rail,
+  .workspace {
+    border-radius: 24px;
+  }
+
+  .workspace-header,
+  .hero-strip,
+  .composer-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workspace-header,
+  .messages,
+  .composer-panel {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .hero-strip {
+    margin: 0 18px;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .message {
+    max-width: 100%;
+  }
+
+  .send-button,
+  .ghost-button {
+    width: 100%;
+  }
+}
