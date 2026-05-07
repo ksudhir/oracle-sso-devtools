@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "OAM/SAML/OAUTH DevTools Panel",
+  "version": "0.1.0",
+  "description": "Adds a DevTools panel for inspecting OAM/WebGate traffic and SAML requests and responses in the active tab.",
+  "devtools_page": "devtools.html",
+  "permissions": [],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
