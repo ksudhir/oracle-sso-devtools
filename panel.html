@@ -11,8 +11,9 @@
       <button id="captureButton" class="captureButton isCapturing" type="button">Stop capture</button>
       <button id="clearButton" type="button">Clear</button>
       <button id="exportButton" type="button">Export</button>
-      <label class="importButton" for="importInput">Import</label>
-      <input id="importInput" type="file" accept="application/json">
+      <button id="loadNetworkHarButton" type="button">Load From Network Tab</button>
+      <button id="importButton" class="importButton" type="button">Import HAR/JSON</button>
+      <input id="importInput" type="file" accept=".json,.har,.HAR,application/json,application/x-har+json">
       <label class="toggle">
         <input id="samlOnlyInput" type="checkbox">
         <span>SAML only</span>
@@ -25,12 +26,17 @@
         <input id="hideStaticInput" type="checkbox">
         <span>Hide static</span>
       </label>
+      <label class="searchFilter">
+        <span>Search</span>
+        <input id="searchInput" type="search" placeholder="Find request/response text">
+      </label>
       <label class="hostFilter">
         <span>Hosts</span>
         <input id="oamHostInput" type="text" placeholder="login.company.com, sso.company.com">
       </label>
       <button id="scrubButton" type="button">Scrub links</button>
       <span id="summary" class="summary">0 requests</span>
+      <span id="importStatus" class="importStatus"></span>
     </header>
 
     <main class="shell">
@@ -38,11 +44,14 @@
         <div id="requestList" class="requestList"></div>
       </section>
 
+      <div id="paneDivider" class="paneDivider" role="separator" aria-label="Resize request and detail panes" aria-orientation="vertical" tabindex="0"></div>
+
       <section class="detailPane" aria-label="Request details">
         <nav class="tabs" aria-label="Detail tabs">
           <button class="tab isActive" type="button" data-tab="request">Request</button>
           <button class="tab" type="button" data-tab="response">Response</button>
           <button class="tab" type="button" data-tab="cookies">Cookies</button>
+          <button class="tab" type="button" data-tab="authInfo">Auth Info</button>
           <button class="tab" type="button" data-tab="saml">SAML XML</button>
           <button class="tab" type="button" data-tab="samlInfo">SAML Info</button>
           <button class="tab" type="button" data-tab="oauthInfo">OAuth Info</button>

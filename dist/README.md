@@ -7,7 +7,7 @@ A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** pa
 1. Open `chrome://extensions`.
 2. Enable **Developer mode**.
 3. Click **Load unpacked**.
-4. Select this folder: `saml-devtools-mv3`.
+4. Select this folder: `oracle-sso-devtools`.
 5. Open DevTools on the tab you want to inspect.
 6. Open the **OAM/SAML/OAUTH** panel before starting the login flow.
 
@@ -20,6 +20,12 @@ A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** pa
 - Color-codes SAML, OAM, and WebGate artifacts in request rows and detail panes. Requests containing `/oam/server`, `obreq.cgi`, `obrareq.cgi`, or `OAM_ID` are tagged as OAM; requests containing only `REQUEST_ID` / `request_id` are not tagged as OAM. Requests containing `obrar.cgi` or `OAMAuthnCookie` are tagged as WebGate, with an additional SAML tag when a SAML message is found.
 - Highlights OAM/WebGate cookie names in **Request** and **Response** tabs, including suffix variants such as `OAMAuthnCookie...`, `ObSSOCookie...`, `OAM_ID...`, `OAM_REQ...`, and `ORA_OSFS_SESSION...`.
 - Adds a **Cookies** tab with separate **Request Cookies** and **Response Cookies** sections rendered as name/value pairs.
+- Adds an **Auth Info** tab for browser-visible Kerberos/SPNEGO/NTLM headers and forwarded X.509 client-certificate headers.
+- Tags requests as **Kerberos** when `Authorization`, `WWW-Authenticate`, or `Proxy-Authenticate` contains `Negotiate` / `Kerberos`.
+- Tags requests as **NTLM** when those headers contain `NTLM`.
+- Highlights `/oam/CredCollectServlet/WNA` as Kerberos/WNA-related and `/oam/CredCollectServlet/X509` as X.509-related.
+- Tags requests as **X509** when client-certificate forwarding headers are present, such as `SSL_CLIENT_CERT`, `X-SSL-Client-Cert`, `X-Client-Cert`, `X-Forwarded-Client-Cert`, or `X-ARR-ClientCert`.
+- Parses forwarded client certificates when present to show subject, issuer, serial number, issued-on date, expires-on date, SHA-1 thumbprint, and SHA-256 thumbprint.
 - Adds an **About** tab with creator/contact information.
 - Tags URLs containing `/oauth2/` as OAuth.
 - Adds an **OAuth Info** tab that extracts OAuth/OIDC parameters and Bearer tokens from URLs, headers, form bodies, and JSON bodies.
@@ -30,7 +36,9 @@ A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** pa
 - Parses embedded X.509 certificates to show subject, issuer, serial number, issued-on date, expires-on date, SHA-1 thumbprint, and SHA-256 thumbprint.
 - Exports captured traffic as JSON.
 - Imports OAM/SAML/OAUTH panel exports, raw entry arrays, and browser HAR files.
+- Adds **Load From Network Tab** to import entries currently available in Chrome DevTools' Network HAR model, including HAR files imported into the Network tab when Chrome exposes them to DevTools extensions.
 - Toggles between all traffic and SAML-only traffic.
+- Adds a **Search** field that filters captured entries across URL, request headers/body, response headers/body, status/mime fields, and decoded SAML data.
 - Toggles OAM Webgate-only traffic for browser-to-OAM and browser-to-WebGate communication. It checks URLs, headers, cookies, and bodies for OAM/WebGate markers such as `/oam/server`, `auth_cred_submit`, `obrareq.cgi`, `obrar.cgi`, `obreq.cgi`, `OAM_ID`, `OAMAuthnCookie`, `ObSSOCookie`, `oam_req`, and `request_id`.
 - Hides static resources such as `.js`, `.css`, `.ico`, `.png`, `.jpg`, `.gif`, `.jpeg`, `.svg`, `.webp`, `.woff`, `.woff2`, `.ttf`, `.otf`, and `.eot` when **Hide static** is checked.
 - Adds optional site-specific OAM/WebGate host matching with the **Hosts** toolbar field. Enter comma- or space-separated hostnames such as `login.company.com, sso.company.com`.

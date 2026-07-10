@@ -17,6 +17,12 @@
   --oauth-bg: #e3f3df;
   --fed: #6d3fb2;
   --fed-bg: #efe6ff;
+  --kerberos: #0f766e;
+  --kerberos-bg: #d9f6f1;
+  --ntlm: #a03932;
+  --ntlm-bg: #ffe5e2;
+  --x509: #854d0e;
+  --x509-bg: #fef3c7;
   --xml-tag: #7b2cbf;
   --xml-name: #005f73;
   --xml-attr: #9b4d00;
@@ -49,6 +55,12 @@
     --oauth-bg: #203d24;
     --fed: #d6b8ff;
     --fed-bg: #352550;
+    --kerberos: #99f6e4;
+    --kerberos-bg: #153b37;
+    --ntlm: #ff9a91;
+    --ntlm-bg: #4c2524;
+    --x509: #fde68a;
+    --x509-bg: #452f10;
     --xml-tag: #d6b8ff;
     --xml-name: #8bd3dd;
     --xml-attr: #ffd166;
@@ -67,9 +79,18 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   margin: 0;
+  height: 100%;
   min-width: 720px;
+  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font: 12px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -132,14 +153,16 @@ button:hover,
   color: var(--muted);
 }
 
-.hostFilter {
+.hostFilter,
+.searchFilter {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   color: var(--muted);
 }
 
-.hostFilter input {
+.hostFilter input,
+.searchFilter input {
   width: min(28vw, 280px);
   height: 28px;
   border: 1px solid var(--line);
@@ -150,9 +173,14 @@ button:hover,
   font: inherit;
 }
 
-.hostFilter input:focus {
+.hostFilter input:focus,
+.searchFilter input:focus {
   border-color: var(--accent);
   outline: none;
+}
+
+.searchFilter input {
+  width: min(24vw, 240px);
 }
 
 .summary {
@@ -161,16 +189,55 @@ button:hover,
   white-space: nowrap;
 }
 
+.importStatus {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--accent);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .shell {
   display: grid;
-  grid-template-columns: minmax(320px, 42%) minmax(420px, 58%);
-  height: calc(100vh - 44px);
+  grid-template-columns: minmax(260px, var(--request-pane-width, 42%)) 8px minmax(360px, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .requestPane {
+  min-height: 0;
   overflow: auto;
-  border-right: 1px solid var(--line);
+  overscroll-behavior: contain;
   background: var(--panel);
+}
+
+.paneDivider {
+  position: relative;
+  z-index: 2;
+  border-inline: 1px solid var(--line);
+  background: color-mix(in srgb, var(--line) 45%, transparent);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.paneDivider::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: -5px;
+}
+
+.paneDivider:hover,
+.paneDivider:focus,
+.shell.isResizing .paneDivider {
+  background: var(--accent);
+  outline: none;
+}
+
+.shell.isResizing {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .requestList {
@@ -179,7 +246,7 @@ button:hover,
 
 .requestRow {
   display: grid;
-  grid-template-columns: 62px 54px 1fr;
+  grid-template-columns: 62px 54px 76px 72px 1fr;
   gap: 8px;
   width: 100%;
   min-height: 36px;
@@ -195,8 +262,14 @@ button:hover,
   background: var(--accent-soft);
 }
 
+.requestRow.isSlowRequest:not(.isActive) {
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+}
+
 .method,
 .status,
+.duration,
+.contentSize,
 .url {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -207,8 +280,97 @@ button:hover,
   font-weight: 700;
 }
 
+.methodGet {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.methodPost {
+  color: var(--xml-value);
+  font-weight: 800;
+}
+
+.methodPut,
+.methodPatch {
+  color: var(--oam);
+  font-weight: 800;
+}
+
+.methodDelete {
+  color: var(--danger);
+  font-weight: 900;
+}
+
+.methodOptions,
+.methodHead {
+  color: var(--fed);
+  font-weight: 800;
+}
+
+.methodOther {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .status {
   color: var(--muted);
+}
+
+.statusInfo {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.statusSuccess {
+  color: var(--xml-value);
+  font-weight: 800;
+}
+
+.statusRedirect {
+  color: var(--fed);
+  font-weight: 800;
+}
+
+.statusAuthError {
+  color: var(--danger);
+  font-weight: 900;
+}
+
+.statusClientError {
+  color: var(--oam);
+  font-weight: 900;
+}
+
+.statusServerError {
+  color: var(--danger);
+  font-weight: 900;
+}
+
+.statusUnknown {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.duration {
+  color: var(--muted);
+  font-weight: 700;
+  text-align: right;
+}
+
+.contentSize {
+  color: var(--muted);
+  font-weight: 700;
+  text-align: right;
+}
+
+.duration.isSlow {
+  color: var(--danger);
+  font-weight: 900;
+}
+
+.url {
+  color: light-dark(var(--origin-color-light, var(--text)), var(--origin-color-dark, var(--text)));
+  font-weight: 650;
 }
 
 .badge,
@@ -249,6 +411,25 @@ button:hover,
 .tokenFed {
   background: var(--fed-bg);
   color: var(--fed);
+}
+
+.badgeKerberos,
+.tokenKerberos {
+  background: var(--kerberos-bg);
+  color: var(--kerberos);
+}
+
+.badgeNtlm,
+.tokenNtlm {
+  background: var(--ntlm-bg);
+  color: var(--ntlm);
+  font-weight: 800;
+}
+
+.badgeX509,
+.tokenX509 {
+  background: var(--x509-bg);
+  color: var(--x509);
 }
 
 .artifactToken {
@@ -305,6 +486,8 @@ button:hover,
   display: grid;
   grid-template-rows: 37px 1fr;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .tabs {
@@ -329,10 +512,72 @@ button:hover,
 .detailOutput {
   margin: 0;
   padding: 12px;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
   white-space: pre-wrap;
   word-break: break-word;
   font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+.nameValueDetail {
+  display: grid;
+  gap: 12px;
+  white-space: normal;
+  word-break: normal;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.nameValueSection {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.nameValueSection h3 {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nameValueTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.nameValueTable th,
+.nameValueTable td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.nameValueTable tr:last-child th,
+.nameValueTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.nameValueTable th {
+  width: min(32%, 260px);
+  color: var(--muted);
+  font-weight: 800;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.nameValueTable td {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .samlInfo {
@@ -370,9 +615,10 @@ button:hover,
   margin: 0;
   padding: 8px 10px;
   border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
+  background: var(--saml-bg);
+  color: var(--saml);
+  font-size: 12px;
+  font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -463,4 +709,29 @@ button:hover,
 .warningValue {
   color: var(--oam);
   font-weight: 700;
+}
+
+.samlDefaultValue {
+  color: var(--xml-value);
+  font-weight: 700;
+}
+
+.samlDeploymentValue {
+  color: var(--fed);
+  font-weight: 800;
+}
+
+.samlIdValue {
+  color: var(--saml);
+  font-weight: 800;
+}
+
+.samlIssuerValue {
+  color: var(--fed);
+  font-weight: 800;
+}
+
+.samlDestinationValue {
+  color: var(--oam);
+  font-weight: 800;
 }

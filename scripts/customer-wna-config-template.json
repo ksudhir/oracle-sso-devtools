@@ -1,0 +1,17 @@
+{
+  "customerName": "customer-or-deployment-name",
+  "protectedResource": "https://protected-app.example.com:443/cgi-bin/printenv_wna",
+  "oamBaseUrl": "https://oam.example.com:443",
+  "wnaPath": "/oam/CredCollectServlet/WNA",
+  "httpClient": "Auto",
+  "curlPath": "curl.exe",
+  "curlMaxTimeSeconds": 120,
+  "recentEventHours": 6,
+  "netshScenario": "InternetClient",
+  "capturePackets": false,
+  "skipNetshTrace": false,
+  "skipServiceTicketProbe": false,
+  "keepCookies": false,
+  "noInsecure": false,
+  "noArchive": false
+}
