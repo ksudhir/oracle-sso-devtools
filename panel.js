@@ -1276,6 +1276,12 @@ async function renderDetails() {
     setDetailHtml(renderSamlDetails(selected));
   } else if (state.activeTab === "oauthInfo") {
     setDetailHtml(renderOAuthInfo(selected));
+  } else if (state.activeTab === "oidcInfo") {
+    setDetailHtml(renderOidcInfo(selected));
+  } else if (state.activeTab === "oamInfo") {
+    setDetailHtml(renderOamInfo(selected));
+  } else if (state.activeTab === "wnaInfo") {
+    setDetailHtml(renderWnaInfo(selected));
   } else if (state.activeTab === "cookies") {
     setDetailHtml(renderCookiesInfo(selected));
   } else if (state.activeTab === "authInfo") {
@@ -1557,6 +1563,784 @@ function renderOAuthInfo(entry) {
     jwtCards.join(""),
     `</div>`,
     `</div>`
+  ].join("");
+}
+
+const ECID_HEADER_NAMES = ["ecid-context", "x-oracle-dms-ecid", "oracle-ecid", "x-ecid"];
+const RID_HEADER_NAMES = ["x-oracle-dms-rid", "oracle-rid", "x-rid"];
+
+function renderOamInfo(selectedEntry) {
+  const analysis = analyzeOamFlow(state.entries, selectedEntry);
+  if (!analysis.timeline.length) {
+    return highlightArtifacts("No browser-visible OAM or WebGate flow information was found in the captured traffic.");
+  }
+
+  return [
+    `<div class="samlInfo oidcInfo oamFlowInfo">`,
+    `<h3 class="samlInfoTitle">OAM / WebGate Flow Analysis</h3>`,
+    `<div class="oidcSummary">${renderOidcStatusBadge(analysis.overallStatus, analysis.overallLabel)}<span>${escapeHtml(analysis.summary)}</span></div>`,
+    `<div class="samlInfoGrid">`,
+    renderOidcCard("WebGate", [
+      ["First WebGate Endpoint", analysis.webgateEntry?.entry.url],
+      ["Request ID", analysis.requestId],
+      ["WebGate Requests", analysis.webgateCount],
+      ["OAMAuthnCookie", analysis.cookies.oamAuthnCookie ? "Present" : "Missing"],
+      ["ObSSOCookie", analysis.cookies.obSsoCookie ? "Present" : "Missing"]
+    ], false, "oamFlowCard webgateFlowCard"),
+    renderOidcCard("OAM Server", [
+      ["First OAM Endpoint", analysis.oamEntry?.entry.url],
+      ["Credential Submit", analysis.credentialSubmit ? `${analysis.credentialSubmit.entry.status} ${analysis.credentialSubmit.entry.statusText}` : "Not captured"],
+      ["OAM Requests", analysis.oamCount],
+      ["OAM_ID", analysis.cookies.oamId ? "Present" : "Missing"],
+      ["ORA_OSFS_SESSION", analysis.cookies.oraSession ? "Present" : "Missing"],
+      ["OAM_REQ", analysis.cookies.oamReq ? "Present" : "Missing"]
+    ], false, "oamFlowCard oamServerFlowCard"),
+    renderOidcChecks(analysis.checks),
+    renderTraceCorrelationCard(analysis.failuresWithTrace),
+    renderOidcTimeline(analysis.timeline, selectedEntry.id),
+    renderOidcCard("Captured OAM / WebGate Endpoints", analysis.endpoints.map((item) => [item.stage, item.url]), true, "oamFlowCard"),
+    `</div>`,
+    `<p class="flowTroubleshootingNote"><strong>Diagnostic interpretation:</strong> ${escapeHtml(analysis.interpretation)}</p>`,
+    `</div>`
+  ].join("");
+}
+
+function analyzeOamFlow(entries, selectedEntry) {
+  const coreIndexes = entries
+    .map((entry, index) => (isOamFlowEntry(entry) || isWebgateEntry(entry) || hasOamCookie(entry) ? index : -1))
+    .filter((index) => index >= 0);
+  if (!coreIndexes.length) return emptyFlowAnalysis();
+
+  const selectedIndex = Math.max(0, entries.indexOf(selectedEntry));
+  const nearestCore = coreIndexes.slice().sort((a, b) => Math.abs(a - selectedIndex) - Math.abs(b - selectedIndex))[0];
+  const cluster = contiguousFlowCluster(coreIndexes, nearestCore, 8);
+  const start = Math.max(0, Math.min(...cluster) - 1);
+  const end = Math.min(entries.length - 1, Math.max(...cluster) + 2);
+  const timeline = entries.slice(start, end + 1).map((entry, offset) => ({
+    entry,
+    index: start + offset,
+    stage: classifyOamStage(entry, start + offset, start, end)
+  }));
+  const flowEntries = timeline.map((item) => item.entry);
+  const webgateItems = timeline.filter((item) => isWebgateEntry(item.entry));
+  const oamItems = timeline.filter((item) => isOamFlowEntry(item.entry));
+  const credentialSubmit = timeline.find((item) => getEntrySearchText(item.entry).includes("auth_cred_submit"));
+  const requestId = flowEntries.map(extractOamRequestId).find(Boolean) || "";
+  const cookies = summarizeOamCookies(flowEntries);
+  const failuresWithTrace = timeline
+    .filter((item) => Number(item.entry.status) >= 400)
+    .map((item) => ({ ...item, trace: extractTraceIdentifiers(item.entry) }));
+  const checks = buildOamChecks({ webgateItems, oamItems, credentialSubmit, cookies, timeline, failuresWithTrace, requestId });
+  const overallStatus = flowStatusFromChecks(checks);
+  const finalEntry = timeline[timeline.length - 1]?.entry;
+
+  return {
+    timeline,
+    checks,
+    overallStatus,
+    overallLabel: flowStatusLabel(overallStatus),
+    summary: requestId ? `Correlated by request ID ${previewToken(requestId)}` : "Correlated by adjacent OAM/WebGate browser requests",
+    requestId,
+    cookies,
+    failuresWithTrace,
+    webgateEntry: webgateItems[0],
+    oamEntry: oamItems[0],
+    credentialSubmit,
+    webgateCount: webgateItems.length,
+    oamCount: oamItems.length,
+    endpoints: dedupeFlowEndpoints(timeline),
+    interpretation: buildOamInterpretation(cookies, finalEntry, failuresWithTrace)
+  };
+}
+
+function buildOamChecks({ webgateItems, oamItems, credentialSubmit, cookies, timeline, failuresWithTrace, requestId }) {
+  const finalEntry = timeline[timeline.length - 1]?.entry;
+  const finalStatus = Number(finalEntry?.status || 0);
+  const repeatedUrls = findRepeatedFlowUrls(timeline);
+  const tracedFailure = failuresWithTrace.find((item) => item.trace.ecid);
+  return [
+    oidcCheck(webgateItems.length ? "pass" : "warn", "WebGate traffic", webgateItems.length ? `${webgateItems.length} WebGate request(s) were captured.` : "No browser-visible WebGate marker was found."),
+    oidcCheck(oamItems.length ? "pass" : "fail", "OAM server traffic", oamItems.length ? `${oamItems.length} OAM request(s) were captured.` : "No browser-visible OAM server request was found."),
+    oidcCheck(requestId ? "pass" : "warn", "Request correlation", requestId ? `Request ID ${previewToken(requestId)} was captured.` : "No request ID was available; adjacent requests were used for correlation."),
+    oidcCheck(credentialSubmit ? (Number(credentialSubmit.entry.status) < 400 ? "pass" : "fail") : "warn", "Credential submission", credentialSubmit ? `Credential submission returned HTTP ${credentialSubmit.entry.status}.` : "No auth_cred_submit request was captured."),
+    oidcCheck(cookies.oamId ? "pass" : "warn", "OAM session", cookies.oamId ? "OAM_ID was observed." : "OAM_ID was not observed in browser-visible cookies."),
+    oidcCheck(cookies.oamAuthnCookie || cookies.obSsoCookie ? "pass" : "fail", "WebGate session", cookies.oamAuthnCookie || cookies.obSsoCookie ? "A WebGate session cookie was observed." : "Neither OAMAuthnCookie nor ObSSOCookie was observed."),
+    oidcCheck(finalStatus >= 400 ? "fail" : finalStatus ? "pass" : "warn", "Final browser result", finalStatus ? `The final captured request returned HTTP ${finalStatus}.` : "No final HTTP status was available."),
+    oidcCheck(repeatedUrls.length >= 2 ? "warn" : "pass", "Redirect loop", repeatedUrls.length >= 2 ? `Repeated endpoints may indicate a loop: ${repeatedUrls.join(", ")}` : "No repeated OAM/WebGate redirect loop was detected."),
+    oidcCheck(failuresWithTrace.length ? (tracedFailure ? "pass" : "warn") : "pass", "Failure ECID", failuresWithTrace.length ? (tracedFailure ? `ECID ${previewToken(tracedFailure.trace.ecid)} is available for log correlation.` : "A failing request was captured, but no browser-visible ECID was found.") : "No failing OAM/WebGate request required ECID correlation.")
+  ];
+}
+
+function renderTraceCorrelationCard(items) {
+  if (!items.length) return "";
+  return [
+    `<section class="samlInfoCard traceCorrelationCard">`,
+    `<h4>Failure Correlation</h4><div class="traceCorrelationList">`,
+    items.map((item) => {
+      const trace = item.trace;
+      return [
+        `<div class="traceCorrelationItem">`,
+        `<div><strong>HTTP ${escapeHtml(String(item.entry.status))} ${escapeHtml(item.entry.statusText || "")}</strong><span class="traceEndpoint" title="${escapeHtml(item.entry.url)}">${escapeHtml(item.entry.url)}</span></div>`,
+        trace.ecid
+          ? `<div class="traceIdentifiers"><span class="traceBadge">ECID</span><code>${escapeHtml(trace.ecid)}</code>${trace.rid ? `<span class="traceBadge traceRidBadge">RID</span><code>${escapeHtml(trace.rid)}</code>` : ""}<small>${escapeHtml(trace.source)}</small></div>`
+          : `<span class="mutedValue">No ECID was exposed in browser-visible headers for this failure.</span>`,
+        `</div>`
+      ].join("");
+    }).join(""),
+    `</div>`,
+    `<p class="traceGuidance">Use the ECID to troubleshoot further by correlating this failed transaction across OAM, WebGate, OHS, WebLogic, identity-domain diagnostics, and server logs.</p>`,
+    `</section>`
+  ].join("");
+}
+
+function extractTraceIdentifiers(entry) {
+  const values = [];
+  for (const [source, headers] of [["request header", entry.requestHeaders], ["response header", entry.responseHeaders]]) {
+    for (const header of headers || []) {
+      const name = String(header?.name || "").toLowerCase();
+      const value = String(header?.value || "").trim();
+      if (ECID_HEADER_NAMES.includes(name) && value) values.push({ type: "ecid", value, source: `${source}: ${header.name}` });
+      if (RID_HEADER_NAMES.includes(name) && value) values.push({ type: "rid", value, source: `${source}: ${header.name}` });
+    }
+  }
+  const ecidItem = values.find((item) => item.type === "ecid");
+  const ridItem = values.find((item) => item.type === "rid");
+  const oracleEcidParts = ecidItem?.value.split(",").map((part) => part.trim()) || [];
+  return {
+    ecid: oracleEcidParts[0] || "",
+    rid: ridItem?.value || (oracleEcidParts.length > 1 ? oracleEcidParts.slice(1).join(", ") : ""),
+    source: [ecidItem?.source, ridItem?.source].filter(Boolean).join("; ")
+  };
+}
+
+function extractOamRequestId(entry) {
+  for (const name of ["request_id", "REQUEST_ID", "req_id"]) {
+    const urlValue = getUrlSearchParams(entry.url).get(name);
+    if (urlValue) return urlValue;
+    const bodyValue = new URLSearchParams(entry.requestBody || "").get(name);
+    if (bodyValue) return bodyValue;
+  }
+  const match = getEntrySearchText(entry).match(/\brequest_id[=:]\s*([a-z0-9._:-]+)/iu);
+  return match?.[1] || "";
+}
+
+function summarizeOamCookies(entries) {
+  const names = entries.flatMap((entry) => [
+    ...getRequestCookies(entry.requestHeaders),
+    ...getResponseCookies(entry.responseHeaders)
+  ]).map(([name]) => String(name).toLowerCase());
+  return {
+    oamId: names.some((name) => name.startsWith("oam_id")),
+    oamAuthnCookie: names.some((name) => name.startsWith("oamauthncookie")),
+    obSsoCookie: names.some((name) => name.startsWith("obssocookie")),
+    oraSession: names.some((name) => name.startsWith("ora_osfs_session")),
+    oamReq: names.some((name) => name.startsWith("oam_req") || name.startsWith("oamrequestcontext"))
+  };
+}
+
+function hasOamCookie(entry) {
+  return Object.values(summarizeOamCookies([entry])).some(Boolean);
+}
+
+function isOamFlowEntry(entry) {
+  const text = getEntrySearchText(entry);
+  return [
+    "/oam/",
+    "/oam/server",
+    "obreq.cgi",
+    "obrareq.cgi",
+    "auth_cred_submit",
+    "oam_id",
+    "ora_osfs_session",
+    "oam_req"
+  ].some((marker) => text.includes(marker));
+}
+
+function classifyOamStage(entry, index, start, end) {
+  const text = getEntrySearchText(entry);
+  if (text.includes("auth_cred_submit")) return "Credential Submit";
+  if (isWebgateEntry(entry)) return "WebGate";
+  if (isOamFlowEntry(entry)) return "OAM Server";
+  if (hasOamCookie(entry)) return "Session";
+  if (index === start) return "Protected Resource";
+  if (index === end) return "Application Return";
+  return Number(entry.status) >= 300 && Number(entry.status) < 400 ? "Redirect" : "Browser Request";
+}
+
+function buildOamInterpretation(cookies, finalEntry, failuresWithTrace) {
+  const status = Number(finalEntry?.status || 0);
+  const ecid = failuresWithTrace.find((item) => item.trace.ecid)?.trace.ecid;
+  if (cookies.oamId && !cookies.oamAuthnCookie && !cookies.obSsoCookie) {
+    return `OAM session data was observed, but a WebGate session cookie was not. Review cookie domain/path, host routing, and WebGate/OAM logs.${ecid ? ` Use ECID ${ecid} for further correlation.` : ""}`;
+  }
+  if (status >= 400) {
+    return `The browser-visible OAM/WebGate flow ended with HTTP ${status}.${ecid ? ` Use ECID ${ecid} to troubleshoot further in server logs.` : " No ECID was exposed to the browser."}`;
+  }
+  return "The captured browser flow reached OAM/WebGate and returned without a visible HTTP failure. Confirm server-side policy and session behavior when deeper validation is required.";
+}
+
+function renderWnaInfo(selectedEntry) {
+  const analysis = analyzeWnaFlow(state.entries, selectedEntry);
+  if (!analysis.timeline.length) {
+    return highlightArtifacts("No browser-visible Windows Native Authentication flow was found in the captured traffic.");
+  }
+  return [
+    `<div class="samlInfo oidcInfo wnaFlowInfo">`,
+    `<h3 class="samlInfoTitle">Windows Native Authentication Flow Analysis</h3>`,
+    `<div class="oidcSummary">${renderOidcStatusBadge(analysis.overallStatus, analysis.overallLabel)}<span>${escapeHtml(analysis.summary)}</span></div>`,
+    `<div class="samlInfoGrid">`,
+    renderOidcCard("Challenge", [
+      ["Endpoint", analysis.challenge?.entry.url],
+      ["HTTP Status", analysis.challenge ? `${analysis.challenge.entry.status} ${analysis.challenge.entry.statusText}` : "Not captured"],
+      ["Offered Schemes", analysis.offeredSchemes.join(", ")],
+      ["Repeated 401 Responses", analysis.unauthorizedCount]
+    ], false, "wnaFlowCard wnaChallengeCard"),
+    renderOidcCard("Browser Response", [
+      ["Endpoint", analysis.browserResponse?.entry.url],
+      ["Submitted Scheme", analysis.submittedScheme],
+      ["Likely Protocol", analysis.submittedProtocol],
+      ["Token Present", analysis.submittedToken ? "Yes" : "No"],
+      ["Token Length", analysis.submittedToken ? analysis.submittedToken.length : ""],
+      ["Token Preview", analysis.submittedToken ? { html: `<span class="mutedValue">${escapeHtml(previewToken(analysis.submittedToken))}</span>` } : ""]
+    ], false, "wnaFlowCard wnaBrowserCard"),
+    renderOidcCard("Session Outcome", [
+      ["Final Endpoint", analysis.finalEntry?.url],
+      ["Final HTTP Status", analysis.finalEntry ? `${analysis.finalEntry.status} ${analysis.finalEntry.statusText}` : "Unknown"],
+      ["OAM_ID", analysis.cookies.oamId ? "Present" : "Missing"],
+      ["OAMAuthnCookie", analysis.cookies.oamAuthnCookie ? "Present" : "Missing"],
+      ["ObSSOCookie", analysis.cookies.obSsoCookie ? "Present" : "Missing"]
+    ], true, "wnaFlowCard wnaOutcomeCard"),
+    renderOidcChecks(analysis.checks),
+    renderOidcTimeline(analysis.timeline, selectedEntry.id),
+    renderOidcCard("Captured Authentication Artifacts", analysis.authArtifacts.map((item) => [
+      `${item.header} (${item.source})`,
+      `${item.scheme} · ${item.protocol}${item.token ? ` · ${item.token.length} characters` : ""}`
+    ]), true, "wnaFlowCard"),
+    `</div>`,
+    `<p class="flowTroubleshootingNote"><strong>Browser-visible evidence only:</strong> Use klist, SPN and DNS checks, Windows events, ETW/network traces, browser enterprise policy, and OAM/WebGate logs to validate ticket acquisition and server-side causes.</p>`,
+    `</div>`
+  ].join("");
+}
+
+function analyzeWnaFlow(entries, selectedEntry) {
+  const coreIndexes = entries.map((entry, index) => (isWnaEntry(entry) ? index : -1)).filter((index) => index >= 0);
+  if (!coreIndexes.length) return emptyFlowAnalysis();
+  const selectedIndex = Math.max(0, entries.indexOf(selectedEntry));
+  const nearestCore = coreIndexes.slice().sort((a, b) => Math.abs(a - selectedIndex) - Math.abs(b - selectedIndex))[0];
+  const cluster = contiguousFlowCluster(coreIndexes, nearestCore, 6);
+  const start = Math.max(0, Math.min(...cluster) - 2);
+  const end = Math.min(entries.length - 1, Math.max(...cluster) + 3);
+  const timeline = entries.slice(start, end + 1).map((entry, offset) => ({
+    entry,
+    index: start + offset,
+    stage: classifyWnaStage(entry, start + offset, start, end)
+  }));
+  const authArtifacts = timeline.flatMap((item) => extractHttpAuthInfo(item.entry));
+  const challenge = timeline.find((item) => extractHttpAuthInfo(item.entry).some((auth) => auth.source === "response"));
+  const browserResponse = timeline.find((item) => extractHttpAuthInfo(item.entry).some((auth) => auth.source === "request" && auth.token));
+  const offered = authArtifacts.filter((item) => item.source === "response").map((item) => item.scheme);
+  const submitted = extractHttpAuthInfo(browserResponse?.entry || {}).find((item) => item.source === "request" && item.token);
+  const cookies = summarizeOamCookies(timeline.map((item) => item.entry));
+  const finalEntry = timeline[timeline.length - 1]?.entry;
+  const unauthorizedCount = timeline.filter((item) => Number(item.entry.status) === 401).length;
+  const checks = buildWnaChecks({ timeline, challenge, browserResponse, offered, submitted, cookies, finalEntry, unauthorizedCount });
+  const overallStatus = flowStatusFromChecks(checks);
+  const fallback = offered.some((scheme) => /negotiate|kerberos/iu.test(scheme)) && /^ntlm$/iu.test(submitted?.scheme || "");
+  return {
+    timeline,
+    checks,
+    overallStatus,
+    overallLabel: flowStatusLabel(overallStatus),
+    summary: fallback ? "Negotiate was offered, but the browser submitted NTLM" : submitted ? `Browser submitted ${submitted.scheme}` : "WNA challenge captured; browser response requires review",
+    challenge,
+    browserResponse,
+    offeredSchemes: [...new Set(offered)],
+    submittedScheme: submitted?.scheme || "Not captured",
+    submittedProtocol: submitted?.protocol || "Unknown",
+    submittedToken: submitted?.token || "",
+    authArtifacts,
+    cookies,
+    finalEntry,
+    unauthorizedCount
+  };
+}
+
+function buildWnaChecks({ timeline, challenge, browserResponse, offered, submitted, cookies, finalEntry, unauthorizedCount }) {
+  const hasWnaEndpoint = timeline.some((item) => getEntrySearchText(item.entry).includes("/oam/credcollectservlet/wna"));
+  const negotiateOffered = offered.some((scheme) => /negotiate|kerberos/iu.test(scheme));
+  const ntlmFallback = negotiateOffered && /^ntlm$/iu.test(submitted?.scheme || "");
+  const finalStatus = Number(finalEntry?.status || 0);
+  return [
+    oidcCheck(hasWnaEndpoint ? "pass" : "warn", "WNA endpoint", hasWnaEndpoint ? "/oam/CredCollectServlet/WNA was captured." : "Authentication headers were found, but the standard OAM WNA endpoint was not captured."),
+    oidcCheck(challenge ? (negotiateOffered ? "pass" : "warn") : "fail", "Negotiate challenge", challenge ? (negotiateOffered ? "The server advertised Negotiate or Kerberos." : `The server offered ${offered.join(", ") || "an unknown scheme"}, not Negotiate.`) : "No browser-visible authentication challenge was found."),
+    oidcCheck(browserResponse && submitted?.token ? "pass" : "warn", "Browser response", browserResponse && submitted?.token ? `The browser submitted ${submitted.scheme} with a token.` : "No browser-visible Authorization token was captured; Chrome or the HAR may have redacted it."),
+    oidcCheck(ntlmFallback ? "fail" : submitted ? "pass" : "warn", "Protocol selection", ntlmFallback ? "NTLM was submitted after Negotiate was offered. Kerberos/WNA likely fell back to NTLM." : submitted ? `${submitted.scheme} was submitted.` : "The submitted protocol could not be determined."),
+    oidcCheck(unauthorizedCount > 2 ? "fail" : unauthorizedCount > 1 ? "warn" : "pass", "Challenge loop", unauthorizedCount > 2 ? `${unauthorizedCount} HTTP 401 responses suggest an authentication loop.` : `${unauthorizedCount} HTTP 401 challenge response(s) were captured.`),
+    oidcCheck(finalStatus >= 400 ? "fail" : finalStatus ? "pass" : "warn", "Final authorization", finalStatus ? `The final captured request returned HTTP ${finalStatus}.` : "No final status was available."),
+    oidcCheck(cookies.oamId || cookies.oamAuthnCookie || cookies.obSsoCookie ? "pass" : "warn", "SSO session", cookies.oamId || cookies.oamAuthnCookie || cookies.obSsoCookie ? "An OAM/WebGate session cookie was observed." : "No OAM/WebGate session cookie was observed in the correlated browser flow.")
+  ];
+}
+
+function isWnaEntry(entry) {
+  return getEntrySearchText(entry).includes("/oam/credcollectservlet/wna") || extractHttpAuthInfo(entry).length > 0;
+}
+
+function classifyWnaStage(entry, index, start, end) {
+  const auth = extractHttpAuthInfo(entry);
+  if (auth.some((item) => item.source === "response")) return "Challenge";
+  if (auth.some((item) => item.source === "request" && item.token)) return "Browser Response";
+  if (getEntrySearchText(entry).includes("/oam/credcollectservlet/wna")) return "WNA Result";
+  if (hasOamCookie(entry)) return "Session";
+  if (index === start) return "Protected Resource";
+  if (index === end) return "Application Return";
+  return Number(entry.status) >= 300 && Number(entry.status) < 400 ? "Redirect" : "Browser Request";
+}
+
+function contiguousFlowCluster(indexes, anchor, maximumGap) {
+  const sorted = [...indexes].sort((a, b) => a - b);
+  const anchorPosition = sorted.indexOf(anchor);
+  let start = anchorPosition;
+  let end = anchorPosition;
+  while (start > 0 && sorted[start] - sorted[start - 1] <= maximumGap) start -= 1;
+  while (end < sorted.length - 1 && sorted[end + 1] - sorted[end] <= maximumGap) end += 1;
+  return sorted.slice(start, end + 1);
+}
+
+function findRepeatedFlowUrls(timeline) {
+  const counts = new Map();
+  for (const item of timeline) {
+    const url = String(item.entry.url || "").replace(/[?#].*$/u, "");
+    counts.set(url, (counts.get(url) || 0) + 1);
+  }
+  return [...counts.entries()].filter(([, count]) => count >= 3).map(([url]) => url);
+}
+
+function dedupeFlowEndpoints(timeline) {
+  const seen = new Set();
+  return timeline.filter((item) => {
+    const key = `${item.stage}|${item.entry.url}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).map((item) => ({ stage: item.stage, url: item.entry.url }));
+}
+
+function flowStatusFromChecks(checks) {
+  if (checks.some((check) => check.level === "fail")) return "fail";
+  if (checks.some((check) => check.level === "warn")) return "warn";
+  return "pass";
+}
+
+function flowStatusLabel(status) {
+  if (status === "fail") return "Issues detected";
+  if (status === "warn") return "Review recommended";
+  return "Checks passed";
+}
+
+function emptyFlowAnalysis() {
+  return { timeline: [], checks: [], overallStatus: "warn", overallLabel: "No flow found" };
+}
+
+const OIDC_PARAMETER_NAMES = [
+  "client_id",
+  "redirect_uri",
+  "response_type",
+  "response_mode",
+  "scope",
+  "state",
+  "nonce",
+  "code_challenge",
+  "code_challenge_method",
+  "code_verifier",
+  "prompt",
+  "max_age",
+  "login_hint",
+  "acr_values",
+  "claims",
+  "code",
+  "session_state",
+  "grant_type",
+  "access_token",
+  "id_token",
+  "refresh_token",
+  "token_type",
+  "expires_in",
+  "error",
+  "error_description",
+  "error_uri"
+];
+
+function renderOidcInfo(selectedEntry) {
+  const analysis = analyzeOidcFlow(state.entries, selectedEntry);
+  if (!analysis.timeline.length) {
+    return highlightArtifacts("No OIDC flow information was found in the captured traffic.");
+  }
+
+  const authorization = analysis.authorization;
+  const callback = analysis.callback;
+  const token = analysis.idToken;
+
+  return [
+    `<div class="samlInfo oidcInfo">`,
+    `<h3 class="samlInfoTitle">OIDC Flow Analysis</h3>`,
+    `<div class="oidcSummary">`,
+    renderOidcStatusBadge(analysis.overallStatus, analysis.overallLabel),
+    `<span>${escapeHtml(analysis.correlationLabel)}</span>`,
+    `</div>`,
+    `<div class="samlInfoGrid">`,
+    renderOidcCard("Authorization Request", [
+      ["Endpoint", authorization?.entry.url],
+      ["Client ID", oidcValue(authorization, "client_id")],
+      ["Redirect URI", oidcValue(authorization, "redirect_uri")],
+      ["Response Type", oidcValue(authorization, "response_type")],
+      ["Response Mode", oidcValue(authorization, "response_mode")],
+      ["Scope", oidcValue(authorization, "scope")],
+      ["State", oidcValue(authorization, "state")],
+      ["Nonce", oidcValue(authorization, "nonce")],
+      ["PKCE Challenge", oidcValue(authorization, "code_challenge")],
+      ["PKCE Method", oidcValue(authorization, "code_challenge_method")],
+      ["Prompt", oidcValue(authorization, "prompt")],
+      ["ACR Values", oidcValue(authorization, "acr_values")]
+    ], true, "oidcCardRequest"),
+    renderOidcCard("Callback", [
+      ["Endpoint", callback?.entry.url],
+      ["Authorization Code", sensitiveOidcValue(callback, "code")],
+      ["Returned State", oidcValue(callback, "state")],
+      ["Session State", oidcValue(callback, "session_state")],
+      ["Error", oidcValue(callback, "error")],
+      ["Error Description", oidcValue(callback, "error_description")]
+    ], false, "oidcCardCallback"),
+    renderOidcCard("ID Token", token ? [
+      ["Algorithm", token.header.alg],
+      ["Key ID", token.header.kid],
+      ["Issuer", token.claims.iss],
+      ["Subject", token.claims.sub],
+      ["Audience", formatClaimValue(token.claims.aud)],
+      ["Nonce", token.claims.nonce],
+      ["Auth Time", formatJwtTimestamp(token.claims.auth_time)],
+      ["Issued At", formatJwtTimestamp(token.claims.iat)],
+      ["Not Before", formatJwtTimestamp(token.claims.nbf)],
+      ["Expires On", formatJwtTimestamp(token.claims.exp)],
+      ["ACR", token.claims.acr],
+      ["AMR", formatClaimValue(token.claims.amr)],
+      ["Authorized Party", token.claims.azp],
+      ["Token", { html: `<span class="mutedValue">${escapeHtml(previewToken(token.value))}</span>` }]
+    ] : [], false, "oidcCardToken"),
+    renderOidcChecks(analysis.checks),
+    renderOidcTimeline(analysis.timeline, selectedEntry.id),
+    renderOidcCard("Captured OIDC Endpoints", analysis.endpoints.map((item) => [item.stage, item.url]), true, "oidcCardEndpoints"),
+    `</div>`,
+    `<p class="oidcDisclaimer">JWT contents are decoded locally. Signature and trust-chain validation require the provider's trusted discovery metadata and JWKS and are not performed by this panel.</p>`,
+    `</div>`
+  ].join("");
+}
+
+function analyzeOidcFlow(entries, selectedEntry) {
+  const artifacts = entries.map((entry, index) => extractOidcEntry(entry, index)).filter((item) => item.isOidc);
+  const selected = artifacts.find((item) => item.entry.id === selectedEntry.id);
+  const selectedState = oidcValues(selected, "state")[0];
+  const nearestState = selectedState || artifacts
+    .slice()
+    .sort((a, b) => Math.abs(a.index - entries.indexOf(selectedEntry)) - Math.abs(b.index - entries.indexOf(selectedEntry)))
+    .flatMap((item) => oidcValues(item, "state"))[0];
+  const stateMatched = nearestState
+    ? artifacts.filter((item) => oidcValues(item, "state").includes(nearestState))
+    : [];
+  const anchorIndexes = stateMatched.map((item) => item.index);
+  const rangeStart = anchorIndexes.length ? Math.max(0, Math.min(...anchorIndexes) - 5) : 0;
+  const rangeEnd = anchorIndexes.length ? Math.max(...anchorIndexes) + 15 : entries.length;
+  const flow = artifacts.filter((item) => {
+    if (!nearestState) return true;
+    if (oidcValues(item, "state").includes(nearestState)) return true;
+    return item.index >= rangeStart && item.index <= rangeEnd
+      && ["Token", "UserInfo", "Discovery", "JWKS"].includes(item.stage);
+  });
+
+  const authorization = flow.find((item) => item.stage === "Authorization");
+  const callback = flow.find((item) => item.stage === "Callback");
+  const tokens = flow.flatMap((item) => item.jwtTokens);
+  const idToken = tokens.find((item) => item.name.toLowerCase().includes("id_token"));
+  if (!flow.some((item) => item.oidcEvidence)) {
+    return {
+      authorization: null,
+      callback: null,
+      idToken: null,
+      checks: [],
+      overallStatus: "warn",
+      overallLabel: "No OIDC evidence",
+      correlationLabel: "",
+      timeline: [],
+      endpoints: []
+    };
+  }
+  const checks = buildOidcChecks(authorization, callback, idToken, flow);
+  const overallStatus = checks.some((check) => check.level === "fail")
+    ? "fail"
+    : checks.some((check) => check.level === "warn") ? "warn" : "pass";
+
+  return {
+    authorization,
+    callback,
+    idToken,
+    checks,
+    overallStatus,
+    overallLabel: overallStatus === "fail" ? "Issues detected" : overallStatus === "warn" ? "Review recommended" : "Checks passed",
+    correlationLabel: nearestState ? `Correlated by state ${previewToken(nearestState)}` : "Showing OIDC-related traffic in the current capture",
+    timeline: flow,
+    endpoints: dedupeOidcEndpoints(flow)
+  };
+}
+
+function extractOidcEntry(entry, index) {
+  const items = [];
+  collectOidcParams(getUrlSearchParams(entry.url), "request URL", items);
+  collectOidcParams(getUrlHashParams(entry.url), "request URL fragment", items);
+  collectOidcParams(new URLSearchParams(entry.requestBody || ""), "request body", items);
+  if (/^\s*[\w%+-]+=/u.test(entry.responseBody || "")) {
+    collectOidcParams(new URLSearchParams(entry.responseBody), "response body", items);
+  }
+  collectOidcJson(entry.requestBody, "request JSON body", items);
+  collectOidcJson(entry.responseBody, "response JSON body", items);
+  collectOidcHeaders(entry.requestHeaders, "request header", items);
+  collectOidcHeaders(entry.responseHeaders, "response header", items);
+
+  const path = getUrlPath(entry.url).toLowerCase();
+  const lowerUrl = String(entry.url || "").toLowerCase();
+  const hasAuthorizationRequest = oidcItemValue(items, "client_id")
+    && (oidcItemValue(items, "response_type") || /\/authorize(?:[/?]|$)/u.test(path));
+  const hasCallback = Boolean(oidcItemValue(items, "code") || oidcItemValue(items, "error")
+    || oidcItemValue(items, "id_token")) && !hasAuthorizationRequest;
+  const hasTokens = items.some((item) => ["access_token", "id_token", "refresh_token"].includes(item.name));
+  let stage = "OIDC";
+  if (lowerUrl.includes("/.well-known/openid-configuration")) stage = "Discovery";
+  else if (/\b(jwks|certs)\b/u.test(path)) stage = "JWKS";
+  else if (/\/userinfo(?:[/?]|$)/u.test(path)) stage = "UserInfo";
+  else if (hasAuthorizationRequest) stage = "Authorization";
+  else if (hasTokens || /\/token(?:[/?]|$)/u.test(path)) stage = "Token";
+  else if (hasCallback) stage = "Callback";
+
+  const jwtTokens = items
+    .filter((item) => isJwt(item.value))
+    .map((item) => decodeJwtInfo({ ...item, source: `${item.source} (${stage})` }))
+    .filter((item) => !item.error);
+  const scopeValues = items.filter((item) => item.name === "scope").flatMap((item) => item.value.split(/\s+/u));
+  const oidcEvidence = scopeValues.includes("openid")
+    || items.some((item) => ["id_token", "nonce"].includes(item.name))
+    || ["Discovery", "UserInfo"].includes(stage)
+    || /\b(openid|oidc)\b/u.test(lowerUrl);
+  const isOidc = items.length > 0
+    || jwtTokens.length > 0
+    || ["Discovery", "JWKS", "UserInfo", "Token"].includes(stage)
+    || /\b(openid|oauth2|oidc)\b/u.test(lowerUrl);
+
+  return { entry, index, items: dedupeOAuthItems(items), jwtTokens, stage, isOidc, oidcEvidence };
+}
+
+function collectOidcParams(params, source, items) {
+  for (const name of OIDC_PARAMETER_NAMES) {
+    for (const value of params.getAll(name)) {
+      if (!value) continue;
+      items.push({ name, value, source, isSensitive: isSensitiveOidcName(name) });
+    }
+  }
+}
+
+function collectOidcJson(body, source, items) {
+  if (!body || !/^\s*[{[]/u.test(body)) return;
+  try {
+    collectOidcObject(JSON.parse(body), source, items);
+  } catch {
+    // Not JSON; ignore.
+  }
+}
+
+function collectOidcObject(value, source, items) {
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectOidcObject(item, source, items));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, item] of Object.entries(value)) {
+    const normalized = key.toLowerCase();
+    if (OIDC_PARAMETER_NAMES.includes(normalized) && ["string", "number"].includes(typeof item)) {
+      items.push({ name: normalized, value: String(item), source, isSensitive: isSensitiveOidcName(normalized) });
+    } else if (typeof item === "object") {
+      collectOidcObject(item, source, items);
+    }
+  }
+}
+
+function collectOidcHeaders(headers, source, items) {
+  for (const header of headers || []) {
+    const name = String(header?.name || "");
+    const value = String(header?.value || "");
+    if (/^authorization$/iu.test(name)) {
+      const bearer = value.match(/\bBearer\s+([A-Za-z0-9._~+/=-]+)/u);
+      if (bearer) items.push({ name: "access_token", value: bearer[1], source: `${source}: ${name}`, isSensitive: true });
+    }
+    if (/^location$/iu.test(name) || /[?&#](?:code|state|id_token|access_token|error)=/u.test(value)) {
+      collectOidcParams(getUrlSearchParams(value), `${source}: ${name}`, items);
+      collectOidcParams(getUrlHashParams(value), `${source}: ${name}`, items);
+    }
+  }
+}
+
+function isSensitiveOidcName(name) {
+  return ["code", "code_verifier", "access_token", "id_token", "refresh_token"].includes(name);
+}
+
+function oidcItemValue(items, name) {
+  return items.find((item) => item.name === name)?.value || "";
+}
+
+function oidcValues(artifact, name) {
+  return artifact?.items.filter((item) => item.name === name).map((item) => item.value) || [];
+}
+
+function oidcValue(artifact, name) {
+  return oidcValues(artifact, name)[0] || "";
+}
+
+function sensitiveOidcValue(artifact, name) {
+  const value = oidcValue(artifact, name);
+  return value ? { html: `<span class="mutedValue">${escapeHtml(previewToken(value))}</span>` } : "";
+}
+
+function buildOidcChecks(authorization, callback, idToken, flow) {
+  const checks = [];
+  const authState = oidcValue(authorization, "state");
+  const callbackState = oidcValue(callback, "state");
+  const authNonce = oidcValue(authorization, "nonce");
+  const tokenNonce = idToken?.claims.nonce;
+  const clientId = oidcValue(authorization, "client_id");
+  const audience = idToken?.claims.aud;
+  const audienceValues = Array.isArray(audience) ? audience.map(String) : audience ? [String(audience)] : [];
+  const challenge = oidcValue(authorization, "code_challenge");
+  const challengeMethod = oidcValue(authorization, "code_challenge_method");
+  const verifier = flow.map((item) => oidcValue(item, "code_verifier")).find(Boolean);
+  const callbackError = oidcValue(callback, "error");
+
+  checks.push(callbackError
+    ? oidcCheck("fail", "Authorization response", `${callbackError}: ${oidcValue(callback, "error_description") || "The provider returned an error."}`)
+    : oidcCheck(callback ? "pass" : "warn", "Authorization response", callback ? "A callback response was captured." : "No callback response was identified."));
+  checks.push(authState && callbackState
+    ? oidcCheck(authState === callbackState ? "pass" : "fail", "State", authState === callbackState ? "Authorization and callback state values match." : "Authorization and callback state values do not match.")
+    : oidcCheck("warn", "State", "State could not be compared from the captured browser traffic."));
+  checks.push(authNonce && tokenNonce
+    ? oidcCheck(authNonce === String(tokenNonce) ? "pass" : "fail", "Nonce", authNonce === String(tokenNonce) ? "Authorization nonce matches the ID token." : "Authorization nonce does not match the ID token.")
+    : oidcCheck("warn", "Nonce", "Nonce could not be compared; an authorization nonce or ID-token nonce is missing."));
+  checks.push(challenge
+    ? oidcCheck(challengeMethod.toUpperCase() === "S256" ? "pass" : "warn", "PKCE", verifier
+      ? `PKCE ${challengeMethod || "plain"} challenge and verifier were captured.`
+      : `PKCE ${challengeMethod || "plain"} challenge was captured; the verifier may be exchanged server-side.`)
+    : oidcCheck("warn", "PKCE", "No PKCE code challenge was found in the captured authorization request."));
+
+  if (idToken) {
+    checks.push(oidcCheck(idToken.header.alg && String(idToken.header.alg).toLowerCase() !== "none" ? "warn" : "fail", "Signature",
+      String(idToken.header.alg).toLowerCase() === "none"
+        ? "The ID token declares alg=none."
+        : `The token declares ${idToken.header.alg || "an unknown algorithm"}; cryptographic verification is not performed.`));
+    checks.push(clientId && audienceValues.length
+      ? oidcCheck(audienceValues.includes(clientId) ? "pass" : "fail", "Audience", audienceValues.includes(clientId) ? "ID-token audience includes the client ID." : "ID-token audience does not include the captured client ID.")
+      : oidcCheck("warn", "Audience", "Audience could not be compared with the client ID."));
+    checks.push(oidcTokenTimeCheck(idToken.claims));
+    checks.push(oidcCheck(idToken.claims.iss ? "pass" : "warn", "Issuer", idToken.claims.iss ? `Issuer: ${idToken.claims.iss}` : "The ID token does not contain an issuer claim."));
+  } else {
+    checks.push(oidcCheck("warn", "ID token", "No browser-visible ID token was found. It may have been exchanged server-side."));
+  }
+
+  return checks;
+}
+
+function oidcCheck(level, label, message) {
+  return { level, label, message };
+}
+
+function oidcTokenTimeCheck(claims) {
+  const now = Math.floor(Date.now() / 1000);
+  if (Number.isFinite(Number(claims.exp)) && Number(claims.exp) <= now) {
+    return oidcCheck("fail", "Token lifetime", `The ID token expired on ${formatJwtTimestamp(claims.exp)}.`);
+  }
+  if (Number.isFinite(Number(claims.nbf)) && Number(claims.nbf) > now) {
+    return oidcCheck("fail", "Token lifetime", `The ID token is not valid before ${formatJwtTimestamp(claims.nbf)}.`);
+  }
+  if (Number.isFinite(Number(claims.exp))) {
+    return oidcCheck("pass", "Token lifetime", `The ID token is active until ${formatJwtTimestamp(claims.exp)}.`);
+  }
+  return oidcCheck("warn", "Token lifetime", "The ID token does not contain an expiration claim.");
+}
+
+function dedupeOidcEndpoints(flow) {
+  const seen = new Set();
+  return flow.filter((item) => {
+    const key = `${item.stage}|${item.entry.url}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).map((item) => ({ stage: item.stage, url: item.entry.url }));
+}
+
+function renderOidcStatusBadge(level, label) {
+  return `<span class="oidcStatus oidcStatus-${escapeHtml(level)}">${escapeHtml(label)}</span>`;
+}
+
+function renderOidcCard(title, rows, wide = false, className = "") {
+  const visibleRows = rows.filter(([, value]) => hasInfoValue(value));
+  if (!visibleRows.length) return "";
+  return [
+    `<section class="samlInfoCard oidcCard ${wide ? "isWide " : ""}${escapeHtml(className)}">`,
+    `<h4>${escapeHtml(title)}</h4>`,
+    `<table class="samlInfoTable"><tbody>`,
+    visibleRows.map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${formatOidcValue(label, value)}</td></tr>`).join(""),
+    `</tbody></table>`,
+    `</section>`
+  ].join("");
+}
+
+function formatOidcValue(label, value) {
+  if (value && typeof value === "object" && "html" in value) return value.html;
+  const text = String(value || "").trim();
+  if (label === "Expires On") return formatExpiryValue(text);
+  if (["State", "Returned State", "Nonce", "PKCE Challenge", "Authorization Code"].includes(label)) {
+    return `<span class="oidcCorrelationValue">${escapeHtml(text)}</span>`;
+  }
+  if (["Client ID", "Redirect URI", "Endpoint", "Issuer", "Audience"].includes(label)) {
+    return `<span class="oidcDeploymentValue">${escapeHtml(text)}</span>`;
+  }
+  return highlightArtifacts(text);
+}
+
+function renderOidcChecks(checks) {
+  return [
+    `<section class="samlInfoCard oidcChecks">`,
+    `<h4>Validation Checks</h4>`,
+    `<div class="oidcCheckList">`,
+    checks.map((check) => [
+      `<div class="oidcCheck oidcCheck-${escapeHtml(check.level)}">`,
+      renderOidcStatusBadge(check.level, check.level === "pass" ? "PASS" : check.level === "fail" ? "FAIL" : "REVIEW"),
+      `<div><strong>${escapeHtml(check.label)}</strong><span>${escapeHtml(check.message)}</span></div>`,
+      `</div>`
+    ].join("")).join(""),
+    `</div>`,
+    `</section>`
+  ].join("");
+}
+
+function renderOidcTimeline(items, selectedId) {
+  return [
+    `<section class="samlInfoCard oidcTimeline">`,
+    `<h4>Captured Flow</h4>`,
+    `<div class="oidcTimelineList">`,
+    items.map((item) => [
+      `<div class="oidcTimelineItem${item.entry.id === selectedId ? " isSelected" : ""}">`,
+      `<span class="oidcStage">${escapeHtml(item.stage)}</span>`,
+      `<span class="oidcTimelineMethod">${escapeHtml(item.entry.method || "GET")}</span>`,
+      `<span class="oidcTimelineStatus">${escapeHtml(String(item.entry.status || "-"))}</span>`,
+      `<span class="oidcTimelineUrl" title="${escapeHtml(item.entry.url)}">${escapeHtml(item.entry.url)}</span>`,
+      `</div>`
+    ].join("")).join(""),
+    `</div>`,
+    `</section>`
   ].join("");
 }
 

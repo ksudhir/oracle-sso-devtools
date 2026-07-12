@@ -495,11 +495,15 @@ button:hover,
   align-items: end;
   gap: 4px;
   padding: 6px 8px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
+  scrollbar-width: thin;
 }
 
 .tab {
+  flex: 0 0 auto;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -709,6 +713,302 @@ button:hover,
 .warningValue {
   color: var(--oam);
   font-weight: 700;
+}
+
+.oidcInfo {
+  gap: 12px;
+}
+
+.oidcSummary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  color: var(--muted);
+}
+
+.oidcStatus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  padding: 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.oidcStatus-pass {
+  color: var(--xml-value);
+  background: color-mix(in srgb, var(--xml-value) 12%, transparent);
+}
+
+.oidcStatus-warn {
+  color: var(--oam);
+  background: color-mix(in srgb, var(--oam) 12%, transparent);
+}
+
+.oidcStatus-fail {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.oidcCard h4 {
+  color: var(--oauth);
+  background: color-mix(in srgb, var(--oauth) 15%, var(--panel));
+}
+
+.oidcCardRequest h4 {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+}
+
+.oidcCardCallback h4 {
+  color: var(--fed);
+  background: color-mix(in srgb, var(--fed) 16%, var(--panel));
+}
+
+.oidcCardToken h4 {
+  color: var(--xml-value);
+  background: color-mix(in srgb, var(--xml-value) 14%, var(--panel));
+}
+
+.oidcCorrelationValue {
+  color: var(--oauth);
+  font-weight: 800;
+}
+
+.oidcDeploymentValue {
+  color: var(--fed);
+  font-weight: 700;
+}
+
+.oidcCheckList,
+.oidcTimelineList {
+  display: grid;
+}
+
+.oidcCheck {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.oidcCheck:last-child,
+.oidcTimelineItem:last-child {
+  border-bottom: 0;
+}
+
+.oidcCheck strong,
+.oidcCheck span:not(.oidcStatus) {
+  display: block;
+}
+
+.oidcCheck strong {
+  margin-bottom: 2px;
+  color: var(--text);
+}
+
+.oidcCheck span:not(.oidcStatus) {
+  color: var(--muted);
+}
+
+.oidcCheck-fail {
+  background: color-mix(in srgb, var(--danger) 5%, transparent);
+}
+
+.oidcCheck-warn {
+  background: color-mix(in srgb, var(--oam) 4%, transparent);
+}
+
+.oidcTimelineItem {
+  display: grid;
+  grid-template-columns: 88px 52px 42px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.oidcTimelineItem.isSelected {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+}
+
+.oidcStage {
+  color: var(--oauth);
+  font-weight: 800;
+}
+
+.oidcTimelineMethod,
+.oidcTimelineStatus {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+}
+
+.oidcTimelineUrl {
+  overflow: hidden;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oidcDisclaimer {
+  margin: 0;
+  padding: 9px 10px;
+  border-left: 3px solid var(--oam);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--oam) 7%, transparent);
+  line-height: 1.45;
+}
+
+.oamFlowCard h4,
+.oamServerFlowCard h4 {
+  color: var(--oam);
+  background: color-mix(in srgb, var(--oam) 15%, var(--panel));
+}
+
+.webgateFlowCard h4 {
+  color: var(--webgate);
+  background: color-mix(in srgb, var(--webgate) 15%, var(--panel));
+}
+
+.wnaFlowCard h4,
+.wnaChallengeCard h4 {
+  color: var(--kerberos);
+  background: color-mix(in srgb, var(--kerberos) 14%, var(--panel));
+}
+
+.wnaBrowserCard h4 {
+  color: var(--ntlm);
+  background: color-mix(in srgb, var(--ntlm) 15%, var(--panel));
+}
+
+.wnaOutcomeCard h4 {
+  color: var(--oam);
+  background: color-mix(in srgb, var(--oam) 13%, var(--panel));
+}
+
+.oamFlowInfo .oidcStage {
+  color: var(--oam);
+}
+
+.wnaFlowInfo .oidcStage {
+  color: var(--kerberos);
+}
+
+.traceCorrelationCard h4 {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 15%, var(--panel));
+}
+
+.traceCorrelationList {
+  display: grid;
+}
+
+.traceCorrelationItem {
+  display: grid;
+  gap: 7px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--danger) 4%, transparent);
+}
+
+.traceCorrelationItem:last-child {
+  border-bottom: 0;
+}
+
+.traceCorrelationItem strong,
+.traceEndpoint,
+.traceIdentifiers small {
+  display: block;
+}
+
+.traceCorrelationItem strong {
+  color: var(--danger);
+}
+
+.traceEndpoint {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traceIdentifiers {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.traceIdentifiers code {
+  overflow-wrap: anywhere;
+  color: var(--fed);
+  font-weight: 800;
+}
+
+.traceIdentifiers small {
+  grid-column: 2;
+  color: var(--muted);
+}
+
+.traceBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--fed-bg);
+  color: var(--fed);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.traceRidBadge {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.traceGuidance,
+.flowTroubleshootingNote {
+  margin: 0;
+  padding: 9px 10px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.traceGuidance {
+  border-top: 1px solid var(--line);
+  color: var(--oam);
+  background: color-mix(in srgb, var(--oam) 7%, transparent);
+  font-weight: 700;
+}
+
+.flowTroubleshootingNote {
+  border-left: 3px solid var(--oam);
+  background: color-mix(in srgb, var(--oam) 7%, transparent);
+}
+
+.flowTroubleshootingNote strong {
+  color: var(--oam);
+}
+
+@media (max-width: 900px) {
+  .oidcTimelineItem {
+    grid-template-columns: 76px 48px 38px minmax(0, 1fr);
+  }
 }
 
 .samlDefaultValue {

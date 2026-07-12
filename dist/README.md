@@ -1,6 +1,6 @@
-# OAM/SAML/OAUTH DevTools Panel
+# SSO & Federation Inspector for OAM, SAML & OAuth
 
-A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** panel to DevTools. The panel captures network traffic from the inspected tab, highlights OAM/WebGate traffic, SAML requests/responses, and OAuth/OIDC tokens, formats decoded XML, and supports import/export of captured traffic.
+A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise SSO troubleshooting. The **OAM/SAML/OAUTH** panel inspects OAM/WebGate, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, and HAR/JSON import and export.
 
 ## Load It In Chrome
 
@@ -21,6 +21,8 @@ A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** pa
 - Highlights OAM/WebGate cookie names in **Request** and **Response** tabs, including suffix variants such as `OAMAuthnCookie...`, `ObSSOCookie...`, `OAM_ID...`, `OAM_REQ...`, and `ORA_OSFS_SESSION...`.
 - Adds a **Cookies** tab with separate **Request Cookies** and **Response Cookies** sections rendered as name/value pairs.
 - Adds an **Auth Info** tab for browser-visible Kerberos/SPNEGO/NTLM headers and forwarded X.509 client-certificate headers.
+- Adds a correlated **WNA Info** tab for the protected-resource request, authentication challenge, browser response, Negotiate/Kerberos versus NTLM selection, repeated 401s, final authorization, and OAM/WebGate session cookies.
+- Flags NTLM fallback when the server offers Negotiate but the browser submits NTLM, while separating browser-visible evidence from ticket-cache, SPN, DNS, KDC, and server-log validation.
 - Tags requests as **Kerberos** when `Authorization`, `WWW-Authenticate`, or `Proxy-Authenticate` contains `Negotiate` / `Kerberos`.
 - Tags requests as **NTLM** when those headers contain `NTLM`.
 - Highlights `/oam/CredCollectServlet/WNA` as Kerberos/WNA-related and `/oam/CredCollectServlet/X509` as X.509-related.
@@ -30,6 +32,7 @@ A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** pa
 - Tags URLs containing `/oauth2/` as OAuth.
 - Adds an **OAuth Info** tab that extracts OAuth/OIDC parameters and Bearer tokens from URLs, headers, form bodies, and JSON bodies.
 - Decodes JWT-style access tokens and ID tokens to show header values, common claims, timestamps, and full claims.
+- Adds an **OIDC Info** tab that correlates authorization, callback, token, UserInfo, discovery, and JWKS traffic by state, summarizes ID-token claims, and checks state, nonce, PKCE, audience, issuer, and token lifetime. JWT signatures are identified but not cryptographically validated.
 - Tags URLs containing `/fed/sp` or `/fed/idp` as FED.
 - Decodes HTTP POST binding messages from Base64.
 - Adds a **SAML Info** tab that summarizes decoded SAML XML into common fields, status, conditions, assertion subject/session details, signature presence, X.509 certificate metadata, and attributes.
@@ -40,6 +43,8 @@ A clean Manifest V3 Chrome DevTools extension that adds an **OAM/SAML/OAUTH** pa
 - Toggles between all traffic and SAML-only traffic.
 - Adds a **Search** field that filters captured entries across URL, request headers/body, response headers/body, status/mime fields, and decoded SAML data.
 - Toggles OAM Webgate-only traffic for browser-to-OAM and browser-to-WebGate communication. It checks URLs, headers, cookies, and bodies for OAM/WebGate markers such as `/oam/server`, `auth_cred_submit`, `obrareq.cgi`, `obrar.cgi`, `obreq.cgi`, `OAM_ID`, `OAMAuthnCookie`, `ObSSOCookie`, `oam_req`, and `request_id`.
+- Adds a correlated **OAM Info** tab that separates WebGate and OAM server stages, follows request IDs and cookie transitions, detects redirect loops and failures, and summarizes the final browser outcome.
+- Extracts browser-visible `ECID-Context`, `X-ORACLE-DMS-ECID`, `Oracle-ECID`, and RID headers from failing requests, then prompts the user to use the ECID for further OAM, WebGate, OHS, WebLogic, identity-domain, and server-log correlation.
 - Hides static resources such as `.js`, `.css`, `.ico`, `.png`, `.jpg`, `.gif`, `.jpeg`, `.svg`, `.webp`, `.woff`, `.woff2`, `.ttf`, `.otf`, and `.eot` when **Hide static** is checked.
 - Adds optional site-specific OAM/WebGate host matching with the **Hosts** toolbar field. Enter comma- or space-separated hostnames such as `login.company.com, sso.company.com`.
 - Scrubs links in the inspected page by setting anchor targets to `_self`.
@@ -53,3 +58,10 @@ SAML HTTP Redirect binding values are Base64-encoded raw DEFLATE payloads. Chrom
 - `manifest.json` declares the MV3 DevTools extension.
 - `devtools.html` and `devtools.js` register the DevTools panel.
 - `panel.html`, `panel.css`, and `panel.js` implement the panel UI and capture logic.
+
+## Marketing and Publishing
+
+- `STORE_LISTING.md` contains the approved Chrome Web Store description, declarations, screenshot captions, and YouTube metadata.
+- `CHROME_WEB_STORE_PUBLISHING.md` contains the release and review workflow.
+- `store-assets/build_marketing_assets.cjs` deterministically regenerates sanitized screenshots and promotional tiles from the real panel code.
+- `store-assets/video/create_promo_video.swift` regenerates the YouTube-ready product video.

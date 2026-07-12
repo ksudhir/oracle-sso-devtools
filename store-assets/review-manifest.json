@@ -1,0 +1,51 @@
+[
+  {
+    "id": "complete-sso-traffic",
+    "index": 1,
+    "title": "Complete SSO Traffic",
+    "src": "screenshots/01-complete-sso-traffic.png",
+    "href": "screenshots/01-complete-sso-traffic.png"
+  },
+  {
+    "id": "saml-federation-analysis",
+    "index": 2,
+    "title": "SAML Federation Analysis",
+    "src": "screenshots/02-saml-federation-analysis.png",
+    "href": "screenshots/02-saml-federation-analysis.png"
+  },
+  {
+    "id": "oidc-flow-analysis",
+    "index": 3,
+    "title": "OIDC Flow Analysis",
+    "src": "screenshots/03-oidc-flow-analysis.png",
+    "href": "screenshots/03-oidc-flow-analysis.png"
+  },
+  {
+    "id": "wna-ntlm-x509",
+    "index": 4,
+    "title": "Kerberos WNA, NTLM, and X.509",
+    "src": "screenshots/04-wna-ntlm-x509-auth.png",
+    "href": "screenshots/04-wna-ntlm-x509-auth.png"
+  },
+  {
+    "id": "oam-webgate-diagnostics",
+    "index": 5,
+    "title": "OAM and WebGate Diagnostics",
+    "src": "screenshots/05-oam-webgate-diagnostics.png",
+    "href": "screenshots/05-oam-webgate-diagnostics.png"
+  },
+  {
+    "id": "small-promo",
+    "index": 6,
+    "title": "Small Promo Tile",
+    "src": "promo/small-promo-tile-440x280.png",
+    "href": "promo/small-promo-tile-440x280.png"
+  },
+  {
+    "id": "marquee-promo",
+    "index": 7,
+    "title": "Marquee Promo Tile",
+    "src": "promo/marquee-promo-tile-1400x560.png",
+    "href": "promo/marquee-promo-tile-1400x560.png"
+  }
+]

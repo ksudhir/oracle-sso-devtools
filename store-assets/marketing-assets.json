@@ -1,0 +1,84 @@
+{
+  "product": "SSO & Federation Inspector for OAM, SAML & OAuth",
+  "version": "0.3.0",
+  "reviewStatus": "publish-ready",
+  "copySource": "../STORE_LISTING.md",
+  "assets": {
+    "icon": {
+      "path": "../icons/icon128.png",
+      "width": 128,
+      "height": 128,
+      "format": "PNG"
+    },
+    "screenshots": [
+      {
+        "path": "screenshots/01-complete-sso-traffic.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Complete browser-visible SSO traffic"
+      },
+      {
+        "path": "screenshots/02-saml-federation-analysis.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Decoded SAML and federation analysis"
+      },
+      {
+        "path": "screenshots/03-oidc-flow-analysis.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Correlated OpenID Connect flow"
+      },
+      {
+        "path": "screenshots/04-wna-ntlm-x509-auth.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Kerberos/WNA, NTLM, and forwarded X.509"
+      },
+      {
+        "path": "screenshots/05-oam-webgate-diagnostics.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "OAM/WebGate status, timing, cookies, and redirects"
+      }
+    ],
+    "promoTiles": [
+      {
+        "path": "promo/small-promo-tile-440x280.png",
+        "width": 440,
+        "height": 280,
+        "format": "24-bit PNG"
+      },
+      {
+        "path": "promo/marquee-promo-tile-1400x560.png",
+        "width": 1400,
+        "height": 560,
+        "format": "24-bit PNG"
+      }
+    ],
+    "video": {
+      "path": "video/sso-federation-inspector-youtube-promo.mp4",
+      "width": 1920,
+      "height": 1080,
+      "durationSeconds": 54,
+      "codec": "H.264",
+      "metadataSource": "../STORE_LISTING.md"
+    }
+  },
+  "generation": {
+    "screenshotsAndPromo": "store-assets/build_marketing_assets.cjs",
+    "video": "store-assets/video/create_promo_video.swift"
+  },
+  "provenance": {
+    "productUI": "Rendered deterministically from the repository panel HTML, CSS, and JavaScript",
+    "sampleData": "Synthetic and sanitized example.com authentication traffic",
+    "generatedImagery": "None",
+    "customerData": "None"
+  },
+  "claimBoundaries": [
+    "The extension analyzes only traffic visible to Chrome DevTools.",
+    "JWT and certificate data is decoded and summarized but not cryptographically validated.",
+    "Kerberos tickets and PAC data are not decrypted or validated.",
+    "Server-to-server, KDC, and backend-only exchanges may not be visible."
+  ]
+}
