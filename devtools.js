@@ -1,5 +1,5 @@
 chrome.devtools.panels.create(
-  "OAM/SAML/OAUTH",
+  "SSO/Federation",
   "icons/icon48.png",
   "panel.html"
 );

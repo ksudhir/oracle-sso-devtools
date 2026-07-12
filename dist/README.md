@@ -1,6 +1,6 @@
 # SSO & Federation Inspector for OAM, SAML & OAuth
 
-A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise SSO troubleshooting. The **OAM/SAML/OAUTH** panel inspects OAM/WebGate, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, and HAR/JSON import and export.
+A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise SSO troubleshooting. The **SSO/Federation** panel inspects OAM/WebGate, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, and HAR/JSON import and export.
 
 ## Load It In Chrome
 
@@ -9,7 +9,7 @@ A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise SSO
 3. Click **Load unpacked**.
 4. Select this folder: `oracle-sso-devtools`.
 5. Open DevTools on the tab you want to inspect.
-6. Open the **OAM/SAML/OAUTH** panel before starting the login flow.
+6. Open the **SSO/Federation** panel before starting the login flow.
 
 ## Features
 
@@ -40,7 +40,7 @@ A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise SSO
 - Adds a **SAML Info** tab that summarizes decoded SAML XML into common fields, status, conditions, assertion subject/session details, signature presence, X.509 certificate metadata, and attributes.
 - Parses embedded X.509 certificates to show subject, issuer, serial number, issued-on date, expires-on date, SHA-1 thumbprint, and SHA-256 thumbprint.
 - Exports captured traffic as JSON.
-- Imports OAM/SAML/OAUTH panel exports, raw entry arrays, and browser HAR files.
+- Imports SSO/Federation Inspector exports, raw entry arrays, and browser HAR files.
 - Adds **Load From Network Tab** to import entries currently available in Chrome DevTools' Network HAR model, including HAR files imported into the Network tab when Chrome exposes them to DevTools extensions.
 - Toggles between all traffic and SAML-only traffic.
 - Adds a **Search** field that filters captured entries across URL, request headers/body, response headers/body, status/mime fields, and decoded SAML data.

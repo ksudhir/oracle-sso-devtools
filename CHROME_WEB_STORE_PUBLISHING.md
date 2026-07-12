@@ -30,7 +30,7 @@ Manifest summary:
 3. Click **Load unpacked**.
 4. Select this project's `dist` directory.
 5. Open a normal browser tab and then open DevTools.
-6. Confirm that the **OAM/SAML/OAUTH** panel appears.
+6. Confirm that the **SSO/Federation** panel appears.
 7. Test live capture, Start/Stop capture, filters, HAR import/export, SAML decoding, cookies, Auth Info, OAM Info with ECID/RID, WNA Info, OAuth Info, and correlated OIDC Info.
 8. Check DevTools and `chrome://extensions` for errors.
 
@@ -152,7 +152,7 @@ Explain to the reviewer how to find and test the extension:
 
 > 1. Install the extension.
 > 2. Open any browser tab and launch Chrome DevTools.
-> 3. Select the OAM/SAML/OAUTH panel. It may appear under the DevTools overflow menu if the window is narrow.
+> 3. Select the SSO/Federation panel. It may appear under the DevTools overflow menu if the window is narrow.
 > 4. Browse an authentication flow or use Import HAR/JSON to load a HAR file.
 > 5. Select a request to inspect Request, Response, Cookies, Auth Info, OAM Info, WNA Info, SAML XML, SAML Info, OAuth Info, and OIDC Info.
 > 6. The extension processes inspected traffic locally and does not require an account or external service.
@@ -184,7 +184,7 @@ Publishing choices:
 1. If deferred publishing was selected, click **Publish** within 30 days.
 2. Open the public Web Store listing and verify the title, description, screenshots, privacy link, and support information.
 3. Install the Web Store version in a clean Chrome profile.
-4. Open DevTools and verify that the OAM/SAML/OAUTH panel loads.
+4. Open DevTools and verify that the SSO/Federation panel loads.
 5. Test capture, filtering, HAR import, SAML decoding, cookie tables, Auth Info, OAuth Info, and OIDC Info correlation.
 6. Save and share the public listing URL.
 7. Monitor reviews, support email, crash reports, policy notices, and publisher notifications.

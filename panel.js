@@ -569,7 +569,7 @@ async function parseImportedEntries(imported) {
     return normalizeHarEntries(imported.log.entries);
   }
 
-  throw new Error("Expected an OAM/SAML/OAUTH panel export, an entries array, or a HAR file with log.entries.");
+  throw new Error("Expected an SSO/Federation Inspector export, an entries array, or a HAR file with log.entries.");
 }
 
 async function normalizeHarEntries(entries) {
@@ -1399,7 +1399,7 @@ function renderAbout() {
     `<div class="samlInfo">`,
     `<h3 class="samlInfoTitle">About</h3>`,
     `<div class="samlInfoGrid">`,
-    renderInfoCard("OAM/SAML/OAUTH DevTools Panel", [
+    renderInfoCard("SSO/Federation Inspector", [
       ["Created by", "Sudhir Kulkarni"],
       ["Contact", "ksudhir@gmail.com"]
     ], true),
