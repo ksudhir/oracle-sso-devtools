@@ -2470,6 +2470,8 @@ function renderOidcInfo(selectedEntry) {
       ["Authorization Code", sensitiveOidcValue(callback, "code")],
       ["Returned State", oidcValue(callback, "state")],
       ["Session State", oidcValue(callback, "session_state")],
+      ["ID Token", sensitiveOidcValue(callback, "id_token")],
+      ["ID Token Format", analysis.rawIdToken ? (isJwt(analysis.rawIdToken) ? "JWT" : "Opaque or encrypted") : ""],
       ["Error", oidcValue(callback, "error")],
       ["Error Description", oidcValue(callback, "error_description")]
     ], false, "oidcCardCallback"),
@@ -2507,14 +2509,17 @@ function analyzeOidcFlow(entries, selectedEntry) {
     .sort((a, b) => Math.abs(a.index - entries.indexOf(selectedEntry)) - Math.abs(b.index - entries.indexOf(selectedEntry)))
     .flatMap((item) => oidcValues(item, "state"))[0];
   const stateMatched = nearestState
-    ? artifacts.filter((item) => oidcValues(item, "state").includes(nearestState))
+    ? artifacts.filter((item) => oidcValues(item, "state").includes(nearestState) && (
+      item.oidcEvidence || ["Authorization", "Callback", "Token"].includes(item.stage)
+    ))
     : [];
+  const stateMatchedIds = new Set(stateMatched.map((item) => item.entry.id));
   const anchorIndexes = stateMatched.map((item) => item.index);
   const rangeStart = anchorIndexes.length ? Math.max(0, Math.min(...anchorIndexes) - 5) : 0;
   const rangeEnd = anchorIndexes.length ? Math.max(...anchorIndexes) + 15 : entries.length;
   const flow = artifacts.filter((item) => {
     if (!nearestState) return true;
-    if (oidcValues(item, "state").includes(nearestState)) return true;
+    if (stateMatchedIds.has(item.entry.id)) return true;
     return item.index >= rangeStart && item.index <= rangeEnd
       && ["Token", "UserInfo", "Discovery", "JWKS"].includes(item.stage);
   });
@@ -2523,6 +2528,7 @@ function analyzeOidcFlow(entries, selectedEntry) {
   const callback = flow.find((item) => item.stage === "Callback");
   const tokens = flow.flatMap((item) => item.jwtTokens);
   const idToken = tokens.find((item) => item.name.toLowerCase().includes("id_token"));
+  const rawIdToken = flow.flatMap((item) => item.items).find((item) => item.name === "id_token")?.value || "";
   if (!flow.some((item) => item.oidcEvidence)) {
     return {
       authorization: null,
@@ -2536,7 +2542,7 @@ function analyzeOidcFlow(entries, selectedEntry) {
       endpoints: []
     };
   }
-  const checks = buildOidcChecks(authorization, callback, idToken, flow);
+  const checks = buildOidcChecks(authorization, callback, idToken, rawIdToken, flow);
   const overallStatus = checks.some((check) => check.level === "fail")
     ? "fail"
     : checks.some((check) => check.level === "warn") ? "warn" : "pass";
@@ -2545,6 +2551,7 @@ function analyzeOidcFlow(entries, selectedEntry) {
     authorization,
     callback,
     idToken,
+    rawIdToken,
     checks,
     overallStatus,
     overallLabel: overallStatus === "fail" ? "Issues detected" : overallStatus === "warn" ? "Review recommended" : "Checks passed",
@@ -2571,16 +2578,23 @@ function extractOidcEntry(entry, index) {
   const lowerUrl = String(entry.url || "").toLowerCase();
   const hasAuthorizationRequest = oidcItemValue(items, "client_id")
     && (oidcItemValue(items, "response_type") || /\/authorize(?:[/?]|$)/u.test(path));
+  const hasAuthorizationRedirect = hasAuthorizationRequest
+    && items.some((item) => /header:\s*location/iu.test(item.source))
+    && !/\/authorize(?:[/?]|$)/u.test(path);
   const hasCallback = Boolean(oidcItemValue(items, "code") || oidcItemValue(items, "error")
     || oidcItemValue(items, "id_token")) && !hasAuthorizationRequest;
-  const hasTokens = items.some((item) => ["access_token", "id_token", "refresh_token"].includes(item.name));
+  const hasIssuedTokens = items.some((item) => (
+    ["access_token", "id_token", "refresh_token"].includes(item.name)
+    && !/request header:\s*authorization/iu.test(item.source)
+  ));
   let stage = "OIDC";
   if (lowerUrl.includes("/.well-known/openid-configuration")) stage = "Discovery";
   else if (/\b(jwks|certs)\b/u.test(path)) stage = "JWKS";
   else if (/\/userinfo(?:[/?]|$)/u.test(path)) stage = "UserInfo";
+  else if (hasAuthorizationRedirect) stage = "Authorization Redirect";
   else if (hasAuthorizationRequest) stage = "Authorization";
-  else if (hasTokens || /\/token(?:[/?]|$)/u.test(path)) stage = "Token";
   else if (hasCallback) stage = "Callback";
+  else if (hasIssuedTokens || /\/token(?:[/?]|$)/u.test(path)) stage = "Token";
 
   const jwtTokens = items
     .filter((item) => isJwt(item.value))
@@ -2641,7 +2655,7 @@ function collectOidcHeaders(headers, source, items) {
       const bearer = value.match(/\bBearer\s+([A-Za-z0-9._~+/=-]+)/u);
       if (bearer) items.push({ name: "access_token", value: bearer[1], source: `${source}: ${name}`, isSensitive: true });
     }
-    if (/^location$/iu.test(name) || /[?&#](?:code|state|id_token|access_token|error)=/u.test(value)) {
+    if (/^location$/iu.test(name)) {
       collectOidcParams(getUrlSearchParams(value), `${source}: ${name}`, items);
       collectOidcParams(getUrlHashParams(value), `${source}: ${name}`, items);
     }
@@ -2669,7 +2683,7 @@ function sensitiveOidcValue(artifact, name) {
   return value ? { html: `<span class="mutedValue">${escapeHtml(previewToken(value))}</span>` } : "";
 }
 
-function buildOidcChecks(authorization, callback, idToken, flow) {
+function buildOidcChecks(authorization, callback, idToken, rawIdToken, flow) {
   const checks = [];
   const authState = oidcValue(authorization, "state");
   const callbackState = oidcValue(callback, "state");
@@ -2709,7 +2723,9 @@ function buildOidcChecks(authorization, callback, idToken, flow) {
     checks.push(oidcTokenTimeCheck(idToken.claims));
     checks.push(oidcCheck(idToken.claims.iss ? "pass" : "warn", "Issuer", idToken.claims.iss ? `Issuer: ${idToken.claims.iss}` : "The ID token does not contain an issuer claim."));
   } else {
-    checks.push(oidcCheck("warn", "ID token", "No browser-visible ID token was found. It may have been exchanged server-side."));
+    checks.push(rawIdToken
+      ? oidcCheck("warn", "ID token", "A browser-visible ID token was captured, but it is opaque or encrypted rather than a locally decodable JWT.")
+      : oidcCheck("warn", "ID token", "No browser-visible ID token was found. It may have been exchanged server-side."));
   }
 
   return checks;

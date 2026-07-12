@@ -189,4 +189,24 @@ if (process.argv[2]) {
     confidence: flow.confidence,
     entries: flow.entries.map((entry) => ({ id: entry.id, url: entry.url, saml: entry.saml.length }))
   })), null, 2));
+
+  context.importedOidcEntry = context.importedEntries.find((entry) => /\/oauth2\/v1\/authorize/iu.test(entry.url));
+  if (context.importedOidcEntry) {
+    const oidcAnalysis = evaluate("analyzeOidcFlow(importedEntries, importedOidcEntry)");
+    assert.deepEqual([...oidcAnalysis.timeline.map((item) => item.stage)], ["Authorization Redirect", "Authorization", "Callback"]);
+    assert.ok(oidcAnalysis.timeline.every((item) => !String(item.entry.url).startsWith("chrome-extension://")));
+    assert.ok(oidcAnalysis.rawIdToken);
+    assert.match(oidcAnalysis.checks.find((check) => check.label === "ID token").message, /opaque or encrypted/iu);
+    console.log(JSON.stringify({
+      oidcCorrelation: oidcAnalysis.correlationLabel,
+      oidcStatus: oidcAnalysis.overallStatus,
+      checks: oidcAnalysis.checks,
+      timeline: oidcAnalysis.timeline.map((item) => ({
+        index: item.index,
+        stage: item.stage,
+        url: item.entry.url,
+        items: item.items.map((value) => `${value.name} (${value.source})`)
+      }))
+    }, null, 2));
+  }
 }
