@@ -1620,7 +1620,9 @@ function renderFlowAnalysis(selectedEntry) {
   const evidenceEntry = selectedFlow.entries.find((entry) => entry.id === state.selectedId) || selectedFlow.entries[0];
   const assessment = selectedFlow.protocol === "saml"
     ? analyzeSamlFlow(selectedFlow)
-    : analyzeOamFlow(state.entries, selectedFlow.entries[0]);
+    : selectedFlow.kind === "session"
+      ? analyzeOamSessionFlow(selectedFlow)
+      : analyzeOamFlow(selectedFlow.entries, selectedFlow.entries[0]);
 
   return [
     `<div class="flowWorkspace">`,
@@ -1640,9 +1642,70 @@ function renderFlowAnalysis(selectedEntry) {
 
 function buildAuthenticationFlows(entries) {
   return [
-    ...buildProtocolFlows(entries, "oam", (entry) => isOamFlowEntry(entry) || isWebgateEntry(entry) || hasOamCookie(entry)),
+    ...buildOamProtocolFlows(entries),
     ...buildSamlProtocolFlows(entries)
   ].sort((a, b) => a.startIndex - b.startIndex || a.protocol.localeCompare(b.protocol));
+}
+
+function buildOamProtocolFlows(entries) {
+  const authenticationFlows = buildProtocolFlows(entries, "oam", isOamAuthenticationAnchor)
+    .map((flow) => ({
+      ...flow,
+      kind: "authentication",
+      entries: flow.entries.filter((entry) => !isInternalUrl(entry.url) && !isStaticResource(entry.url))
+    }))
+    .filter((flow) => flow.entries.length);
+  if (authenticationFlows.length) return authenticationFlows;
+
+  const sessionEntries = entries
+    .map((entry, index) => ({ entry, index }))
+    .filter(({ entry }) => hasOamCookie(entry) && !isInternalUrl(entry.url) && !isStaticResource(entry.url));
+  if (!sessionEntries.length) return [];
+
+  const groups = [];
+  for (const item of sessionEntries) {
+    const matchingGroup = groups.find((group) => {
+      const previous = group[group.length - 1];
+      return getOriginLabel(previous.entry.url) === getOriginLabel(item.entry.url)
+        && Math.abs(entryTimeMs(previous.entry) - entryTimeMs(item.entry)) <= 45000;
+    });
+    if (matchingGroup) matchingGroup.push(item);
+    else groups.push([item]);
+  }
+
+  return groups.map((group, groupIndex) => {
+    const startIndex = Math.min(...group.map((item) => item.index));
+    const endIndex = Math.max(...group.map((item) => item.index));
+    const flowEntries = group.map((item) => item.entry);
+    return {
+      key: `oam-session:${startIndex}:${endIndex}`,
+      protocol: "oam",
+      kind: "session",
+      sequence: groupIndex + 1,
+      startIndex,
+      endIndex,
+      entries: flowEntries,
+      startedAt: flowEntries[0]?.capturedAt || "",
+      endedAt: flowEntries[flowEntries.length - 1]?.capturedAt || "",
+      confidence: { level: "medium", score: 0.78, reason: "Existing WebGate session cookie on the same application origin" }
+    };
+  });
+}
+
+function isOamAuthenticationAnchor(entry) {
+  const headersWithoutCookies = [...(entry.requestHeaders || []), ...(entry.responseHeaders || [])]
+    .filter((header) => !["cookie", "set-cookie"].includes(String(header?.name || "").toLowerCase()));
+  const evidence = [entry.url, entry.requestBody, entry.responseBody, headersToText(headersWithoutCookies)].join("\n").toLowerCase();
+  return [
+    "/oam/",
+    "/oam/server",
+    "/oam/credcollectservlet/",
+    "obreq.cgi",
+    "obrareq.cgi",
+    "obrar.cgi",
+    "auth_cred_submit",
+    "oam_req="
+  ].some((marker) => evidence.includes(marker));
 }
 
 function buildSamlProtocolFlows(entries) {
@@ -1838,17 +1901,24 @@ function renderFlowNavigator(flows, selectedFlow, evidenceEntry) {
 
 function renderFlowChoice(flow, selectedKey) {
   const outcome = getFlowOutcome(flow.entries);
+  const flowLabel = flow.protocol === "oam" && flow.kind === "session"
+    ? `OAM session ${flow.sequence}`
+    : `${flow.protocol.toUpperCase()} attempt ${flow.sequence}`;
   return [
     `<button type="button" class="flowChoice${flow.key === selectedKey ? " isActive" : ""}" data-flow-key="${escapeHtml(flow.key)}">`,
     `<span class="flowProtocolMark protocol-${flow.protocol}">${flow.protocol.toUpperCase()}</span>`,
-    `<span><strong>${flow.protocol.toUpperCase()} attempt ${flow.sequence}</strong><small>${formatFlowTime(flow.startedAt)} · ${flow.entries.length} requests</small></span>`,
+    `<span><strong>${flowLabel}</strong><small>${formatFlowTime(flow.startedAt)} · ${flow.entries.length} requests</small></span>`,
     `<span class="flowOutcome ${outcome.className}">${outcome.label}</span>`,
     `</button>`
   ].join("");
 }
 
 function renderFlowStage(entry, index, flow, selectedId) {
-  const stage = flow.protocol === "saml" ? classifySamlStage(entry) : classifyOamStage(entry, flow.startIndex + index, flow.startIndex, flow.endIndex);
+  const stage = flow.protocol === "saml"
+    ? classifySamlStage(entry)
+    : flow.kind === "session"
+      ? (index === 0 ? "Protected Application" : "Authenticated Application Request")
+      : classifyOamStage(entry, flow.startIndex + index, flow.startIndex, flow.endIndex);
   return [
     `<button type="button" class="flowStage${entry.id === selectedId ? " isActive" : ""}" data-entry-id="${escapeHtml(entry.id)}" title="${escapeHtml(entry.url)}">`,
     `<span class="flowStageIndex">${index + 1}</span>`,
@@ -1884,7 +1954,7 @@ function shortUrl(value) {
 function renderOamFlowAssessment(analysis) {
   return [
     `<div class="flowAssessmentHeader"><div><span class="flowEyebrow">OAM FLOW ASSESSMENT</span><h3>${escapeHtml(analysis.overallLabel)}</h3></div>${renderOidcStatusBadge(analysis.overallStatus, analysis.overallLabel)}</div>`,
-    renderFlowMetrics(analysis.timeline, calculateFlowConfidence("oam", analysis.timeline.map((item) => item.entry))),
+    renderFlowMetrics(analysis.timeline, analysis.confidence || calculateFlowConfidence("oam", analysis.timeline.map((item) => item.entry))),
     `<div class="flowAssessmentGrid">`,
     renderOidcCard("Session Assessment", [
       ["Correlation", analysis.summary],
@@ -1897,6 +1967,40 @@ function renderOamFlowAssessment(analysis) {
     renderTraceCorrelationCard(analysis.failuresWithTrace),
     `</div>`
   ].join("");
+}
+
+function analyzeOamSessionFlow(flow) {
+  const timeline = flow.entries.map((entry, index) => ({
+    entry,
+    index: flow.startIndex + index,
+    stage: index === 0 ? "Protected Application" : "Authenticated Application Request"
+  }));
+  const cookies = summarizeOamCookies(flow.entries);
+  const failuresWithTrace = timeline
+    .filter((item) => Number(item.entry.status) >= 400)
+    .map((item) => ({ ...item, trace: extractTraceIdentifiers(item.entry) }));
+  const failed = failuresWithTrace.length > 0;
+  const checks = [
+    oidcCheck(cookies.oamAuthnCookie || cookies.obSsoCookie ? "pass" : "warn", "WebGate session", cookies.oamAuthnCookie || cookies.obSsoCookie ? "An existing WebGate session cookie was sent with the application requests." : "No WebGate session cookie was identified."),
+    oidcCheck(failed ? "fail" : "pass", "Application responses", failed ? `${failuresWithTrace.length} application request(s) returned an HTTP error.` : "The captured application requests completed without an HTTP error."),
+    oidcCheck("warn", "Authentication transaction", "No new OAM authentication redirect, credential submission, or OAM server exchange was captured; this is session activity, not a login attempt.")
+  ];
+  return {
+    timeline,
+    checks,
+    overallStatus: failed ? "fail" : "warn",
+    overallLabel: failed ? "Issues detected" : "Existing session observed",
+    confidence: flow.confidence,
+    summary: "Grouped by application origin, timing, and existing WebGate session cookie",
+    requestId: "",
+    cookies,
+    failuresWithTrace,
+    webgateCount: flow.entries.length,
+    oamCount: 0,
+    interpretation: failed
+      ? "An existing WebGate session was present, but one or more application requests failed. This capture does not contain the original OAM login exchange."
+      : "The browser reused an existing WebGate session successfully. Capture from before navigation begins to analyze the original OAM authentication exchange."
+  };
 }
 
 function renderFlowMetrics(timeline, confidence) {

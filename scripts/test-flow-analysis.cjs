@@ -180,14 +180,32 @@ console.log("Flow Analysis tests passed: OAM correlation, SAML ID correlation ac
 if (process.argv[2]) {
   const imported = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
   context.importedEntries = Array.isArray(imported) ? imported : imported.entries;
-  const importedFlows = evaluate("buildAuthenticationFlows(importedEntries)").filter((flow) => flow.protocol === "saml");
-  assert.ok(importedFlows.length, "Expected at least one SAML flow in the supplied export");
+  const allImportedFlows = evaluate("buildAuthenticationFlows(importedEntries)");
+  const importedFlows = allImportedFlows.filter((flow) => flow.protocol === "saml");
   assert.ok(importedFlows.every((flow) => flow.entries.every((entry) => !String(entry.url).startsWith("chrome-extension://"))));
-  console.log(JSON.stringify(importedFlows.map((flow) => ({
+  if (importedFlows.length) console.log(JSON.stringify(importedFlows.map((flow) => ({
     key: flow.key,
     requests: flow.entries.length,
     confidence: flow.confidence,
     entries: flow.entries.map((entry) => ({ id: entry.id, url: entry.url, saml: entry.saml.length }))
+  })), null, 2));
+
+  const importedOamFlows = allImportedFlows.filter((flow) => flow.protocol === "oam");
+  assert.ok(importedOamFlows.every((flow) => flow.entries.every((entry) => !String(entry.url).startsWith("chrome-extension://"))));
+  if (importedOamFlows.some((flow) => flow.kind === "session")) {
+    context.importedOamFlow = importedOamFlows.find((flow) => flow.kind === "session");
+    evaluate("state.entries = importedEntries; state.selectedId = importedOamFlow.entries[0].id; state.flowProtocol = 'oam'; state.selectedFlowKey = importedOamFlow.key");
+    const renderedOamSession = evaluate("renderFlowAnalysis(importedOamFlow.entries[0])");
+    assert.match(renderedOamSession, /OAM session 1/iu);
+    assert.match(renderedOamSession, /Existing session observed/iu);
+    assert.doesNotMatch(renderedOamSession, /OAM attempt 1/iu);
+  }
+  if (importedOamFlows.length) console.log(JSON.stringify(importedOamFlows.map((flow) => ({
+    key: flow.key,
+    kind: flow.kind,
+    requests: flow.entries.length,
+    confidence: flow.confidence,
+    entries: flow.entries.map((entry) => ({ id: entry.id, url: entry.url, status: entry.status }))
   })), null, 2));
 
   context.importedOidcEntry = context.importedEntries.find((entry) => /\/oauth2\/v1\/authorize/iu.test(entry.url));
