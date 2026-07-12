@@ -175,6 +175,12 @@ assert.match(rendered, /SAML FLOW ASSESSMENT/u);
 assert.match(rendered, /Selected Request Evidence/u);
 assert.match(rendered, /request-7/u);
 
+evaluate("state.entries = testSamlEntries; state.activeTab = 'flowAnalysis'; state.samlOnly = true; state.selectedId = 'sso-context'");
+const filteredFlowEntries = evaluate("getVisibleEntries()");
+assert.ok(filteredFlowEntries.some((entry) => entry.id === "sso-context"));
+assert.ok(filteredFlowEntries.filter((entry) => !entry.saml.length).every((entry) => entry.id === "sso-context"));
+evaluate("state.samlOnly = false");
+
 console.log("Flow Analysis tests passed: OAM correlation, SAML ID correlation across noise, and evidence rendering.");
 
 if (process.argv[2]) {

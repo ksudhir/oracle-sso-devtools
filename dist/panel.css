@@ -262,6 +262,11 @@ button:hover,
   background: var(--accent-soft);
 }
 
+.requestRow:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .requestRow.isSlowRequest:not(.isActive) {
   background: color-mix(in srgb, var(--danger) 9%, transparent);
 }

@@ -54,6 +54,7 @@ detailOutput.addEventListener("click", (event) => {
     const flow = buildAuthenticationFlows(state.entries).find((item) => item.key === state.selectedFlowKey);
     if (flow?.entries.length) state.selectedId = flow.entries[0].id;
     render();
+    focusSelectedRequestRow();
     return;
   }
 
@@ -61,6 +62,7 @@ detailOutput.addEventListener("click", (event) => {
   if (evidenceButton) {
     state.selectedId = evidenceButton.dataset.entryId;
     render();
+    focusSelectedRequestRow();
   }
 });
 
@@ -896,7 +898,19 @@ function render() {
 }
 
 function getVisibleEntries() {
-  return state.entries.filter(matchesActiveFilters);
+  return state.entries.filter((entry) => matchesActiveFilters(entry) || (
+    state.activeTab === "flowAnalysis" && entry.id === state.selectedId
+  ));
+}
+
+function focusSelectedRequestRow() {
+  queueMicrotask(() => {
+    const row = [...requestList.querySelectorAll(".requestRow")]
+      .find((item) => item.dataset.entryId === state.selectedId);
+    if (!row) return;
+    row.scrollIntoView({ block: "nearest", inline: "nearest" });
+    row.focus({ preventScroll: true });
+  });
 }
 
 function resetFiltersAfterImport() {
@@ -1004,6 +1018,7 @@ function renderRequestRow(entry, timingStats) {
   const row = document.createElement("button");
   row.className = "requestRow";
   row.type = "button";
+  row.dataset.entryId = entry.id;
   const originStyle = getOriginColorStyle(entry.url);
   if (originStyle) {
     row.style.setProperty("--origin-color-light", originStyle.light);
