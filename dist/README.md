@@ -20,6 +20,8 @@ A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise SSO
 - Color-codes SAML, OAM, and WebGate artifacts in request rows and detail panes. Requests containing `/oam/server`, `obreq.cgi`, `obrareq.cgi`, or `OAM_ID` are tagged as OAM; requests containing only `REQUEST_ID` / `request_id` are not tagged as OAM. Requests containing `obrar.cgi` or `OAMAuthnCookie` are tagged as WebGate, with an additional SAML tag when a SAML message is found.
 - Highlights OAM/WebGate cookie names in **Request** and **Response** tabs, including suffix variants such as `OAMAuthnCookie...`, `ObSSOCookie...`, `OAM_ID...`, `OAM_REQ...`, and `ORA_OSFS_SESSION...`.
 - Adds a **Cookies** tab with separate **Request Cookies** and **Response Cookies** sections rendered as name/value pairs.
+- Adds a dedicated **Flow Analysis** workspace for OAM and SAML authentication attempts. It groups related browser requests, shows correlation confidence and the inferred outcome, presents a chronological Flow Navigator, and keeps the exact selected-request headers, cookies, timing, ECID/RID, and request ID in an expandable evidence section.
+- Correlates SAML requests and responses using `InResponseTo`, AuthnRequest ID, `RelayState`, timing, and request adjacency. The assessment summarizes issuer, destination, SAML status, and visible XML-signature presence without claiming cryptographic validation.
 - Adds an **Auth Info** tab for browser-visible Kerberos/SPNEGO/NTLM headers and forwarded X.509 client-certificate headers.
 - Adds a correlated **WNA Info** tab for the protected-resource request, authentication challenge, browser response, Negotiate/Kerberos versus NTLM selection, repeated 401s, final authorization, and OAM/WebGate session cookies.
 - Flags NTLM fallback when the server offers Negotiate but the browser submits NTLM, while separating browser-visible evidence from ticket-cache, SPN, DNS, KDC, and server-log validation.
@@ -58,6 +60,7 @@ SAML HTTP Redirect binding values are Base64-encoded raw DEFLATE payloads. Chrom
 - `manifest.json` declares the MV3 DevTools extension.
 - `devtools.html` and `devtools.js` register the DevTools panel.
 - `panel.html`, `panel.css`, and `panel.js` implement the panel UI and capture logic.
+- `scripts/test-flow-analysis.cjs` verifies OAM/SAML flow correlation and selected-request evidence rendering.
 
 ## Marketing and Publishing
 

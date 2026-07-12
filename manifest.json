@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SSO & Federation Inspector for OAM, SAML & OAuth",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Inspect OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 flows with cookies, headers, timing, and HAR analysis.",
   "devtools_page": "devtools.html",
   "permissions": [],

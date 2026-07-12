@@ -9,7 +9,9 @@ const state = {
   oamOnly: false,
   hideStatic: false,
   searchText: "",
-  oamHosts: []
+  oamHosts: [],
+  flowProtocol: "auto",
+  selectedFlowKey: null
 };
 
 const PANE_WIDTH_STORAGE_KEY = "oamSamlOauth.requestPaneWidth";
@@ -36,6 +38,31 @@ const scrubButton = document.querySelector("#scrubButton");
 const importStatus = document.querySelector("#importStatus");
 const paneDivider = document.querySelector("#paneDivider");
 const tabButtons = [...document.querySelectorAll(".tab")];
+
+detailOutput.addEventListener("click", (event) => {
+  const protocolButton = event.target.closest("[data-flow-protocol]");
+  if (protocolButton) {
+    state.flowProtocol = protocolButton.dataset.flowProtocol;
+    state.selectedFlowKey = null;
+    render();
+    return;
+  }
+
+  const flowButton = event.target.closest("[data-flow-key]");
+  if (flowButton) {
+    state.selectedFlowKey = flowButton.dataset.flowKey;
+    const flow = buildAuthenticationFlows(state.entries).find((item) => item.key === state.selectedFlowKey);
+    if (flow?.entries.length) state.selectedId = flow.entries[0].id;
+    render();
+    return;
+  }
+
+  const evidenceButton = event.target.closest("[data-entry-id]");
+  if (evidenceButton) {
+    state.selectedId = evidenceButton.dataset.entryId;
+    render();
+  }
+});
 
 const OAM_WEBGATE_URL_PARTS = [
   "/oam",
@@ -854,6 +881,7 @@ function formatXml(xml) {
 function render() {
   const visibleEntries = getVisibleEntries();
   const timingStats = getTimingStats(visibleEntries);
+  detailOutput.classList.toggle("isFlowAnalysis", state.activeTab === "flowAnalysis");
   requestList.replaceChildren(...visibleEntries.map((entry) => renderRequestRow(entry, timingStats)));
   summary.textContent = `${state.entries.length} requests, ${state.entries.filter((entry) => entry.saml.length).length} SAML, ${state.entries.filter(isOamWebgateUrl).length} OAM`;
   captureButton.textContent = state.isCapturing ? "Stop capture" : "Start capture";
@@ -1272,6 +1300,8 @@ async function renderDetails() {
 
   if (state.activeTab === "samlInfo") {
     setDetailHtml(await renderSamlInfo(selected));
+  } else if (state.activeTab === "flowAnalysis") {
+    setDetailHtml(renderFlowAnalysis(selected));
   } else if (state.activeTab === "saml") {
     setDetailHtml(renderSamlDetails(selected));
   } else if (state.activeTab === "oauthInfo") {
@@ -1568,6 +1598,345 @@ function renderOAuthInfo(entry) {
 
 const ECID_HEADER_NAMES = ["ecid-context", "x-oracle-dms-ecid", "oracle-ecid", "x-ecid"];
 const RID_HEADER_NAMES = ["x-oracle-dms-rid", "oracle-rid", "x-rid"];
+
+function renderFlowAnalysis(selectedEntry) {
+  const flows = buildAuthenticationFlows(state.entries);
+  const inferredProtocol = selectedEntry.saml?.length ? "saml" : (isOamFlowEntry(selectedEntry) || isWebgateEntry(selectedEntry) || hasOamCookie(selectedEntry) ? "oam" : "auto");
+  const protocol = state.flowProtocol === "auto" ? inferredProtocol : state.flowProtocol;
+  const visibleFlows = protocol === "auto" ? flows : flows.filter((flow) => flow.protocol === protocol);
+  const selectedFlow = visibleFlows.find((flow) => flow.key === state.selectedFlowKey)
+    || visibleFlows.find((flow) => flow.entries.some((entry) => entry.id === selectedEntry.id))
+    || visibleFlows[0];
+
+  if (!selectedFlow) {
+    return [
+      `<div class="flowWorkspace">`,
+      renderFlowProtocolSelector(state.flowProtocol, flows),
+      `<div class="flowEmpty"><strong>No correlated ${protocol === "auto" ? "OAM or SAML" : protocol.toUpperCase()} flow found.</strong><span>Select a related request or capture/import more of the authentication exchange.</span></div>`,
+      `</div>`
+    ].join("");
+  }
+
+  const evidenceEntry = selectedFlow.entries.find((entry) => entry.id === state.selectedId) || selectedFlow.entries[0];
+  const assessment = selectedFlow.protocol === "saml"
+    ? analyzeSamlFlow(selectedFlow)
+    : analyzeOamFlow(state.entries, selectedFlow.entries[0]);
+
+  return [
+    `<div class="flowWorkspace">`,
+    renderFlowProtocolSelector(state.flowProtocol, flows),
+    `<div class="flowWorkspaceBody">`,
+    renderFlowNavigator(visibleFlows, selectedFlow, evidenceEntry),
+    `<section class="flowAssessment">`,
+    selectedFlow.protocol === "saml"
+      ? renderSamlFlowAssessment(assessment)
+      : renderOamFlowAssessment(assessment),
+    renderSelectedRequestEvidence(evidenceEntry),
+    `</section>`,
+    `</div>`,
+    `</div>`
+  ].join("");
+}
+
+function buildAuthenticationFlows(entries) {
+  return [
+    ...buildProtocolFlows(entries, "oam", (entry) => isOamFlowEntry(entry) || isWebgateEntry(entry) || hasOamCookie(entry)),
+    ...buildProtocolFlows(entries, "saml", (entry) => Boolean(entry.saml?.length))
+  ].sort((a, b) => a.startIndex - b.startIndex || a.protocol.localeCompare(b.protocol));
+}
+
+function buildProtocolFlows(entries, protocol, predicate) {
+  const marked = entries.map((entry, index) => predicate(entry) ? index : -1).filter((index) => index >= 0);
+  if (!marked.length) return [];
+
+  const groups = [];
+  for (const index of marked) {
+    const previous = groups[groups.length - 1];
+    const previousIndex = previous?.[previous.length - 1];
+    const gapMs = previous
+      ? Math.abs(entryTimeMs(entries[index]) - entryTimeMs(entries[previousIndex]))
+      : Infinity;
+    if (!previous || index - previousIndex > 8 || (Number.isFinite(gapMs) && gapMs > 45000)) {
+      groups.push([index]);
+    } else {
+      previous.push(index);
+    }
+  }
+
+  return groups.map((indexes, groupIndex) => {
+    const startIndex = Math.max(0, indexes[0] - 1);
+    const endIndex = Math.min(entries.length - 1, indexes[indexes.length - 1] + 2);
+    const flowEntries = entries.slice(startIndex, endIndex + 1);
+    const startedAt = flowEntries[0]?.capturedAt || "";
+    const endedAt = flowEntries[flowEntries.length - 1]?.capturedAt || startedAt;
+    return {
+      key: `${protocol}:${startIndex}:${endIndex}`,
+      protocol,
+      sequence: groupIndex + 1,
+      startIndex,
+      endIndex,
+      entries: flowEntries,
+      startedAt,
+      endedAt,
+      confidence: calculateFlowConfidence(protocol, flowEntries)
+    };
+  });
+}
+
+function entryTimeMs(entry) {
+  const value = Date.parse(entry?.capturedAt || "");
+  return Number.isFinite(value) ? value : 0;
+}
+
+function calculateFlowConfidence(protocol, entries) {
+  if (protocol === "oam") {
+    const requestIds = entries.map(extractOamRequestId).filter(Boolean);
+    const traceIds = entries.map(extractTraceIdentifiers).filter((item) => item.ecid);
+    if (requestIds.length || traceIds.length) return { level: "high", score: 0.92, reason: requestIds.length ? "Shared OAM request identifier" : "Shared Oracle correlation identifier" };
+    if (entries.some(hasOamCookie)) return { level: "medium", score: 0.76, reason: "Adjacent OAM endpoints and cookie transitions" };
+    return { level: "low", score: 0.58, reason: "Adjacent OAM/WebGate endpoints" };
+  }
+
+  const artifacts = collectSamlFlowArtifacts(entries);
+  const requestIds = new Set(artifacts.filter((item) => item.type === "AuthnRequest").map((item) => item.id).filter(Boolean));
+  const matchedResponse = artifacts.some((item) => item.inResponseTo && requestIds.has(item.inResponseTo));
+  const relayStates = artifacts.map((item) => item.relayState).filter(Boolean);
+  if (matchedResponse) return { level: "high", score: 0.96, reason: "SAML Response InResponseTo matches AuthnRequest ID" };
+  if (new Set(relayStates).size === 1 && relayStates.length > 1) return { level: "high", score: 0.91, reason: "Matching RelayState" };
+  if (artifacts.length > 1) return { level: "medium", score: 0.74, reason: "Adjacent SAML protocol messages" };
+  return { level: "low", score: 0.55, reason: "Single SAML message with surrounding requests" };
+}
+
+function renderFlowProtocolSelector(protocol, flows) {
+  const counts = {
+    oam: flows.filter((flow) => flow.protocol === "oam").length,
+    saml: flows.filter((flow) => flow.protocol === "saml").length
+  };
+  return [
+    `<header class="flowWorkspaceHeader">`,
+    `<div><h3>Authentication Flow Analysis</h3><span>Correlated browser-visible evidence</span></div>`,
+    `<div class="flowProtocolSelector" role="group" aria-label="Flow protocol">`,
+    renderFlowProtocolButton("auto", "Auto", protocol, flows.length),
+    renderFlowProtocolButton("oam", "OAM", protocol, counts.oam),
+    renderFlowProtocolButton("saml", "SAML", protocol, counts.saml),
+    `</div>`,
+    `</header>`
+  ].join("");
+}
+
+function renderFlowProtocolButton(value, label, active, count) {
+  return `<button type="button" class="flowProtocolButton${value === active ? " isActive" : ""}" data-flow-protocol="${value}">${label}<span>${count}</span></button>`;
+}
+
+function renderFlowNavigator(flows, selectedFlow, evidenceEntry) {
+  return [
+    `<aside class="flowNavigator">`,
+    `<div class="flowNavigatorTitle"><strong>Flow Navigator</strong><span>${flows.length} detected</span></div>`,
+    `<div class="flowList">`,
+    flows.map((flow) => renderFlowChoice(flow, selectedFlow.key)).join(""),
+    `</div>`,
+    `<div class="flowStageList">`,
+    selectedFlow.entries.map((entry, index) => renderFlowStage(entry, index, selectedFlow, evidenceEntry.id)).join(""),
+    `</div>`,
+    `</aside>`
+  ].join("");
+}
+
+function renderFlowChoice(flow, selectedKey) {
+  const outcome = getFlowOutcome(flow.entries);
+  return [
+    `<button type="button" class="flowChoice${flow.key === selectedKey ? " isActive" : ""}" data-flow-key="${escapeHtml(flow.key)}">`,
+    `<span class="flowProtocolMark protocol-${flow.protocol}">${flow.protocol.toUpperCase()}</span>`,
+    `<span><strong>${flow.protocol.toUpperCase()} attempt ${flow.sequence}</strong><small>${formatFlowTime(flow.startedAt)} · ${flow.entries.length} requests</small></span>`,
+    `<span class="flowOutcome ${outcome.className}">${outcome.label}</span>`,
+    `</button>`
+  ].join("");
+}
+
+function renderFlowStage(entry, index, flow, selectedId) {
+  const stage = flow.protocol === "saml" ? classifySamlStage(entry) : classifyOamStage(entry, flow.startIndex + index, flow.startIndex, flow.endIndex);
+  return [
+    `<button type="button" class="flowStage${entry.id === selectedId ? " isActive" : ""}" data-entry-id="${escapeHtml(entry.id)}" title="${escapeHtml(entry.url)}">`,
+    `<span class="flowStageIndex">${index + 1}</span>`,
+    `<span class="flowStageText"><strong>${escapeHtml(stage)}</strong><small>${escapeHtml(shortUrl(entry.url))}</small></span>`,
+    `<span class="${getHttpStatusClass(entry.status)}">${escapeHtml(String(entry.status || "-"))}</span>`,
+    `</button>`
+  ].join("");
+}
+
+function getFlowOutcome(entries) {
+  const failures = entries.filter((entry) => Number(entry.status) >= 400);
+  if (failures.length) return { label: "Failed", className: "isFailure" };
+  const finalStatus = Number(entries[entries.length - 1]?.status || 0);
+  if (finalStatus >= 200 && finalStatus < 400) return { label: "Complete", className: "isSuccess" };
+  return { label: "Incomplete", className: "isWarning" };
+}
+
+function formatFlowTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "time unavailable";
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function shortUrl(value) {
+  try {
+    const url = new URL(value);
+    return `${url.host}${url.pathname}${url.search}`;
+  } catch {
+    return String(value || "");
+  }
+}
+
+function renderOamFlowAssessment(analysis) {
+  return [
+    `<div class="flowAssessmentHeader"><div><span class="flowEyebrow">OAM FLOW ASSESSMENT</span><h3>${escapeHtml(analysis.overallLabel)}</h3></div>${renderOidcStatusBadge(analysis.overallStatus, analysis.overallLabel)}</div>`,
+    renderFlowMetrics(analysis.timeline, calculateFlowConfidence("oam", analysis.timeline.map((item) => item.entry))),
+    `<div class="flowAssessmentGrid">`,
+    renderOidcCard("Session Assessment", [
+      ["Correlation", analysis.summary],
+      ["Request ID", analysis.requestId],
+      ["WebGate Requests", analysis.webgateCount],
+      ["OAM Requests", analysis.oamCount],
+      ["Interpretation", analysis.interpretation]
+    ], true, "flowAssessmentCard"),
+    renderOidcChecks(analysis.checks),
+    renderTraceCorrelationCard(analysis.failuresWithTrace),
+    `</div>`
+  ].join("");
+}
+
+function renderFlowMetrics(timeline, confidence) {
+  const entries = timeline.map ? timeline.map((item) => item.entry || item) : [];
+  const first = entries[0];
+  const last = entries[entries.length - 1];
+  const elapsed = Math.max(0, entryTimeMs(last) - entryTimeMs(first));
+  return [
+    `<div class="flowMetrics">`,
+    `<span><small>Confidence</small><strong class="confidence-${confidence.level}">${confidence.level} (${confidence.score.toFixed(2)})</strong></span>`,
+    `<span><small>Reason</small><strong>${escapeHtml(confidence.reason)}</strong></span>`,
+    `<span><small>Time range</small><strong>${formatFlowTime(first?.capturedAt)} – ${formatFlowTime(last?.capturedAt)} (${formatDuration(elapsed)})</strong></span>`,
+    `<span><small>Requests</small><strong>${entries.length}</strong></span>`,
+    `</div>`
+  ].join("");
+}
+
+function renderSelectedRequestEvidence(entry) {
+  const trace = extractTraceIdentifiers(entry);
+  const requestCookies = getRequestCookies(entry.requestHeaders);
+  const responseCookies = getResponseCookies(entry.responseHeaders);
+  return [
+    `<details class="selectedEvidence" open>`,
+    `<summary><span><strong>Selected Request Evidence</strong><small>${escapeHtml(entry.method)} ${escapeHtml(shortUrl(entry.url))}</small></span><span>${formatHttpStatus(entry.status)}</span></summary>`,
+    `<div class="evidenceGrid">`,
+    renderEvidenceSection("Request Summary", [
+      ["Method", entry.method], ["URL", entry.url], ["Status", `${entry.status} ${entry.statusText || ""}`],
+      ["Duration", formatDuration(entry.durationMs)], ["Content Received", formatSize(entry.responseSizeBytes)],
+      ["ECID", trace.ecid], ["RID", trace.rid], ["OAM Request ID", extractOamRequestId(entry)]
+    ]),
+    renderEvidenceSection("Request Headers", (entry.requestHeaders || []).map((header) => [header.name, header.value])),
+    renderEvidenceSection("Response Headers", (entry.responseHeaders || []).map((header) => [header.name, header.value])),
+    renderEvidenceSection("Cookies", [
+      ...requestCookies.map(([name, value]) => [`Request · ${name}`, value]),
+      ...responseCookies.map(([name, value]) => [`Response · ${name}`, value])
+    ]),
+    `</div>`,
+    `</details>`
+  ].join("");
+}
+
+function renderEvidenceSection(title, rows) {
+  const visible = rows.filter(([, value]) => hasInfoValue(value));
+  if (!visible.length) return "";
+  return `<section class="evidenceSection"><h4>${escapeHtml(title)}</h4><table><tbody>${visible.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${highlightArtifacts(String(value))}</td></tr>`).join("")}</tbody></table></section>`;
+}
+
+function collectSamlFlowArtifacts(entries) {
+  return entries.flatMap((entry) => (entry.saml || []).map((message) => {
+    const doc = message.decoded && message.xml ? new DOMParser().parseFromString(message.xml, "application/xml") : null;
+    const root = doc && !doc.querySelector("parsererror") ? doc.documentElement : null;
+    return {
+      entry,
+      message,
+      type: root ? localName(root) : message.parameter,
+      id: attr(root, "ID"),
+      inResponseTo: attr(root, "InResponseTo"),
+      issuer: root ? textOf(firstByLocalName(root, "Issuer")) : "",
+      destination: attr(root, "Destination"),
+      issueInstant: attr(root, "IssueInstant"),
+      status: root ? cleanStatusCode(attr(firstByLocalName(root, "StatusCode"), "Value")) : "",
+      relayState: extractSamlCorrelationValue(entry, "RelayState"),
+      signed: Boolean(root && (directChildByLocalName(root, "Signature") || firstByLocalName(root, "Signature")))
+    };
+  }));
+}
+
+function extractSamlCorrelationValue(entry, name) {
+  const sources = [getUrlSearchParams(entry.url), new URLSearchParams(entry.requestBody || "")];
+  for (const params of sources) {
+    const value = params.get(name);
+    if (value) return value;
+  }
+  for (const headers of [entry.requestHeaders, entry.responseHeaders]) {
+    for (const header of headers || []) {
+      const value = getUrlSearchParams(header.value || "").get(name);
+      if (value) return value;
+    }
+  }
+  return "";
+}
+
+function analyzeSamlFlow(flow) {
+  const artifacts = collectSamlFlowArtifacts(flow.entries);
+  const requests = artifacts.filter((item) => item.type === "AuthnRequest" || item.message.parameter === "SAMLRequest");
+  const responses = artifacts.filter((item) => item.type === "Response" || item.message.parameter === "SAMLResponse");
+  const requestIds = new Set(requests.map((item) => item.id).filter(Boolean));
+  const matchedResponses = responses.filter((item) => item.inResponseTo && requestIds.has(item.inResponseTo));
+  const failedStatus = responses.find((item) => item.status && !/success$/iu.test(item.status));
+  const finalEntry = flow.entries[flow.entries.length - 1];
+  const overallStatus = failedStatus || Number(finalEntry?.status) >= 400 ? "fail" : responses.length ? "pass" : "warn";
+  const confidence = calculateFlowConfidence("saml", flow.entries);
+  const checks = [
+    oidcCheck(requests.length ? "pass" : "warn", "Authentication request", requests.length ? `${requests.length} SAML request message(s) captured.` : "No SAML AuthnRequest was captured."),
+    oidcCheck(responses.length ? "pass" : "warn", "Authentication response", responses.length ? `${responses.length} SAML response message(s) captured.` : "No SAML Response was captured."),
+    oidcCheck(matchedResponses.length ? "pass" : requests.length && responses.length ? "warn" : "warn", "Request/response correlation", matchedResponses.length ? "Response InResponseTo matches the AuthnRequest ID." : "No matching InResponseTo pair was available."),
+    oidcCheck(failedStatus ? "fail" : responses.length ? "pass" : "warn", "SAML status", failedStatus ? `SAML status is ${failedStatus.status}.` : responses.length ? "No failing SAML status was found." : "SAML status is not available."),
+    oidcCheck(artifacts.some((item) => item.signed) ? "pass" : "warn", "XML signature", artifacts.some((item) => item.signed) ? "A SAML XML signature is present." : "No XML signature was visible in the decoded messages."),
+    oidcCheck(Number(finalEntry?.status) >= 400 ? "fail" : "pass", "Final browser result", `The final correlated request returned HTTP ${finalEntry?.status || "unknown"}.`)
+  ];
+  return { flow, artifacts, requests, responses, matchedResponses, overallStatus, confidence, checks, finalEntry };
+}
+
+function classifySamlStage(entry) {
+  const artifacts = collectSamlFlowArtifacts([entry]);
+  if (artifacts.some((item) => item.type === "AuthnRequest")) return "SAML AuthnRequest";
+  if (artifacts.some((item) => item.type === "Response")) return "SAML Response";
+  if (entry.saml?.some((item) => item.message?.parameter === "SAMLRequest" || item.parameter === "SAMLRequest")) return "SAML Request";
+  if (entry.saml?.some((item) => item.message?.parameter === "SAMLResponse" || item.parameter === "SAMLResponse")) return "SAML Response";
+  if (Number(entry.status) >= 300 && Number(entry.status) < 400) return "Federation Redirect";
+  return "Browser Request";
+}
+
+function renderSamlFlowAssessment(analysis) {
+  const primaryRequest = analysis.requests[0];
+  const primaryResponse = analysis.responses[0];
+  const relayState = analysis.artifacts.map((item) => item.relayState).find(Boolean) || "";
+  return [
+    `<div class="flowAssessmentHeader"><div><span class="flowEyebrow">SAML FLOW ASSESSMENT</span><h3>${analysis.overallStatus === "pass" ? "SAML exchange completed" : analysis.overallStatus === "fail" ? "SAML exchange failed" : "SAML exchange incomplete"}</h3></div>${renderOidcStatusBadge(analysis.overallStatus, flowStatusLabel(analysis.overallStatus))}</div>`,
+    renderFlowMetrics(analysis.flow.entries, analysis.confidence),
+    `<div class="flowAssessmentGrid">`,
+    renderOidcCard("Federation Exchange", [
+      ["Issuer", primaryRequest?.issuer || primaryResponse?.issuer],
+      ["Destination", primaryRequest?.destination || primaryResponse?.destination],
+      ["AuthnRequest ID", primaryRequest?.id],
+      ["Response InResponseTo", primaryResponse?.inResponseTo],
+      ["RelayState", relayState],
+      ["SAML Status", primaryResponse?.status],
+      ["Signed Message", analysis.artifacts.some((item) => item.signed) ? "Present" : "Not observed"]
+    ], true, "flowAssessmentCard samlFlowAssessmentCard"),
+    renderOidcChecks(analysis.checks),
+    `</div>`
+  ].join("");
+}
 
 function renderOamInfo(selectedEntry) {
   const analysis = analyzeOamFlow(state.entries, selectedEntry);
