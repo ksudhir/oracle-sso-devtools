@@ -1641,8 +1641,102 @@ function renderFlowAnalysis(selectedEntry) {
 function buildAuthenticationFlows(entries) {
   return [
     ...buildProtocolFlows(entries, "oam", (entry) => isOamFlowEntry(entry) || isWebgateEntry(entry) || hasOamCookie(entry)),
-    ...buildProtocolFlows(entries, "saml", (entry) => Boolean(entry.saml?.length))
+    ...buildSamlProtocolFlows(entries)
   ].sort((a, b) => a.startIndex - b.startIndex || a.protocol.localeCompare(b.protocol));
+}
+
+function buildSamlProtocolFlows(entries) {
+  const anchors = entries.flatMap((entry, index) => {
+    const artifacts = collectSamlFlowArtifacts([entry]);
+    return artifacts.length ? [{ entry, index, artifacts }] : [];
+  });
+  if (!anchors.length) return [];
+
+  const parents = anchors.map((_, index) => index);
+  const find = (index) => {
+    while (parents[index] !== index) {
+      parents[index] = parents[parents[index]];
+      index = parents[index];
+    }
+    return index;
+  };
+  const join = (left, right) => {
+    const leftRoot = find(left);
+    const rightRoot = find(right);
+    if (leftRoot !== rightRoot) parents[rightRoot] = leftRoot;
+  };
+
+  for (let left = 0; left < anchors.length; left += 1) {
+    for (let right = left + 1; right < anchors.length; right += 1) {
+      if (samlAnchorsCorrelate(anchors[left], anchors[right])) join(left, right);
+    }
+  }
+
+  const groups = new Map();
+  anchors.forEach((anchor, index) => {
+    const root = find(index);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(anchor);
+  });
+
+  return [...groups.values()]
+    .sort((left, right) => left[0].index - right[0].index)
+    .map((group, groupIndex) => {
+      const startIndex = Math.min(...group.map((anchor) => anchor.index));
+      const endIndex = Math.max(...group.map((anchor) => anchor.index));
+      const anchorIds = new Set(group.map((anchor) => anchor.entry.id));
+      const anchorHosts = new Set(group.map((anchor) => getUrlHostname(anchor.entry.url)).filter(Boolean));
+      const flowEntries = entries.slice(startIndex, endIndex + 1).filter((entry) => (
+        anchorIds.has(entry.id) || isSamlFlowContextEntry(entry, anchorHosts)
+      ));
+      const boundedEntries = flowEntries.length ? flowEntries : group.map((anchor) => anchor.entry);
+      return {
+        key: `saml:${startIndex}:${endIndex}`,
+        protocol: "saml",
+        sequence: groupIndex + 1,
+        startIndex,
+        endIndex,
+        entries: boundedEntries,
+        startedAt: boundedEntries[0]?.capturedAt || "",
+        endedAt: boundedEntries[boundedEntries.length - 1]?.capturedAt || "",
+        confidence: calculateFlowConfidence("saml", boundedEntries)
+      };
+    });
+}
+
+function samlAnchorsCorrelate(left, right) {
+  const leftArtifacts = left.artifacts;
+  const rightArtifacts = right.artifacts;
+  const leftIds = new Set(leftArtifacts.map((item) => item.id).filter(Boolean));
+  const rightIds = new Set(rightArtifacts.map((item) => item.id).filter(Boolean));
+  const leftResponses = new Set(leftArtifacts.map((item) => item.inResponseTo).filter(Boolean));
+  const rightResponses = new Set(rightArtifacts.map((item) => item.inResponseTo).filter(Boolean));
+
+  if ([...leftIds].some((id) => rightIds.has(id))) return true;
+  if ([...leftIds].some((id) => rightResponses.has(id))) return true;
+  if ([...rightIds].some((id) => leftResponses.has(id))) return true;
+
+  const leftRelayStates = new Set(leftArtifacts.map((item) => item.relayState).filter(Boolean));
+  const rightRelayStates = new Set(rightArtifacts.map((item) => item.relayState).filter(Boolean));
+  if ([...leftRelayStates].some((relayState) => rightRelayStates.has(relayState))) return true;
+
+  const indexGap = Math.abs(left.index - right.index);
+  const timeGap = Math.abs(entryTimeMs(left.entry) - entryTimeMs(right.entry));
+  return indexGap <= 8 && timeGap <= 45000 && samlMessageSequenceIsCompatible(leftArtifacts, rightArtifacts);
+}
+
+function samlMessageSequenceIsCompatible(leftArtifacts, rightArtifacts) {
+  const types = [...leftArtifacts, ...rightArtifacts].map((item) => item.type);
+  return types.some((type) => type === "AuthnRequest" || type === "SAMLRequest")
+    && types.some((type) => type === "Response" || type === "SAMLResponse");
+}
+
+function isSamlFlowContextEntry(entry, anchorHosts) {
+  if (isInternalUrl(entry.url) || isStaticResource(entry.url)) return false;
+  const path = getUrlPath(entry.url).toLowerCase();
+  const hostMatches = anchorHosts.has(getUrlHostname(entry.url));
+  const protocolPath = ["/fed/", "/sso/", "/saml/", "/saml2/"].some((marker) => path.includes(marker));
+  return protocolPath || (hostMatches && Number(entry.status) >= 300 && Number(entry.status) < 400);
 }
 
 function buildProtocolFlows(entries, protocol, predicate) {

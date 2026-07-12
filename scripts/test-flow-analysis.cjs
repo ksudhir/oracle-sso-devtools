@@ -127,14 +127,26 @@ const oamFlows = evaluate("buildAuthenticationFlows(testOamEntries)");
 assert.equal(oamFlows.filter((flow) => flow.protocol === "oam").length, 1);
 assert.equal(oamFlows.find((flow) => flow.protocol === "oam").confidence.level, "high");
 
+const samlRequest = { parameter: "SAMLRequest", binding: "redirect", source: "query string", decoded: true, xml: "<samlp:AuthnRequest ID=\"request-7\" Destination=\"https://idp.example/fed/idp\"><saml:Issuer>https://sp.example</saml:Issuer></samlp:AuthnRequest>" };
+const extensionNoise = Array.from({ length: 20 }, (_, index) => ({
+  ...baseEntry,
+  id: `noise-${index}`,
+  status: 200,
+  url: `chrome-extension://example/assets/module-${index}.js`
+}));
+
 context.testSamlEntries = [
   { ...baseEntry, id: "s1", url: "https://sp.example/start" },
   {
     ...baseEntry,
     id: "s2",
     url: "https://idp.example/fed/idp?RelayState=relay-7",
-    saml: [{ parameter: "SAMLRequest", binding: "redirect", source: "query string", decoded: true, xml: "<samlp:AuthnRequest ID=\"request-7\" Destination=\"https://idp.example/fed/idp\"><saml:Issuer>https://sp.example</saml:Issuer></samlp:AuthnRequest>" }]
+    saml: [samlRequest]
   },
+  { ...baseEntry, id: "s2-redirect", url: "https://idp.example/fed/idp?RelayState=relay-7", saml: [{ ...samlRequest, source: "response header: location" }] },
+  ...extensionNoise.slice(0, 10),
+  { ...baseEntry, id: "sso-context", status: 303, url: "https://idp.example/sso/v1/user/login" },
+  ...extensionNoise.slice(10),
   {
     ...baseEntry,
     id: "s3",
@@ -148,6 +160,9 @@ context.testSamlEntries = [
 const samlFlows = evaluate("buildAuthenticationFlows(testSamlEntries)");
 const samlFlow = samlFlows.find((flow) => flow.protocol === "saml");
 assert.ok(samlFlow);
+assert.equal(samlFlows.filter((flow) => flow.protocol === "saml").length, 1);
+assert.equal(samlFlow.entries.length, 4);
+assert.ok(samlFlow.entries.every((entry) => !entry.url.startsWith("chrome-extension://")));
 assert.equal(samlFlow.confidence.level, "high");
 context.testSamlFlow = samlFlow;
 const samlAnalysis = evaluate("analyzeSamlFlow(testSamlFlow)");
@@ -160,4 +175,18 @@ assert.match(rendered, /SAML FLOW ASSESSMENT/u);
 assert.match(rendered, /Selected Request Evidence/u);
 assert.match(rendered, /request-7/u);
 
-console.log("Flow Analysis tests passed: OAM correlation, SAML correlation, and evidence rendering.");
+console.log("Flow Analysis tests passed: OAM correlation, SAML ID correlation across noise, and evidence rendering.");
+
+if (process.argv[2]) {
+  const imported = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+  context.importedEntries = Array.isArray(imported) ? imported : imported.entries;
+  const importedFlows = evaluate("buildAuthenticationFlows(importedEntries)").filter((flow) => flow.protocol === "saml");
+  assert.ok(importedFlows.length, "Expected at least one SAML flow in the supplied export");
+  assert.ok(importedFlows.every((flow) => flow.entries.every((entry) => !String(entry.url).startsWith("chrome-extension://"))));
+  console.log(JSON.stringify(importedFlows.map((flow) => ({
+    key: flow.key,
+    requests: flow.entries.length,
+    confidence: flow.confidence,
+    entries: flow.entries.map((entry) => ({ id: entry.id, url: entry.url, saml: entry.saml.length }))
+  })), null, 2));
+}
