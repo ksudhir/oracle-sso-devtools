@@ -45,8 +45,9 @@ function descendants(node) {
 
 class TestDOMParser {
   parseFromString(xml) {
-    const rootMatch = String(xml).match(/^\s*<([\w:.-]+)([^>]*)>([\s\S]*)<\/\1>\s*$/u)
-      || String(xml).match(/^\s*<([\w:.-]+)([^>]*)\/>\s*$/u);
+    const normalizedXml = String(xml).replace(/^\s*<\?xml[^?]*\?>\s*/u, "");
+    const rootMatch = normalizedXml.match(/^\s*<([\w:.-]+)([^>]*)>([\s\S]*)<\/\1>\s*$/u)
+      || normalizedXml.match(/^\s*<([\w:.-]+)([^>]*)\/>\s*$/u);
     if (!rootMatch) return { querySelector: () => ({}) };
     const body = rootMatch[3] || "";
     const children = [];
@@ -189,6 +190,25 @@ if (process.argv[2]) {
   const allImportedFlows = evaluate("buildAuthenticationFlows(importedEntries)");
   const importedFlows = allImportedFlows.filter((flow) => flow.protocol === "saml");
   assert.ok(importedFlows.every((flow) => flow.entries.every((entry) => !String(entry.url).startsWith("chrome-extension://"))));
+  context.importedSamlArtifacts = evaluate("collectSamlFlowArtifacts(importedEntries)");
+  const distinctImportedRequestIds = new Set(context.importedSamlArtifacts
+    .filter((item) => item.type === "AuthnRequest")
+    .map((item) => item.id)
+    .filter(Boolean));
+  const importedResponseTargets = new Set(context.importedSamlArtifacts.map((item) => item.inResponseTo).filter(Boolean));
+  if (distinctImportedRequestIds.size > 1 && importedResponseTargets.size) {
+    assert.equal(importedFlows.length, distinctImportedRequestIds.size);
+    assert.ok(importedFlows.some((flow) => {
+      context.importedSamlFlow = flow;
+      const analysis = evaluate("analyzeSamlFlow(importedSamlFlow)");
+      return analysis.requests.length && !analysis.responses.length && analysis.overallStatus === "warn";
+    }));
+    assert.ok(importedFlows.some((flow) => {
+      context.importedSamlFlow = flow;
+      const analysis = evaluate("analyzeSamlFlow(importedSamlFlow)");
+      return analysis.matchedResponses.length && analysis.overallStatus === "pass";
+    }));
+  }
   for (const importedSamlFlow of importedFlows) {
     context.importedSamlFlow = importedSamlFlow;
     const importedSamlAnalysis = evaluate("analyzeSamlFlow(importedSamlFlow)");

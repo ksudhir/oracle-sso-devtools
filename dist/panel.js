@@ -1798,10 +1798,12 @@ function samlAnchorsCorrelate(left, right) {
 
   const leftRelayStates = new Set(leftArtifacts.map((item) => item.relayState).filter(Boolean));
   const rightRelayStates = new Set(rightArtifacts.map((item) => item.relayState).filter(Boolean));
-  if ([...leftRelayStates].some((relayState) => rightRelayStates.has(relayState))) return true;
-
   const indexGap = Math.abs(left.index - right.index);
   const timeGap = Math.abs(entryTimeMs(left.entry) - entryTimeMs(right.entry));
+  if ([...leftRelayStates].some((relayState) => rightRelayStates.has(relayState))
+    && timeGap <= 45000
+    && samlMessageSequenceIsCompatible(leftArtifacts, rightArtifacts)) return true;
+
   return indexGap <= 8 && timeGap <= 45000 && samlMessageSequenceIsCompatible(leftArtifacts, rightArtifacts);
 }
 
