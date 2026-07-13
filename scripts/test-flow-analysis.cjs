@@ -189,6 +189,17 @@ if (process.argv[2]) {
   const allImportedFlows = evaluate("buildAuthenticationFlows(importedEntries)");
   const importedFlows = allImportedFlows.filter((flow) => flow.protocol === "saml");
   assert.ok(importedFlows.every((flow) => flow.entries.every((entry) => !String(entry.url).startsWith("chrome-extension://"))));
+  for (const importedSamlFlow of importedFlows) {
+    context.importedSamlFlow = importedSamlFlow;
+    const importedSamlAnalysis = evaluate("analyzeSamlFlow(importedSamlFlow)");
+    if (importedSamlAnalysis.requests.length && !importedSamlAnalysis.responses.length) {
+      assert.equal(importedSamlAnalysis.overallStatus, "warn");
+      assert.ok(importedSamlAnalysis.checks.some((check) => check.label === "Authentication response" && check.level === "warn"));
+      const incompleteChoice = evaluate("renderFlowChoice(importedSamlFlow, importedSamlFlow.key)");
+      assert.match(incompleteChoice, /Incomplete/iu);
+      assert.doesNotMatch(incompleteChoice, />Complete</iu);
+    }
+  }
   if (importedFlows.length) console.log(JSON.stringify(importedFlows.map((flow) => ({
     key: flow.key,
     requests: flow.entries.length,

@@ -1764,7 +1764,9 @@ function buildSamlProtocolFlows(entries) {
       const endIndex = Math.max(...group.map((anchor) => anchor.index));
       const anchorIds = new Set(group.map((anchor) => anchor.entry.id));
       const anchorHosts = new Set(group.map((anchor) => getUrlHostname(anchor.entry.url)).filter(Boolean));
-      const flowEntries = entries.slice(startIndex, endIndex + 1).filter((entry) => (
+      const hasResponse = group.some((anchor) => anchor.artifacts.some((item) => item.type === "Response" || item.message.parameter === "SAMLResponse"));
+      const contextEndIndex = hasResponse ? endIndex : Math.min(entries.length - 1, endIndex + 15);
+      const flowEntries = entries.slice(startIndex, contextEndIndex + 1).filter((entry) => (
         anchorIds.has(entry.id) || isSamlFlowContextEntry(entry, anchorHosts)
       ));
       const boundedEntries = flowEntries.length ? flowEntries : group.map((anchor) => anchor.entry);
@@ -1814,7 +1816,7 @@ function isSamlFlowContextEntry(entry, anchorHosts) {
   const path = getUrlPath(entry.url).toLowerCase();
   const hostMatches = anchorHosts.has(getUrlHostname(entry.url));
   const protocolPath = ["/fed/", "/sso/", "/saml/", "/saml2/"].some((marker) => path.includes(marker));
-  return protocolPath || (hostMatches && Number(entry.status) >= 300 && Number(entry.status) < 400);
+  return hostMatches && (protocolPath || (Number(entry.status) >= 300 && Number(entry.status) < 400));
 }
 
 function buildProtocolFlows(entries, protocol, predicate) {
@@ -1915,7 +1917,7 @@ function renderFlowNavigator(flows, selectedFlow, evidenceEntry) {
 }
 
 function renderFlowChoice(flow, selectedKey) {
-  const outcome = getFlowOutcome(flow.entries);
+  const outcome = getFlowOutcome(flow);
   const flowLabel = flow.protocol === "oam" && flow.kind === "session"
     ? `OAM session ${flow.sequence}`
     : `${flow.protocol.toUpperCase()} attempt ${flow.sequence}`;
@@ -1943,9 +1945,18 @@ function renderFlowStage(entry, index, flow, selectedId) {
   ].join("");
 }
 
-function getFlowOutcome(entries) {
+function getFlowOutcome(flow) {
+  const entries = flow.entries;
   const failures = entries.filter((entry) => Number(entry.status) >= 400);
   if (failures.length) return { label: "Failed", className: "isFailure" };
+  if (flow.protocol === "saml") {
+    const artifacts = collectSamlFlowArtifacts(entries);
+    const hasRequest = artifacts.some((item) => item.type === "AuthnRequest" || item.message.parameter === "SAMLRequest");
+    const responses = artifacts.filter((item) => item.type === "Response" || item.message.parameter === "SAMLResponse");
+    if (responses.some((item) => item.status && !/success$/iu.test(item.status))) return { label: "Failed", className: "isFailure" };
+    if (hasRequest && !responses.length) return { label: "Incomplete", className: "isWarning" };
+    if (responses.length) return { label: "Complete", className: "isSuccess" };
+  }
   const finalStatus = Number(entries[entries.length - 1]?.status || 0);
   if (finalStatus >= 200 && finalStatus < 400) return { label: "Complete", className: "isSuccess" };
   return { label: "Incomplete", className: "isWarning" };
