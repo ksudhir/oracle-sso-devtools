@@ -10,7 +10,7 @@ Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAut
 
 ## Short Promotional Description
 
-Troubleshoot enterprise SSO and federation directly in Chrome DevTools. Follow redirects, decode SAML and JWT data, correlate OIDC flows, inspect OAM/WebGate artifacts, and distinguish Kerberos/WNA from NTLM fallback.
+Troubleshoot enterprise SSO and federation directly in Chrome DevTools. Correlate OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos/WNA, NTLM, and X.509 evidence.
 
 ## Full Store Description
 
@@ -54,6 +54,13 @@ Authentication Flow Inspector adds a focused authentication troubleshooting pane
 - Check browser-visible state, nonce, PKCE, audience, issuer, and token lifetime signals.
 - Clearly distinguish decoded token content from cryptographic signature validation.
 
+### Okta and Microsoft Entra ID
+
+- Recognize Okta and Microsoft Entra ID using confidence-based combinations of official authority domains, provider endpoints, headers, issuer metadata, cookies, and error formats.
+- Extract Okta organization, authorization-server ID, provider errors, and `X-Okta-Request-Id` when browser-visible.
+- Extract Microsoft Entra tenant information, `AADSTS` errors, trace ID, correlation ID, and provider request ID when browser-visible.
+- Direct troubleshooting toward the Okta System Log or Microsoft Entra sign-in logs using the captured provider correlation evidence.
+
 ### Windows Native Authentication and X.509
 
 - Identify browser-visible `WWW-Authenticate`, `Authorization`, and `Proxy-Authenticate` challenges.
@@ -89,9 +96,9 @@ No. All JavaScript, HTML, CSS, icons, and processing logic are packaged inside t
 
 ## Screenshot Captions
 
-1. **Complete SSO traffic view** — Follow OAM, WebGate, SAML, FED, OAuth/OIDC, Kerberos, NTLM, and X.509 requests with status, timing, size, and host-aware URL colors.
+1. **Complete SSO traffic view** — Follow OAM, WebGate, SAML, FED, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos, NTLM, and X.509 requests with provider badges, status, timing, size, and host-aware URL colors.
 2. **Decoded SAML intelligence** — Read formatted federation details, deployment-specific values, bindings, assertions, attributes, and certificate metadata.
-3. **Correlated OIDC flow analysis** — Connect authorization, callback, token, UserInfo, discovery, and JWKS traffic with state, nonce, PKCE, audience, issuer, and lifetime checks.
+3. **Correlated OIDC flow analysis** — Connect Okta, Microsoft Entra ID, and standards-based authorization, callback, token, UserInfo, discovery, and JWKS traffic with state, nonce, PKCE, audience, issuer, and lifetime checks.
 4. **Windows authentication and X.509** — Inspect Negotiate/SPNEGO, Kerberos/WNA, NTLM fallback, credential-collection endpoints, and forwarded client-certificate headers.
 5. **OAM/WebGate diagnostics** — Analyze authentication cookies, redirects, HTTP failures, response timing, content size, and imported HAR evidence.
 
@@ -99,18 +106,19 @@ No. All JavaScript, HTML, CSS, icons, and processing logic are packaged inside t
 
 ### Video Title
 
-Troubleshoot OAM, SAML, OAuth/OIDC & Kerberos in Chrome DevTools
+Troubleshoot OAM, SAML, Okta, Entra & OIDC in Chrome DevTools
 
 ### Video Description
 
 See how Authentication Flow Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
 
-The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, and imported HAR sessions.
+The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Okta, Microsoft Entra ID, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, and imported HAR sessions.
 
 Highlights:
 
 - Decode and summarize SAML requests and responses.
 - Correlate OIDC authorization, callback, token, UserInfo, discovery, and JWKS traffic.
+- Recognize Okta and Microsoft Entra ID and surface provider-specific request, trace, correlation, tenant, and error evidence.
 - Inspect JWT claims and active or expired token state.
 - Identify Negotiate/SPNEGO, Kerberos, NTLM, and WNA credential-collection requests.
 - Highlight OAM/WebGate cookies and FED endpoints.
@@ -124,4 +132,4 @@ Created by Sudhir Kulkarni
 
 ### Suggested Tags
 
-OAM, Oracle Access Manager, WebGate, SAML, OAuth, OIDC, OpenID Connect, SSO, federation, Kerberos, WNA, SPNEGO, NTLM, X.509, JWT, HAR, Chrome DevTools, identity troubleshooting
+OAM, Oracle Access Manager, WebGate, SAML, OAuth, OIDC, OpenID Connect, Okta, Microsoft Entra ID, Azure AD, SSO, federation, Kerberos, WNA, SPNEGO, NTLM, X.509, JWT, HAR, Chrome DevTools, identity troubleshooting

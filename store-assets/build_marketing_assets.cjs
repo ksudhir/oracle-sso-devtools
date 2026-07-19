@@ -36,7 +36,7 @@ function createEntries() {
   const now = Math.floor(Date.now() / 1000);
   const idToken = [
     base64Url({ alg: "RS256", typ: "JWT", kid: "oidc-key-01" }),
-    base64Url({ iss: "https://login.example.com/oauth2", sub: "user-1042", aud: "enterprise-portal", nonce: "nonce-789", auth_time: now - 45, iat: now - 30, exp: now + 3300, acr: "urn:example:mfa", amr: ["pwd", "otp"], scope: "openid profile email" }),
+    base64Url({ iss: "https://acme.okta.com/oauth2/default", sub: "user-1042", aud: "enterprise-portal", nonce: "nonce-789", auth_time: now - 45, iat: now - 30, exp: now + 3300, acr: "urn:example:mfa", amr: ["pwd", "otp"], scope: "openid profile email" }),
     "signature"
   ].join(".");
   const samlXml = [
@@ -66,11 +66,16 @@ function createEntries() {
       [{ name: "Content-Type", value: "application/x-www-form-urlencoded" }],
       [{ name: "Location", value: "https://sso.example.com/oamfed/idp/samlv20" }],
       "SAMLRequest=" + encodeURIComponent(samlRequest) + "&RelayState=relay-1042", "", 2180),
-    make("GET", "https://login.example.com/oauth2/authorize?client_id=enterprise-portal&redirect_uri=https%3A%2F%2Fportal.example.com%2Foidc%2Fcallback&response_type=code&scope=openid%20profile%20email&state=state-123&nonce=nonce-789&code_challenge=challenge-value&code_challenge_method=S256", 302, 122),
+    make("GET", "https://acme.okta.com/oauth2/default/v1/authorize?client_id=enterprise-portal&redirect_uri=https%3A%2F%2Fportal.example.com%2Foidc%2Fcallback&response_type=code&scope=openid%20profile%20email&state=state-123&nonce=nonce-789&code_challenge=challenge-value&code_challenge_method=S256", 302, 122,
+      [], [{ name: "X-Okta-Request-Id", value: "okta-request-example-1042" }]),
     make("GET", "https://portal.example.com/oidc/callback?code=authorization-code&state=state-123&session_state=session-456", 302, 91),
-    make("POST", "https://login.example.com/oauth2/token", 200, 244,
+    make("POST", "https://login.microsoftonline.com/example-tenant/oauth2/v2.0/token", 200, 244,
       [{ name: "Content-Type", value: "application/x-www-form-urlencoded" }],
-      [{ name: "Content-Type", value: "application/json" }],
+      [
+        { name: "Content-Type", value: "application/json" },
+        { name: "X-Ms-Request-Id", value: "entra-request-example-1042" },
+        { name: "X-Ms-Correlation-Request-Id", value: "entra-correlation-example-1042" }
+      ],
       "grant_type=authorization_code&code=authorization-code&code_verifier=verifier-value",
       JSON.stringify({ id_token: idToken, access_token: idToken, token_type: "Bearer", expires_in: 3600 }), 6840),
     make("GET", "https://sso.example.com/oam/CredCollectServlet/WNA", 401, 187, [],
@@ -116,7 +121,7 @@ function panelPage() {
 function promoPage(small) {
   const width = small ? 440 : 1400;
   const height = small ? 280 : 560;
-  const chips = (small ? ["SAML", "OIDC", "WNA", "X.509", "HAR"] : ["OAM / WebGate", "SAML / FED", "OAuth / OIDC", "Kerberos / WNA", "NTLM", "X.509", "HAR"])
+  const chips = (small ? ["SAML", "OIDC", "Okta", "Entra", "WNA", "X.509"] : ["OAM / WebGate", "SAML / FED", "OAuth / OIDC", "Okta", "Microsoft Entra", "Kerberos / WNA", "NTLM", "X.509"])
     .map((item) => '<span class="chip">' + item + "</span>").join("");
   const proof = small ? "" : '<div class="proof"><img src="/oidc-proof.png"></div>';
   return '<!doctype html><html><head><meta charset="utf-8"><style>' +
@@ -135,7 +140,7 @@ function promoPage(small) {
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
     '</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">Chrome DevTools Extension</div></div>' +
     "<h1>" + (small ? "Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
-    (small ? "OAM · SAML · OAuth/OIDC · Kerberos/WNA" : "Inspect OAM, WebGate, SAML, OAuth/OIDC, Kerberos, NTLM, X.509, cookies, timing, and HAR evidence.") +
+    (small ? "OAM · SAML · OAuth/OIDC · Okta · Entra" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra, Kerberos/WNA, X.509, and HAR evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
 }
 
@@ -165,6 +170,10 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   await page.goto("http://127.0.0.1:" + port + "/panel");
   await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
+  const providerBadges = await page.locator(".requestRow .badge").allTextContents();
+  if (!providerBadges.includes("OKTA") || !providerBadges.includes("ENTRA")) {
+    throw new Error("Marketing capture did not render both Okta and Microsoft Entra provider badges.");
+  }
   await page.locator(".requestRow").nth(1).click();
   await page.getByRole("button", { name: "Flow Analysis", exact: true }).click();
   await page.locator('[data-flow-protocol="oidc"]').click();
@@ -306,7 +315,7 @@ async function main() {
   const shots = [
     [3, "Request", "01-complete-sso-traffic.png"],
     [2, "SAML Details", "02-saml-federation-analysis.png"],
-    [1, "OIDC Details", "03-oidc-flow-analysis.png"],
+    [1, "Flow Analysis", "03-oidc-flow-analysis.png", "oidc"],
     [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"],
     [8, "Flow Analysis", "05-oam-webgate-diagnostics.png", "oam", ".oamFlowDetails > summary"]
   ];
@@ -326,6 +335,13 @@ async function main() {
       const samlDetails = await page.locator("#detailOutput").innerText();
       if (samlDetails.includes("No decoded SAML XML")) {
         throw new Error("SAML store screenshot did not render decoded federation details.");
+      }
+    }
+    if (filename === "03-oidc-flow-analysis.png") {
+      const providerCard = page.locator(".oidcCard").filter({ hasText: "Okta Provider Evidence" });
+      await providerCard.scrollIntoViewIfNeeded();
+      if (!await providerCard.isVisible()) {
+        throw new Error("OIDC store screenshot did not render Okta provider evidence.");
       }
     }
     await page.evaluate(() => {

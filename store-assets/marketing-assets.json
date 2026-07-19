@@ -1,7 +1,7 @@
 {
   "product": "Authentication Flow Inspector for SSO & Federation",
-  "version": "0.3.0",
-  "reviewStatus": "publish-ready",
+  "version": "0.4.0",
+  "reviewStatus": "store-ready-video-regeneration-pending",
   "copySource": "../STORE_LISTING.md",
   "assets": {
     "icon": {
@@ -15,7 +15,7 @@
         "path": "screenshots/01-complete-sso-traffic.png",
         "width": 1280,
         "height": 800,
-        "topic": "Complete browser-visible SSO traffic"
+        "topic": "Complete browser-visible SSO traffic with Okta and Microsoft Entra provider recognition"
       },
       {
         "path": "screenshots/02-saml-federation-analysis.png",
@@ -27,7 +27,7 @@
         "path": "screenshots/03-oidc-flow-analysis.png",
         "width": 1280,
         "height": 800,
-        "topic": "Correlated OpenID Connect flow"
+        "topic": "Correlated OpenID Connect flow with Okta provider evidence"
       },
       {
         "path": "screenshots/04-wna-ntlm-x509-auth.png",
@@ -62,7 +62,8 @@
       "height": 1080,
       "durationSeconds": 54,
       "codec": "H.264",
-      "metadataSource": "../STORE_LISTING.md"
+      "metadataSource": "../STORE_LISTING.md",
+      "status": "Source updated for Okta and Microsoft Entra ID; MP4 regeneration pending compatible Apple toolchain"
     }
   },
   "generation": {
