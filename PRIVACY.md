@@ -1,10 +1,10 @@
-# Privacy Policy for OAM/SAML/OAUTH DevTools Panel
+# Privacy Policy for Authentication Flow Inspector
 
 This extension is designed for local troubleshooting of enterprise single sign-on traffic inside Chrome Developer Tools.
 
 ## Data Processing
 
-The extension processes network request and response information from the active inspected tab while Chrome DevTools is open. This may include URLs, headers, cookies, request bodies, response bodies, SAML messages, OAuth tokens, authentication headers, timing information, response sizes, and imported HAR or JSON files.
+The extension processes network request and response information from the active inspected tab while Chrome DevTools is open. This may include URLs, headers, cookies, request bodies, response bodies, SAML messages, OAuth/OIDC tokens, Kerberos/SPNEGO or NTLM authentication headers, forwarded X.509 certificate information, ECID/RID correlation identifiers, timing information, response sizes, and imported HAR or JSON files.
 
 The extension processes this data locally inside the browser.
 
@@ -12,13 +12,15 @@ The extension processes this data locally inside the browser.
 
 The extension does not collect, transmit, sell, share, or store user data on any external server.
 
-The extension does not send captured traffic, cookies, tokens, SAML messages, OAuth tokens, headers, HAR files, or authentication data to the developer or to any third party.
+The extension does not send captured traffic, cookies, tokens, SAML messages, OAuth/OIDC tokens, Kerberos/WNA or NTLM headers, X.509 information, HAR files, or other authentication data to the developer or to any third party.
 
 ## User-Controlled Import and Export
 
 Users may manually import HAR or JSON files for local analysis.
 
-Users may manually export captured panel data as a JSON file. Exported files are created only when the user explicitly clicks Export.
+Users may manually export captured panel data as JSON or export the selected correlated authentication assessment as Markdown. Exported files are created only when the user explicitly chooses an export action.
+
+Sanitized traffic exports can retain recognized OAuth/OIDC parameter names and per-export aliases such as `STATE-1` or `NONCE-1` so transaction equality remains analyzable without retaining the original correlation values. Sanitized Markdown assessment reports mask deployment hostnames and identity-bearing values while retaining troubleshooting correlation identifiers such as ECIDs, request IDs, SAML message IDs, and provider trace IDs. Full-diagnostic Markdown reports retain deployment and identity context for restricted internal troubleshooting. Both report modes exclude passwords, private keys, client secrets, cookie values, SAML payloads, OAuth/OIDC tokens, authorization codes, and WNA token bytes.
 
 ## Sensitive Data Notice
 
