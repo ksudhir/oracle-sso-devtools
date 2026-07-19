@@ -1,5 +1,5 @@
 {
-  "product": "SSO & Federation Inspector for OAM, SAML & OAuth",
+  "product": "Authentication Flow Inspector for SSO & Federation",
   "version": "0.3.0",
   "reviewStatus": "publish-ready",
   "copySource": "../STORE_LISTING.md",

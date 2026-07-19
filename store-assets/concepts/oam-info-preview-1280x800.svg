@@ -15,7 +15,7 @@
   <rect y="35" width="1280" height="29" fill="#111416"/>
   <text x="12" y="54" class="small muted">Elements</text><text x="78" y="54" class="small muted">Console</text><text x="137" y="54" class="small muted">Sources</text>
   <text x="198" y="54" class="small muted">Network</text><text x="262" y="54" class="small muted">Application</text><text x="338" y="54" class="small muted">Security</text>
-  <text x="401" y="54" class="small accent">OAM/SAML/OAUTH</text><rect x="399" y="61" width="103" height="2" fill="#72c7d4"/>
+  <text x="401" y="54" class="small accent">AUTH FLOW INSPECTOR</text><rect x="399" y="61" width="128" height="2" fill="#72c7d4"/>
 
   <rect y="64" width="1280" height="42" fill="#202427" stroke="#343b40"/>
   <rect x="7" y="73" width="75" height="25" rx="4" fill="#17383f" stroke="#72c7d4"/><text x="17" y="90" class="small accent">Stop capture</text>
@@ -38,8 +38,7 @@
   </g>
 
   <rect x="475" y="106" width="805" height="38" fill="#202427" stroke="#343b40"/>
-  <g class="small"><text x="491" y="130">Request</text><text x="549" y="130">Response</text><text x="615" y="130">Cookies</text><text x="670" y="130">Auth Info</text><text x="733" y="130">SAML XML</text><text x="797" y="130">SAML Info</text><text x="862" y="130">OAuth Info</text>
-    <rect x="921" y="112" width="68" height="28" rx="4" fill="#493813" stroke="#ffd36a"/><text x="933" y="130" class="amber">OAM Info</text><text x="1002" y="130">OIDC Info</text></g>
+  <g class="small"><text x="491" y="130">Request</text><text x="549" y="130">Response</text><text x="615" y="130">Cookies</text><rect x="662" y="112" width="84" height="28" rx="4" fill="#493813" stroke="#ffd36a"/><text x="670" y="130" class="amber">Flow Analysis</text><text x="754" y="130">Kerberos / X.509</text><text x="855" y="130">SAML XML</text><text x="913" y="130">SAML Details</text><text x="984" y="130">OAuth Token</text><text x="1052" y="130">OIDC Details</text></g>
 
   <text x="493" y="170" class="heading">OAM / WebGate Flow Analysis</text>
   <rect x="493" y="184" width="128" height="24" rx="4" fill="#493813" stroke="#ffd36a"/><text x="505" y="200" class="small amber">REVIEW REQUIRED</text>

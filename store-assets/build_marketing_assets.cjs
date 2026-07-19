@@ -18,7 +18,7 @@ const darkCss = [
   "--kerberos:#99f6e4;--kerberos-bg:#153b37;--ntlm:#ff9a91;--ntlm-bg:#4c2524;--x509:#fde68a;--x509-bg:#452f10;",
   "--xml-tag:#d6b8ff;--xml-name:#8bd3dd;--xml-attr:#ffd166;--xml-value:#9be7b0;--xml-comment:#9aa4ad;",
   "--json-key:#d6b8ff;--json-string:#9be7b0;--json-number:#ffd166;--json-literal:#8ab9ff;--json-punctuation:#9aa4ad;--danger:#ff9a91}",
-  "body{grid-template-rows:36px 28px auto minmax(0,1fr);min-width:0}",
+  "body{grid-template-rows:36px 28px auto auto minmax(0,1fr);min-width:0}",
   ".marketingChrome,.marketingDevtools{display:flex;align-items:center;padding:0 12px;background:#111416;color:#aeb7bc;font:11px system-ui;border-bottom:1px solid #30363a}",
   ".marketingChrome{gap:10px;background:#24282b;color:#d9dddf}.marketingChrome strong{color:#fff}",
   ".marketingDevtools{gap:18px}.marketingDevtools .active{color:#72c7d4;border-bottom:2px solid #72c7d4;height:28px;display:flex;align-items:center}",
@@ -78,13 +78,16 @@ function createEntries() {
     make("POST", "https://sso.example.com/oam/CredCollectServlet/WNA", 401, 392,
       [{ name: "Authorization", value: "NTLM TlRMTVNTUAABAAAAB4IIogAAAAAAAAAAAAAAAAAAAAAGAbEdAAAADw==" }],
       [{ name: "WWW-Authenticate", value: "NTLM TlRMTVNTUAACAAAA" }], "", "", 910),
-    make("GET", "https://sso.example.com/oam/CredCollectServlet/X509", 200, 205,
+    make("GET", "https://sso.example.com/oam/CredCollectServlet/X509", 200, 520,
       [
         { name: "Authorization", value: "Negotiate YIIGBgYGKwYBBQUCoIIF" },
         { name: "X-Forwarded-Client-Cert", value: "By=spiffe://gateway;Hash=AB12CD34;Subject=CN=Example User,O=Example Corp" },
         { name: "SSL_CLIENT_VERIFY", value: "SUCCESS" },
         { name: "SSL_CLIENT_S_DN", value: "CN=Example User,OU=Identity,O=Example Corp" }
       ], [], "", "", 1280),
+    make("GET", "https://portal.example.com/protected/reports", 302, 640,
+      [{ name: "Cookie", value: "OAMAuthnCookie_portal=masked-webgate-token" }],
+      [{ name: "Location", value: "https://sso.example.com/oam/server/obrareq.cgi?request_id=req-2048" }], "", "", 980),
     make("GET", "https://sso.example.com/oam/server/obrareq.cgi?request_id=req-2048", 403, 2920,
       [{ name: "Cookie", value: "OAM_ID=masked-oam-session; ORA_OSFS_SESSION=masked-context" }],
       [
@@ -105,7 +108,7 @@ function panelPage() {
   let html = fs.readFileSync(path.join(root, "panel.html"), "utf8");
   html = html.replace('href="panel.css"', 'href="/panel.css"');
   html = html.replace("</head>", "<style>" + darkCss + "</style></head>");
-  html = html.replace("<body>", '<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>Chrome DevTools</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">OAM/SAML/OAUTH</span></div>');
+  html = html.replace("<body>", '<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>Chrome DevTools</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth Flow Inspector</span></div>');
   html = html.replace('<script src="panel.js"></script>', "<script>" + mock + '</script><script src="/panel.js"></script>');
   return html;
 }
@@ -131,7 +134,7 @@ function promoPage(small) {
     ".proof{position:absolute;right:55px;top:58px;width:540px;height:420px;border:1px solid #34434d;border-radius:8px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.5);transform:rotate(-1deg)}.proof img{width:100%;height:100%;object-fit:cover;object-position:46% 50%}" +
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
     '</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">Chrome DevTools Extension</div></div>' +
-    "<h1>" + (small ? "SSO & Federation Inspector" : "See the complete SSO flow") + "</h1><p>" +
+    "<h1>" + (small ? "Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
     (small ? "OAM · SAML · OAuth/OIDC · Kerberos/WNA" : "Inspect OAM, WebGate, SAML, OAuth/OIDC, Kerberos, NTLM, X.509, cookies, timing, and HAR evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
 }
@@ -161,32 +164,160 @@ async function main() {
   const browser = await chromium.launch({ headless: true, executablePath: chromePath });
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
   await page.goto("http://127.0.0.1:" + port + "/panel");
-  await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 9);
-  await page.locator(".requestRow").nth(7).click();
-  await page.getByRole("button", { name: "OAM Info", exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
+  await page.locator(".requestRow").nth(1).click();
+  await page.getByRole("button", { name: "Flow Analysis", exact: true }).click();
+  await page.locator('[data-flow-protocol="oidc"]').click();
+  const oidcNavigatorText = await page.locator(".flowNavigator").innerText();
+  if (!oidcNavigatorText.includes("OIDC transaction") || oidcNavigatorText.includes("OIDC attempt")) {
+    throw new Error("Flow Navigator did not distinguish OIDC transactions from user login attempts.");
+  }
+  await page.getByRole("button", { name: "Traffic Inspector", exact: true }).click();
+  await page.locator(".requestRow").nth(8).click();
+  await page.getByRole("button", { name: "Flow Analysis", exact: true }).click();
+  await page.locator('[data-flow-protocol="oam"]').click();
+  await page.locator(".oamFlowDetails > summary").click();
   await page.waitForFunction(() => document.querySelector("#detailOutput").innerText.includes("005ExampleEcid7f31"));
   const oamInfoText = await page.locator("#detailOutput").innerText();
   if (!oamInfoText.includes("Use the ECID to troubleshoot further") || !oamInfoText.includes("0:1:2")) {
-    throw new Error("OAM Info did not render ECID/RID troubleshooting guidance.");
+    throw new Error("Flow Analysis did not render OAM ECID/RID troubleshooting guidance.");
   }
+  const flowScroll = await page.locator(".flowAssessment").evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+    return { top: element.scrollTop, max: element.scrollHeight - element.clientHeight };
+  });
+  if (flowScroll.max <= 0 || flowScroll.top <= 0) {
+    throw new Error("Flow Analysis assessment did not expose an independent scroll area.");
+  }
+  await page.evaluate(() => render());
+  await page.waitForTimeout(50);
+  const restoredFlowScroll = await page.locator(".flowAssessment").evaluate((element) => element.scrollTop);
+  if (restoredFlowScroll <= 0) {
+    throw new Error("Flow Analysis assessment scroll position was lost after rerendering.");
+  }
+  await page.getByRole("button", { name: "Traffic Inspector", exact: true }).click();
   await page.locator(".requestRow").nth(5).click();
-  await page.getByRole("button", { name: "WNA Info", exact: true }).click();
+  await page.getByRole("button", { name: "Flow Analysis", exact: true }).click();
+  await page.locator('[data-flow-protocol="wna"]').click();
+  await page.locator(".flowChoice").filter({ hasText: "Failed" }).click();
+  await page.locator(".wnaFlowDetails > summary").click();
   const wnaInfoText = await page.locator("#detailOutput").innerText();
   if (!wnaInfoText.includes("NTLM was submitted after Negotiate was offered") || !wnaInfoText.includes("Browser-visible evidence only")) {
-    throw new Error("WNA Info did not render NTLM fallback and scope guidance.");
+    throw new Error("Flow Analysis did not render WNA fallback and scope guidance.");
   }
+  await page.getByRole("button", { name: "Open in Traffic Inspector", exact: true }).click();
+  if (await page.locator('[data-workspace-mode="traffic"]').getAttribute("aria-current") !== "page") {
+    throw new Error("Selected flow evidence did not return to Traffic Inspector.");
+  }
+  if (!await page.locator('.tab[data-tab="request"]').evaluate((element) => element.classList.contains("isActive"))) {
+    throw new Error("Returning to Traffic Inspector did not open the selected request.");
+  }
+  await page.setViewportSize({ width: 900, height: 700 });
+  await page.getByRole("button", { name: "Flow Analysis", exact: true }).click();
+  const compactFlowLayout = await page.evaluate(() => {
+    const navigator = document.querySelector(".flowNavigator")?.getBoundingClientRect();
+    const assessment = document.querySelector(".flowAssessment")?.getBoundingClientRect();
+    const divider = document.querySelector(".flowPaneDivider");
+    return {
+      dividerHidden: divider ? getComputedStyle(divider).display === "none" : false,
+      separated: Boolean(navigator && assessment && navigator.right <= assessment.left)
+    };
+  });
+  if (!compactFlowLayout.dividerHidden || !compactFlowLayout.separated) {
+    throw new Error("Compact Flow Analysis workspace columns overlap or retain the hidden divider.");
+  }
+  await page.goto("http://127.0.0.1:" + port + "/panel");
+  await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
+  await page.evaluate(() => {
+    const oidcCallback = {
+      ...state.entries[0],
+      id: "oidc-callback-only",
+      url: "https://portal.example.com/signin/callback?code=authorization-code&state=state-123",
+      requestHeaders: []
+    };
+    const bearerApi = {
+      ...state.entries[0],
+      id: "bearer-api-only",
+      url: "https://api.example.com/v1/profile",
+      requestHeaders: [{ name: "Authorization", value: "Bearer access-token" }]
+    };
+    state.entries = [state.entries[1], oidcCallback, bearerApi];
+    state.selectedId = state.entries[0].id;
+    state.protocolFilters = ["oauth"];
+    state.hideStatic = false;
+    state.workspaceMode = "traffic";
+    render({ preserveFlowScroll: false });
+  });
+  const oauthFamilyTags = await page.locator(".requestRow .badge").allTextContents();
+  if (!["OAuth", "OIDC", "Bearer"].every((tag) => oauthFamilyTags.includes(tag))) {
+    throw new Error("OAuth family filtering did not explain endpoint, OIDC, and Bearer matches with distinct row tags.");
+  }
+  const oauthFamilySummary = await page.locator("#summary").innerText();
+  if (!oauthFamilySummary.includes("3 requests") || !oauthFamilySummary.includes("OAuth/OIDC/Bearer")) {
+    throw new Error("OAuth family filter summary did not describe all visible match categories.");
+  }
+  await page.goto("http://127.0.0.1:" + port + "/panel");
+  await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
+  await page.evaluate(() => {
+    state.entries = [{
+      id: "google-only",
+      capturedAt: new Date().toISOString(),
+      method: "GET",
+      status: 200,
+      statusText: "OK",
+      url: "https://www.google.com/",
+      mimeType: "text/html",
+      durationMs: 50,
+      responseSizeBytes: 1024,
+      requestHeaders: [{ name: "referer", value: "https://www.google.com/" }],
+      responseHeaders: [],
+      requestBody: "",
+      responseBody: "",
+      timings: {},
+      saml: []
+    }];
+    state.selectedId = "google-only";
+    state.workspaceMode = "traffic";
+    state.flowProtocol = "auto";
+    state.selectedFlowKey = null;
+    render({ preserveFlowScroll: false });
+  });
+  await page.getByRole("button", { name: "Flow Analysis", exact: true }).click();
+  if (!await page.locator(".flowWorkspace .flowEmpty").isVisible()) {
+    throw new Error("A Google-only request did not render the empty Flow Analysis workspace.");
+  }
+  await page.locator('[data-flow-protocol="oam"]').click();
+  const emptyFlowLayout = await page.evaluate(() => {
+    const workspace = document.querySelector(".flowWorkspace")?.getBoundingClientRect();
+    const header = document.querySelector(".flowWorkspaceHeader")?.getBoundingClientRect();
+    const empty = document.querySelector(".flowWorkspace > .flowEmpty")?.getBoundingClientRect();
+    return {
+      headerAtTop: Boolean(workspace && header && Math.abs(header.top - workspace.top) <= 1),
+      emptyBelowHeader: Boolean(header && empty && empty.top >= header.bottom - 1)
+    };
+  });
+  if (!emptyFlowLayout.headerAtTop || !emptyFlowLayout.emptyBelowHeader) {
+    throw new Error("Empty protocol Flow Analysis displaced its header or protocol selector.");
+  }
+  if (await page.locator("#detailOutput .nameValueDetail").count()) {
+    throw new Error("Stale request details remained visible after opening Flow Analysis.");
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
   const shots = [
     [3, "Request", "01-complete-sso-traffic.png"],
-    [0, "SAML Info", "02-saml-federation-analysis.png"],
-    [1, "OIDC Info", "03-oidc-flow-analysis.png"],
-    [5, "WNA Info", "04-wna-ntlm-x509-auth.png"],
-    [7, "OAM Info", "05-oam-webgate-diagnostics.png"]
+    [0, "SAML Details", "02-saml-federation-analysis.png"],
+    [1, "OIDC Details", "03-oidc-flow-analysis.png"],
+    [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"],
+    [8, "Flow Analysis", "05-oam-webgate-diagnostics.png", "oam", ".oamFlowDetails > summary"]
   ];
-  for (const [row, tab, filename] of shots) {
+  for (const [row, tab, filename, protocol, detailsSelector] of shots) {
     await page.goto("http://127.0.0.1:" + port + "/panel");
-    await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 9);
+    await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
     await page.locator(".requestRow").nth(row).click();
     await page.getByRole("button", { name: tab, exact: true }).click();
+    if (protocol) await page.locator(`[data-flow-protocol="${protocol}"]`).click();
+    if (protocol === "wna") await page.locator(".flowChoice").filter({ hasText: "Failed" }).click();
+    if (detailsSelector) await page.locator(detailsSelector).click();
     await page.evaluate(() => {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;

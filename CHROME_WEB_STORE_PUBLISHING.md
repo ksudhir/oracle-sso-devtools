@@ -1,19 +1,19 @@
 # Chrome Web Store Publishing Guide
 
-This guide covers publishing and updating **SSO & Federation Inspector for OAM, SAML & OAuth** in the Chrome Web Store.
+This guide covers publishing and updating **Authentication Flow Inspector for SSO & Federation** in the Chrome Web Store.
 
 ## Current Package Information
 
-- Extension name: `SSO & Federation Inspector for OAM, SAML & OAuth`
-- Version: `0.3.0`
+- Extension name: `Authentication Flow Inspector for SSO & Federation`
+- Version: `0.4.0`
 - Package directory: `dist/`
-- Upload archive: `oracle-sso-devtools-v0.3.0.zip`
+- Upload archive: `oracle-sso-devtools-v0.4.0.zip`
 - Privacy policy: `PRIVACY.md`
 - Public privacy-policy URL: <https://github.com/ksudhir/oracle-sso-devtools/blob/main/PRIVACY.md>
 
 Manifest summary:
 
-> Inspect OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 flows with cookies, headers, timing, and HAR analysis.
+> Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAuth/OIDC, WNA, X.509, Okta, and Microsoft Entra ID.
 
 ## 1. Prepare the Google Developer Account
 
@@ -30,8 +30,8 @@ Manifest summary:
 3. Click **Load unpacked**.
 4. Select this project's `dist` directory.
 5. Open a normal browser tab and then open DevTools.
-6. Confirm that the **SSO/Federation** panel appears.
-7. Test live capture, Start/Stop capture, filters, HAR import/export, SAML decoding, cookies, Auth Info, OAM Info with ECID/RID, WNA Info, OAuth Info, and correlated OIDC Info.
+6. Confirm that the **Auth Flow Inspector** panel appears.
+7. Test live capture, Start/Stop capture, filters, HAR import/export, Flow Analysis with OAM/WNA details and ECID/RID, SAML decoding, cookies, Kerberos / X.509, OAuth Token, and OIDC Details.
 8. Check DevTools and `chrome://extensions` for errors.
 
 Test both a live authentication flow and the supplied HAR-import workflow before every release.
@@ -48,7 +48,7 @@ Before packaging, verify `dist/manifest.json`:
 - Only necessary permissions are declared.
 - The manifest is valid JSON and contains no comments.
 
-The current feature release is version `0.3.0`. For later releases, increase it, for example, to `0.3.1` or `0.4.0`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
+The current feature release is version `0.4.0`. For later releases, increase it, for example, to `0.4.1` or `0.5.0`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
 
 ## 4. Create a Clean ZIP Archive
 
@@ -56,7 +56,7 @@ The manifest must be at the root of the ZIP, not inside a `dist` folder. From th
 
 ```bash
 cd dist
-zip -r ../oracle-sso-devtools-v0.3.0.zip \
+zip -r ../oracle-sso-devtools-v0.4.0.zip \
   manifest.json devtools.html devtools.js \
   panel.html panel.css panel.js README.md icons \
   -x '*.DS_Store'
@@ -66,8 +66,8 @@ cd ..
 Check the package:
 
 ```bash
-unzip -l oracle-sso-devtools-v0.3.0.zip
-unzip -p oracle-sso-devtools-v0.3.0.zip manifest.json
+unzip -l oracle-sso-devtools-v0.4.0.zip
+unzip -p oracle-sso-devtools-v0.4.0.zip manifest.json
 ```
 
 Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screenshots, or store-promotion assets in the extension ZIP.
@@ -76,7 +76,7 @@ Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screensh
 
 1. Open the Chrome Web Store Developer Dashboard.
 2. For the first release, click **New item**.
-3. Upload `oracle-sso-devtools-v0.3.0.zip`.
+3. Upload `oracle-sso-devtools-v0.4.0.zip`.
 4. For an existing item, open it, select **Package**, and click **Upload new package**.
 
 Keep using the same Web Store item for future production releases. Creating another item for the same extension can be treated as repetitive content.
@@ -85,11 +85,11 @@ Keep using the same Web Store item for future production releases. Creating anot
 
 Use the following title:
 
-> SSO & Federation Inspector for OAM, SAML & OAuth
+> Authentication Flow Inspector for SSO & Federation
 
 Use the package summary:
 
-> Inspect OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 flows with cookies, headers, timing, and HAR analysis.
+> Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAuth/OIDC, WNA, X.509, Okta, and Microsoft Entra ID.
 
 Use the complete approved copy in `STORE_LISTING.md` for the full description, screenshot captions, single-purpose statement, permission justification, remote-code declaration, and YouTube metadata.
 
@@ -152,9 +152,9 @@ Explain to the reviewer how to find and test the extension:
 
 > 1. Install the extension.
 > 2. Open any browser tab and launch Chrome DevTools.
-> 3. Select the SSO/Federation panel. It may appear under the DevTools overflow menu if the window is narrow.
+> 3. Select the Auth Flow Inspector panel. It may appear under the DevTools overflow menu if the window is narrow.
 > 4. Browse an authentication flow or use Import HAR/JSON to load a HAR file.
-> 5. Select a request to inspect Request, Response, Cookies, Auth Info, OAM Info, WNA Info, SAML XML, SAML Info, OAuth Info, and OIDC Info.
+> 5. Use Traffic Inspector for Request, Response, Cookies, Kerberos / X.509, SAML XML, SAML Details, OAuth Token, and OIDC Details. Switch to the primary Flow Analysis workspace for correlated attempts, expandable OAM/WNA details, evidence, and recommended actions.
 > 6. The extension processes inspected traffic locally and does not require an account or external service.
 
 Provide only sanitized test data. Never upload a HAR containing real credentials, session cookies, bearer tokens, SAML assertions, personal data, or internal hostnames.
@@ -184,8 +184,8 @@ Publishing choices:
 1. If deferred publishing was selected, click **Publish** within 30 days.
 2. Open the public Web Store listing and verify the title, description, screenshots, privacy link, and support information.
 3. Install the Web Store version in a clean Chrome profile.
-4. Open DevTools and verify that the SSO/Federation panel loads.
-5. Test capture, filtering, HAR import, SAML decoding, cookie tables, Auth Info, OAuth Info, and OIDC Info correlation.
+4. Open DevTools and verify that the Auth Flow Inspector panel loads.
+5. Test capture, filtering, HAR import, Flow Analysis, SAML decoding, cookie tables, Kerberos / X.509, OAuth Token, and OIDC Details correlation.
 6. Save and share the public listing URL.
 7. Monitor reviews, support email, crash reports, policy notices, and publisher notifications.
 

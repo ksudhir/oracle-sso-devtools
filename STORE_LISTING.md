@@ -2,11 +2,11 @@
 
 ## Title
 
-SSO & Federation Inspector for OAM, SAML & OAuth
+Authentication Flow Inspector for SSO & Federation
 
 ## Package Summary
 
-Inspect OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 flows with cookies, headers, timing, and HAR analysis.
+Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAuth/OIDC, WNA, X.509, Okta, and Microsoft Entra ID.
 
 ## Short Promotional Description
 
@@ -14,25 +14,27 @@ Troubleshoot enterprise SSO and federation directly in Chrome DevTools. Follow r
 
 ## Full Store Description
 
-SSO & Federation Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
+Authentication Flow Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
 
 ### One panel for the complete browser-visible SSO flow
 
 - Capture requests and responses from the active inspected tab.
 - Start or stop processing without clearing the existing trace.
 - Follow redirects across hosts while preserving host-specific URL colors.
+- Receive prioritized next actions tied to the exact browser-visible evidence when a flow fails or requires review.
 - See HTTP method, status meaning, duration, response size, and slow-request emphasis.
 - Search request and response content and filter SAML, OAM/WebGate, or static-resource traffic.
 - Import browser HAR files or panel JSON exports for offline analysis.
 - Export captured sessions as JSON for repeatable troubleshooting.
+- Export sanitized or full-diagnostic Markdown assessment reports with evidence, prioritized next actions, timelines, correlation keys, and protocol-specific log guidance.
 
 ### Oracle OAM and WebGate
 
 - Identify OAM, WebGate, and FED traffic using URLs, headers, bodies, and cookies.
 - Recognize `/oam/server`, `/fed/sp`, `/fed/idp`, `obrar.cgi`, `obreq.cgi`, `obrareq.cgi`, and credential-collection endpoints.
 - Highlight `OAM_ID`, `OAMAuthnCookie`, `ObSSOCookie`, `ORA_OSFS_SESSION`, and related authentication artifacts.
-- Add site-specific OAM/WebGate hosts to the filter when deployments use custom hostnames.
-- Correlate the browser-visible OAM/WebGate flow in a dedicated OAM Info view, including request IDs, cookie transitions, redirect loops, failures, and the final application return.
+- Correlate the browser-visible OAM/WebGate flow in Flow Analysis, with expandable OAM Details for request IDs, cookie transitions, redirect loops, failures, and the final application return.
+- Switch between a request-focused Traffic Inspector and a full-width Flow Analysis workspace for correlated session assessment.
 - Flag ECID and RID values on failing requests when Oracle correlation headers are visible, with guidance to use the ECID for further OAM, WebGate, OHS, WebLogic, identity-domain, and server-log troubleshooting.
 
 ### SAML federation
@@ -59,7 +61,7 @@ SSO & Federation Inspector adds a focused authentication troubleshooting panel t
 - Highlight NTLM prominently when a flow falls back from expected Kerberos/WNA behavior.
 - Tag `/oam/CredCollectServlet/WNA` and `/oam/CredCollectServlet/X509` requests.
 - Display forwarded client-certificate headers and parse certificate material when available.
-- Correlate the protected-resource request, WNA challenge, browser response, protocol selection, repeated 401s, final authorization, and session-cookie outcome in a dedicated WNA Info view.
+- Correlate the protected-resource request, WNA challenge, browser response, protocol selection, repeated 401s, final authorization, and session-cookie outcome in Flow Analysis with expandable WNA Details.
 
 ### Privacy by design
 
@@ -101,7 +103,7 @@ Troubleshoot OAM, SAML, OAuth/OIDC & Kerberos in Chrome DevTools
 
 ### Video Description
 
-See how SSO & Federation Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
+See how Authentication Flow Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
 
 The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, and imported HAR sessions.
 

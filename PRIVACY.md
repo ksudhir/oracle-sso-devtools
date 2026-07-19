@@ -1,4 +1,4 @@
-# Privacy Policy for SSO & Federation Inspector
+# Privacy Policy for Authentication Flow Inspector
 
 This extension is designed for local troubleshooting of enterprise single sign-on traffic inside Chrome Developer Tools.
 
@@ -18,7 +18,9 @@ The extension does not send captured traffic, cookies, tokens, SAML messages, OA
 
 Users may manually import HAR or JSON files for local analysis.
 
-Users may manually export captured panel data as a JSON file. Exported files are created only when the user explicitly clicks Export.
+Users may manually export captured panel data as JSON or export the selected correlated authentication assessment as Markdown. Exported files are created only when the user explicitly chooses an export action.
+
+Sanitized traffic exports can retain recognized OAuth/OIDC parameter names and per-export aliases such as `STATE-1` or `NONCE-1` so transaction equality remains analyzable without retaining the original correlation values. Sanitized Markdown assessment reports mask deployment hostnames and identity-bearing values while retaining troubleshooting correlation identifiers such as ECIDs, request IDs, SAML message IDs, and provider trace IDs. Full-diagnostic Markdown reports retain deployment and identity context for restricted internal troubleshooting. Both report modes exclude passwords, private keys, client secrets, cookie values, SAML payloads, OAuth/OIDC tokens, authorization codes, and WNA token bytes.
 
 ## Sensitive Data Notice
 

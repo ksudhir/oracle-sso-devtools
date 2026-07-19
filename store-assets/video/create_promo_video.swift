@@ -20,7 +20,7 @@ struct Scene {
 }
 
 let scenes = [
-    Scene(start: 0, end: 6, eyebrow: "CHROME DEVTOOLS EXTENSION", title: "SSO & Federation Inspector", subtitle: "See the complete browser-visible authentication story in one focused panel.", image: nil, accent: NSColor(calibratedRed: 0.31, green: 0.78, blue: 0.96, alpha: 1)),
+    Scene(start: 0, end: 6, eyebrow: "CHROME DEVTOOLS EXTENSION", title: "Authentication Flow Inspector", subtitle: "See the complete browser-visible authentication story in one focused panel.", image: nil, accent: NSColor(calibratedRed: 0.31, green: 0.78, blue: 0.96, alpha: 1)),
     Scene(start: 6, end: 14, eyebrow: "COMPLETE SSO TRAFFIC", title: "Follow every redirect and exchange", subtitle: "OAM, WebGate, SAML, FED, OAuth/OIDC, Kerberos, NTLM, and X.509 in one trace.", image: "store-assets/screenshots/01-complete-sso-traffic.png", accent: NSColor(calibratedRed: 0.25, green: 0.85, blue: 0.67, alpha: 1)),
     Scene(start: 14, end: 22, eyebrow: "SAML FEDERATION", title: "Decode SAML. Understand the deployment.", subtitle: "Inspect bindings, issuer, destination, NameID policy, assertions, attributes, and certificates.", image: "store-assets/screenshots/02-saml-federation-analysis.png", accent: NSColor(calibratedRed: 0.72, green: 0.55, blue: 1.0, alpha: 1)),
     Scene(start: 22, end: 30, eyebrow: "OPENID CONNECT", title: "Correlate the complete OIDC flow", subtitle: "Connect authorization, callback, token, UserInfo, discovery, and JWKS traffic with validation signals.", image: "store-assets/screenshots/03-oidc-flow-analysis.png", accent: NSColor(calibratedRed: 0.38, green: 0.88, blue: 0.76, alpha: 1)),

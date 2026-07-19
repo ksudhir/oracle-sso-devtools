@@ -1,5 +1,5 @@
 chrome.devtools.panels.create(
-  "SSO/Federation",
+  "Auth Flow Inspector",
   "icons/icon48.png",
   "panel.html"
 );
