@@ -305,7 +305,7 @@ async function main() {
   await page.setViewportSize({ width: 1280, height: 800 });
   const shots = [
     [3, "Request", "01-complete-sso-traffic.png"],
-    [0, "SAML Details", "02-saml-federation-analysis.png"],
+    [2, "SAML Details", "02-saml-federation-analysis.png"],
     [1, "OIDC Details", "03-oidc-flow-analysis.png"],
     [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"],
     [8, "Flow Analysis", "05-oam-webgate-diagnostics.png", "oam", ".oamFlowDetails > summary"]
@@ -318,6 +318,16 @@ async function main() {
     if (protocol) await page.locator(`[data-flow-protocol="${protocol}"]`).click();
     if (protocol === "wna") await page.locator(".flowChoice").filter({ hasText: "Failed" }).click();
     if (detailsSelector) await page.locator(detailsSelector).click();
+    if (filename === "02-saml-federation-analysis.png") {
+      await page.waitForFunction(() => {
+        const output = document.querySelector("#detailOutput");
+        return output?.querySelector(".samlInfoCard") && output.innerText.includes("Issuer") && output.innerText.includes("Destination");
+      });
+      const samlDetails = await page.locator("#detailOutput").innerText();
+      if (samlDetails.includes("No decoded SAML XML")) {
+        throw new Error("SAML store screenshot did not render decoded federation details.");
+      }
+    }
     await page.evaluate(() => {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
