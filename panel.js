@@ -150,6 +150,12 @@ const ARTIFACT_HIGHLIGHTS = [
   { term: "RelayState", className: "tokenSaml" },
   { term: "SigAlg", className: "tokenSaml" },
   { term: "Signature", className: "tokenSaml" },
+  { term: "X-Oracle-DMS-ECID", className: "tokenEcid" },
+  { term: "X-Oracle-ECID", className: "tokenEcid" },
+  { term: "Oracle-ECID", className: "tokenEcid" },
+  { term: "ECID-Context", className: "tokenEcid" },
+  { term: "X-ECID", className: "tokenEcid" },
+  { term: "ECID", className: "tokenEcid" },
   { term: "OAMAuthnCookie", className: "tokenWebgate" },
   { term: "OAM_ID", className: "tokenOam" },
   { term: "ObSSOCookie", className: "tokenWebgate" },
@@ -194,14 +200,19 @@ const ARTIFACT_HIGHLIGHTS = [
 ].sort((a, b) => b.term.length - a.term.length);
 
 const COOKIE_HIGHLIGHTS = [
-  { pattern: /\bOAMAuthnCookie[A-Za-z0-9_.:-]*/u, className: "tokenWebgate" },
-  { pattern: /\bObSSOCookie[A-Za-z0-9_.:-]*/u, className: "tokenWebgate" },
-  { pattern: /\bOAM_ID[A-Za-z0-9_.:-]*/u, className: "tokenOam" },
-  { pattern: /\bOAM_REQ[A-Za-z0-9_.:-]*/u, className: "tokenOam" },
-  { pattern: /\bOAMRequestContext[A-Za-z0-9_.:-]*/u, className: "tokenOam" },
-  { pattern: /\bORA_OSFS_SESSION[A-Za-z0-9_.:-]*/u, className: "tokenOam" },
-  { pattern: /\bOAM[A-Za-z0-9_.:-]*Cookie[A-Za-z0-9_.:-]*/u, className: "tokenOam" },
-  { pattern: /\bDCCCtxCookie[A-Za-z0-9_.:-]*/u, className: "tokenOam" }
+  { pattern: /\bECID-Context[A-Za-z0-9_.:-]*/u, className: "tokenEcid", owner: "Oracle Execution Context identifier" },
+  { pattern: /\bOAMAuthnCookie[A-Za-z0-9_.:-]*/u, className: "cookieNameWebgate", owner: "WebGate cookie" },
+  { pattern: /\bOAMAuthnHintCookie[A-Za-z0-9_.:-]*/u, className: "cookieNameWebgate", owner: "WebGate-scoped cookie" },
+  { pattern: /\bOAMRequestContext[A-Za-z0-9_.:-]*/u, className: "cookieNameWebgate", owner: "WebGate request-context cookie" },
+  { pattern: /\bObSSOCookie[A-Za-z0-9_.:-]*/u, className: "cookieNameWebgate", owner: "WebGate SSO cookie" },
+  { pattern: /\bObFormLoginCookie[A-Za-z0-9_.:-]*/u, className: "cookieNameWebgate", owner: "WebGate form-login cookie" },
+  { pattern: /\bOAM_ID[A-Za-z0-9_.:-]*/u, className: "cookieNameOamServer", owner: "OAM Server cookie" },
+  { pattern: /\bOAM_REQ[A-Za-z0-9_.:-]*/u, className: "cookieNameOamServer", owner: "OAM Server request-state cookie" },
+  { pattern: /\bORA_OSFS_SESSION[A-Za-z0-9_.:-]*/u, className: "cookieNameOamServer", owner: "OAM Server session cookie" },
+  { pattern: /\bOAM_LANG_PREF[A-Za-z0-9_.:-]*/u, className: "cookieNameOamServer", owner: "OAM Server preference cookie" },
+  { pattern: /\bOAM_GITO[A-Za-z0-9_.:-]*/u, className: "cookieNameOamServer", owner: "OAM Server interoperability cookie" },
+  { pattern: /\bDCCCtxCookie[A-Za-z0-9_.:-]*/u, className: "cookieNameDcc", owner: "Detached Credential Collector cookie" },
+  { pattern: /\bOAM[A-Za-z0-9_.:-]*Cookie[A-Za-z0-9_.:-]*/u, className: "cookieNameOamRelated", owner: "OAM-related cookie; component ownership not inferred" }
 ];
 
 const HTTP_STATUS_MEANINGS = {
@@ -280,7 +291,7 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
     if (!state.isCapturing) return;
 
     const entry = await createEntry(request, body, encoding);
-    state.entries.push(entry);
+    state.entries = sortEntriesChronologically([...state.entries, entry]);
 
     if (!state.selectedId) {
       state.selectedId = entry.id;
@@ -560,11 +571,11 @@ async function createEntry(request, body, bodyEncoding) {
 
 async function parseImportedEntries(imported) {
   if (Array.isArray(imported)) {
-    return Promise.all(imported.map(normalizeImportedEntry));
+    return sortEntriesChronologically(await Promise.all(imported.map(normalizeImportedEntry)));
   }
 
   if (Array.isArray(imported?.entries)) {
-    return Promise.all(imported.entries.map(normalizeImportedEntry));
+    return sortEntriesChronologically(await Promise.all(imported.entries.map(normalizeImportedEntry)));
   }
 
   if (Array.isArray(imported?.log?.entries)) {
@@ -587,7 +598,7 @@ async function normalizeHarEntries(entries) {
     throw new Error(`Could not normalize any HAR entries. First error: ${failure?.reason?.message || "unknown error"}`);
   }
 
-  return normalized;
+  return sortEntriesChronologically(normalized);
 }
 
 async function loadCurrentDevToolsHar(mode) {
@@ -608,7 +619,7 @@ async function loadCurrentDevToolsHar(mode) {
 
       if (mode === "startup" && state.entries.length) return;
 
-      state.entries = await Promise.all(harEntries.map(normalizeHarEntry));
+      state.entries = sortEntriesChronologically(await Promise.all(harEntries.map(normalizeHarEntry)));
       resetFiltersAfterImport();
       state.activeTab = "request";
       state.selectedId = getVisibleEntries()[0]?.id || state.entries[0]?.id || null;
@@ -675,6 +686,19 @@ async function normalizeHarEntry(entry) {
     responseSizeBytes: normalizeSizeBytes(response.bodySize ?? response.content?.size, responseBody),
     saml: await findSamlMessages(url, requestBody, responseBody, request.headers, response.headers)
   };
+}
+
+function sortEntriesChronologically(entries) {
+  return entries
+    .map((entry, originalIndex) => ({ entry, originalIndex }))
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.entry?.capturedAt || "");
+      const rightTime = Date.parse(right.entry?.capturedAt || "");
+      const normalizedLeft = Number.isFinite(leftTime) ? leftTime : Number.POSITIVE_INFINITY;
+      const normalizedRight = Number.isFinite(rightTime) ? rightTime : Number.POSITIVE_INFINITY;
+      return normalizedLeft - normalizedRight || left.originalIndex - right.originalIndex;
+    })
+    .map(({ entry }) => entry);
 }
 
 function normalizeDurationMs(value) {
@@ -1056,7 +1080,7 @@ function renderRequestRow(entry, timingStats) {
   const url = document.createElement("span");
   url.className = "url";
   url.title = entry.url;
-  if (entry.saml.length) {
+  if (isSamlEntry(entry)) {
     const marker = document.createElement("mark");
     marker.className = "badge badgeSaml";
     marker.textContent = "SAML";
@@ -1084,6 +1108,12 @@ function renderRequestRow(entry, timingStats) {
     const marker = document.createElement("mark");
     marker.className = "badge badgeFed";
     marker.textContent = "FED";
+    url.append(marker, " ");
+  }
+  if (isWnaEndpoint(entry)) {
+    const marker = document.createElement("mark");
+    marker.className = "badge badgeWna";
+    marker.textContent = "WNA";
     url.append(marker, " ");
   }
   if (isKerberosEntry(entry)) {
@@ -1244,31 +1274,75 @@ function hashString(value) {
 }
 
 function isOamEntry(entry) {
-  const text = getEntrySearchText(entry);
-  const hostname = getUrlHostname(entry.url);
-
-  if (text.includes("obrar.cgi") && !text.includes("/oam/server")) return false;
-
-  return state.oamHosts.some((host) => hostname === host || hostname.endsWith(`.${host}`))
-    || [
-      "/oam",
-      "/oam/server",
-      "/oam/credcollectservlet/wna",
-      "/oam/credcollectservlet/x509",
-      "/fed/",
-      "obreq.cgi",
-      "obrareq.cgi",
-      "auth_cred_submit",
-      "oam_id",
-      "ora_osfs_session",
-      "oam_req"
-    ].some((marker) => text.includes(marker));
+  return getOamEndpointRole(entry) === "oam";
 }
 
 function isWebgateEntry(entry) {
-  const text = getEntrySearchText(entry);
+  return getOamEndpointRole(entry) === "webgate";
+}
 
-  return ["obrar.cgi", "oamauthncookie", "obssocookie"].some((marker) => text.includes(marker));
+function getOamEndpointRole(entry, entries = state.entries) {
+  const path = getUrlPath(entry.url).toLowerCase();
+  if (isOamInitiatingRedirect(entry) || isExplicitWebgatePath(path)) return "webgate";
+  if (isExplicitOamPath(path)) return "oam";
+
+  const origin = getOriginLabel(entry.url);
+  const learned = learnOamEndpointOrigins(entries);
+  const learnedWebgate = origin && learned.webgate.has(origin);
+  const learnedOam = origin && learned.oam.has(origin);
+  if (learnedWebgate && !learnedOam) return "webgate";
+  if (learnedOam && !learnedWebgate) return "oam";
+  if (hasWebgateSessionArtifact(entry)) return "webgate";
+  return "";
+}
+
+function learnOamEndpointOrigins(entries) {
+  const roles = { webgate: new Set(), oam: new Set() };
+  for (const candidate of entries || []) {
+    const origin = getOriginLabel(candidate.url);
+    if (!origin) continue;
+    const path = getUrlPath(candidate.url).toLowerCase();
+    if (isOamInitiatingRedirect(candidate) || isExplicitWebgatePath(path)) roles.webgate.add(origin);
+    if (isExplicitOamPath(path)) roles.oam.add(origin);
+  }
+  return roles;
+}
+
+function isExplicitWebgatePath(path) {
+  return String(path || "").toLowerCase().includes("obrar.cgi");
+}
+
+function isExplicitOamPath(path) {
+  const normalized = String(path || "").toLowerCase();
+  if (isExplicitWebgatePath(normalized)) return false;
+  return normalized.includes("/oam/")
+    || normalized.includes("/oamserver/")
+    || normalized.includes("/oamfed/")
+    || normalized.includes("obrareq.cgi")
+    || normalized.includes("obreq.cgi")
+    || normalized.includes("auth_cred_submit");
+}
+
+function hasWebgateSessionArtifact(entry) {
+  const text = getEntrySearchText(entry);
+  return text.includes("oamauthncookie") || text.includes("obssocookie");
+}
+
+function isSamlEntry(entry) {
+  return Boolean(entry.saml?.length) || isSamlEndpoint(entry);
+}
+
+function isSamlEndpoint(entry) {
+  const path = getUrlPath(entry.url).toLowerCase();
+  return ["/saml/", "/saml2/", "/samlv20", "/fed/idp/sso", "/fed/sp/sso"].some((marker) => path.includes(marker));
+}
+
+function isWnaEndpoint(entry) {
+  return getUrlPath(entry.url).toLowerCase().includes("/oam/credcollectservlet/wna");
+}
+
+function isX509Endpoint(entry) {
+  return getUrlPath(entry.url).toLowerCase().includes("/oam/credcollectservlet/x509");
 }
 
 function isOauthEntry(entry) {
@@ -1277,12 +1351,11 @@ function isOauthEntry(entry) {
 
 function isFedEntry(entry) {
   const path = getUrlPath(entry.url).toLowerCase();
-  return path.includes("/fed/sp") || path.includes("/fed/idp");
+  return path.includes("/fed/sp") || path.includes("/fed/idp") || path.includes("/oamfed/");
 }
 
 function isKerberosEntry(entry) {
-  return getEntrySearchText(entry).includes("/oam/credcollectservlet/wna")
-    || extractHttpAuthInfo(entry).some((item) => item.protocol !== "NTLM");
+  return extractHttpAuthInfo(entry).some((item) => item.protocol !== "NTLM");
 }
 
 function isNtlmEntry(entry) {
@@ -1290,7 +1363,7 @@ function isNtlmEntry(entry) {
 }
 
 function isX509Entry(entry) {
-  return getEntrySearchText(entry).includes("/oam/credcollectservlet/x509")
+  return isX509Endpoint(entry)
     || extractX509Info(entry).items.length > 0;
 }
 
@@ -1402,11 +1475,30 @@ function renderNameValueSection(title, rows) {
 }
 
 function renderNameValueRow(name, value) {
+  const renderedName = formatCorrelationFieldName(name);
   if (value && typeof value === "object" && "html" in value) {
-    return `<tr><th>${escapeHtml(name)}</th><td>${value.html}</td></tr>`;
+    return `<tr><th>${renderedName}</th><td>${value.html}</td></tr>`;
   }
   const displayValue = String(value ?? "").trim() || "-";
-  return `<tr><th>${escapeHtml(name)}</th><td>${highlightArtifacts(displayValue)}</td></tr>`;
+  return `<tr><th>${renderedName}</th><td>${formatCorrelationFieldValue(name, displayValue)}</td></tr>`;
+}
+
+function isEcidFieldName(name) {
+  const normalized = String(name || "").trim().toLowerCase();
+  return normalized === "ecid" || ECID_HEADER_NAMES.includes(normalized);
+}
+
+function formatCorrelationFieldName(name) {
+  const escaped = escapeHtml(name);
+  return isEcidFieldName(name)
+    ? `<span class="artifactToken tokenEcid" title="Oracle Execution Context identifier">${escaped}</span>`
+    : escaped;
+}
+
+function formatCorrelationFieldValue(name, value) {
+  return isEcidFieldName(name)
+    ? `<code class="ecidValue" title="Use this ECID for server-log correlation">${escapeHtml(value)}</code>`
+    : highlightArtifacts(value);
 }
 
 function renderAbout() {
@@ -1611,7 +1703,7 @@ function renderOAuthInfo(entry) {
   ].join("");
 }
 
-const ECID_HEADER_NAMES = ["ecid-context", "x-oracle-dms-ecid", "oracle-ecid", "x-ecid"];
+const ECID_HEADER_NAMES = ["ecid-context", "x-oracle-dms-ecid", "x-oracle-ecid", "oracle-ecid", "x-ecid"];
 const RID_HEADER_NAMES = ["x-oracle-dms-rid", "oracle-rid", "x-rid"];
 
 function renderFlowAnalysis(selectedEntry) {
@@ -1663,7 +1755,7 @@ function buildAuthenticationFlows(entries) {
 }
 
 function buildOamProtocolFlows(entries) {
-  const authenticationFlows = buildProtocolFlows(entries, "oam", isOamAuthenticationAnchor)
+  const authenticationFlows = buildOamAuthenticationFlows(entries)
     .map((flow) => ({
       ...flow,
       kind: "authentication",
@@ -1705,6 +1797,79 @@ function buildOamProtocolFlows(entries) {
       confidence: { level: "medium", score: 0.78, reason: "Existing WebGate session cookie on the same application origin" }
     };
   });
+}
+
+function buildOamAuthenticationFlows(entries) {
+  const startIndexes = entries
+    .map((entry, index) => isOamInitiatingRedirect(entry) ? index : -1)
+    .filter((index) => index >= 0);
+  if (!startIndexes.length) return buildProtocolFlows(entries, "oam", isOamAuthenticationAnchor);
+
+  return startIndexes.map((startIndex, sequenceIndex) => {
+    const segmentEnd = sequenceIndex + 1 < startIndexes.length
+      ? startIndexes[sequenceIndex + 1] - 1
+      : entries.length - 1;
+    const redirectTargets = new Set();
+    const flowItems = [];
+
+    for (let index = startIndex; index <= segmentEnd; index += 1) {
+      const entry = entries[index];
+      if (isInternalUrl(entry.url) || isStaticResource(entry.url)) continue;
+
+      const normalizedUrl = normalizeFlowUrl(entry.url);
+      const followsRedirect = normalizedUrl && redirectTargets.has(normalizedUrl);
+      const related = index === startIndex
+        || followsRedirect
+        || isOamAuthenticationAnchor(entry)
+        || hasOamCookie(entry);
+      if (!related) continue;
+
+      flowItems.push({ entry, index });
+      const redirectUrl = getResolvedRedirectUrl(entry);
+      if (redirectUrl) redirectTargets.add(normalizeFlowUrl(redirectUrl));
+    }
+
+    const flowEntries = flowItems.map((item) => item.entry);
+    const endIndex = flowItems[flowItems.length - 1]?.index ?? startIndex;
+    return {
+      key: `oam:${startIndex}:${endIndex}`,
+      protocol: "oam",
+      sequence: sequenceIndex + 1,
+      startIndex,
+      endIndex,
+      entries: flowEntries,
+      startedAt: flowEntries[0]?.capturedAt || "",
+      endedAt: flowEntries[flowEntries.length - 1]?.capturedAt || "",
+      confidence: calculateFlowConfidence("oam", flowEntries)
+    };
+  }).filter((flow) => flow.entries.length);
+}
+
+function isOamInitiatingRedirect(entry) {
+  const status = Number(entry?.status || 0);
+  if (status < 300 || status >= 400) return false;
+  const redirectUrl = getResolvedRedirectUrl(entry);
+  if (!redirectUrl) return false;
+  const path = getUrlPath(redirectUrl).toLowerCase();
+  return path.endsWith("/oam/server/obrareq.cgi") || path.endsWith("/oam/server/obreq.cgi");
+}
+
+function getResolvedRedirectUrl(entry) {
+  const location = getHeaderValues(entry?.responseHeaders, "location")[0];
+  if (!location) return "";
+  try {
+    return new URL(location, entry.url).toString();
+  } catch {
+    return String(location);
+  }
+}
+
+function normalizeFlowUrl(value) {
+  try {
+    return new URL(value).toString();
+  } catch {
+    return String(value || "");
+  }
 }
 
 function isOamAuthenticationAnchor(entry) {
@@ -1937,7 +2102,7 @@ function renderFlowStage(entry, index, flow, selectedId) {
     ? classifySamlStage(entry)
     : flow.kind === "session"
       ? (index === 0 ? "Protected Application" : "Authenticated Application Request")
-      : classifyOamStage(entry, flow.startIndex + index, flow.startIndex, flow.endIndex);
+      : classifyOamStage(entry, index, 0, flow.entries.length - 1);
   return [
     `<button type="button" class="flowStage${entry.id === selectedId ? " isActive" : ""}" data-entry-id="${escapeHtml(entry.id)}" title="${escapeHtml(entry.url)}">`,
     `<span class="flowStageIndex">${index + 1}</span>`,
@@ -2073,7 +2238,7 @@ function renderSelectedRequestEvidence(entry) {
 function renderEvidenceSection(title, rows) {
   const visible = rows.filter(([, value]) => hasInfoValue(value));
   if (!visible.length) return "";
-  return `<section class="evidenceSection"><h4>${escapeHtml(title)}</h4><table><tbody>${visible.map(([name, value]) => `<tr><th>${escapeHtml(name)}</th><td>${highlightArtifacts(String(value))}</td></tr>`).join("")}</tbody></table></section>`;
+  return `<section class="evidenceSection"><h4>${escapeHtml(title)}</h4><table><tbody>${visible.map(([name, value]) => `<tr><th>${formatCorrelationFieldName(name)}</th><td>${formatCorrelationFieldValue(name, String(value))}</td></tr>`).join("")}</tbody></table></section>`;
 }
 
 function collectSamlFlowArtifacts(entries) {
@@ -2219,7 +2384,7 @@ function analyzeOamFlow(entries, selectedEntry) {
   const flowEntries = timeline.map((item) => item.entry);
   const webgateItems = timeline.filter((item) => isWebgateEntry(item.entry));
   const oamItems = timeline.filter((item) => isOamFlowEntry(item.entry));
-  const credentialSubmit = timeline.find((item) => getEntrySearchText(item.entry).includes("auth_cred_submit"));
+  const credentialSubmit = timeline.find((item) => isCredentialSubmitEntry(item.entry));
   const requestId = flowEntries.map(extractOamRequestId).find(Boolean) || "";
   const cookies = summarizeOamCookies(flowEntries);
   const failuresWithTrace = timeline
@@ -2277,7 +2442,7 @@ function renderTraceCorrelationCard(items) {
         `<div class="traceCorrelationItem">`,
         `<div><strong>HTTP ${escapeHtml(String(item.entry.status))} ${escapeHtml(item.entry.statusText || "")}</strong><span class="traceEndpoint" title="${escapeHtml(item.entry.url)}">${escapeHtml(item.entry.url)}</span></div>`,
         trace.ecid
-          ? `<div class="traceIdentifiers"><span class="traceBadge">ECID</span><code>${escapeHtml(trace.ecid)}</code>${trace.rid ? `<span class="traceBadge traceRidBadge">RID</span><code>${escapeHtml(trace.rid)}</code>` : ""}<small>${escapeHtml(trace.source)}</small></div>`
+          ? `<div class="traceIdentifiers"><span class="traceBadge">ECID</span><code class="ecidValue">${escapeHtml(trace.ecid)}</code>${trace.rid ? `<span class="traceBadge traceRidBadge">RID</span><code class="ridValue">${escapeHtml(trace.rid)}</code>` : ""}<small>${escapeHtml(trace.source)}</small></div>`
           : `<span class="mutedValue">No ECID was exposed in browser-visible headers for this failure.</span>`,
         `</div>`
       ].join("");
@@ -2338,27 +2503,30 @@ function hasOamCookie(entry) {
 }
 
 function isOamFlowEntry(entry) {
-  const text = getEntrySearchText(entry);
-  return [
-    "/oam/",
-    "/oam/server",
-    "obreq.cgi",
-    "obrareq.cgi",
-    "auth_cred_submit",
-    "oam_id",
-    "ora_osfs_session",
-    "oam_req"
-  ].some((marker) => text.includes(marker));
+  return getOamEndpointRole(entry) === "oam";
+}
+
+function isCredentialSubmitEntry(entry) {
+  return getUrlPath(entry.url).toLowerCase().includes("/oam/server/auth_cred_submit");
+}
+
+function isCredentialCollectorRoutingEntry(entry) {
+  const path = getUrlPath(entry.url).toLowerCase();
+  return path.includes("/oam/server/obrareq.cgi") || path.includes("/oam/server/obreq.cgi");
 }
 
 function classifyOamStage(entry, index, start, end) {
-  const text = getEntrySearchText(entry);
-  if (text.includes("auth_cred_submit")) return "Credential Submit";
-  if (isWebgateEntry(entry)) return "WebGate";
+  if (isOamInitiatingRedirect(entry)) return "Protected Resource / WebGate";
+  if (isCredentialSubmitEntry(entry)) return "Credential Submit";
+  if (isWnaEndpoint(entry)) return "WNA Credential Collector";
+  if (isX509Endpoint(entry)) return "X.509 Credential Collector";
+  if (isCredentialCollectorRoutingEntry(entry)) return "Credential Collector Routing";
+  if (getUrlPath(entry.url).toLowerCase().includes("obrar.cgi")) return "WebGate Reply";
   if (isOamFlowEntry(entry)) return "OAM Server";
+  if (index === end) return "Application Return";
+  if (isWebgateEntry(entry)) return "WebGate";
   if (hasOamCookie(entry)) return "Session";
   if (index === start) return "Protected Resource";
-  if (index === end) return "Application Return";
   return Number(entry.status) >= 300 && Number(entry.status) < 400 ? "Redirect" : "Browser Request";
 }
 
@@ -3390,7 +3558,7 @@ function hasInfoValue(value) {
 }
 
 function renderInfoRow(label, value) {
-  return `<tr><th>${escapeHtml(label)}</th><td>${formatInfoValue(label, value)}</td></tr>`;
+  return `<tr><th>${formatCorrelationFieldName(label)}</th><td>${formatInfoValue(label, value)}</td></tr>`;
 }
 
 function formatInfoValue(label, value) {
@@ -3399,6 +3567,7 @@ function formatInfoValue(label, value) {
 
   const text = String(value || "").trim();
   if (!text) return `<span class="mutedValue">-</span>`;
+  if (isEcidFieldName(label)) return formatCorrelationFieldValue(label, text);
   if (label === "Status" && /success$/iu.test(text)) return `<span class="goodValue">${escapeHtml(text)}</span>`;
   if (/signed/iu.test(text) && !/^not signed$/iu.test(text)) return `<span class="goodValue">${escapeHtml(text)}</span>`;
   if (/^not signed$/iu.test(text)) return `<span class="mutedValue">${escapeHtml(text)}</span>`;
@@ -3826,12 +3995,14 @@ function highlightArtifacts(text) {
 function highlightEscapedArtifacts(escaped) {
   const terms = ARTIFACT_HIGHLIGHTS.map(({ term }) => escapeRegExp(escapeHtml(term)));
   const cookies = COOKIE_HIGHLIGHTS.map(({ pattern }) => pattern.source);
-  const pattern = new RegExp([...terms, ...cookies].join("|"), "giu");
+  const pattern = new RegExp([...cookies, ...terms].join("|"), "giu");
 
   return String(escaped || "").replace(pattern, (match) => {
-    const highlight = ARTIFACT_HIGHLIGHTS.find(({ term }) => match.toLowerCase() === escapeHtml(term).toLowerCase())
-      || COOKIE_HIGHLIGHTS.find(({ pattern: cookiePattern }) => new RegExp(cookiePattern.source, "iu").test(match));
-    return `<span class="artifactToken ${highlight.className}">${match}</span>`;
+    const cookieHighlight = COOKIE_HIGHLIGHTS.find(({ pattern: cookiePattern }) => new RegExp(cookiePattern.source, "iu").test(match));
+    const highlight = cookieHighlight
+      || ARTIFACT_HIGHLIGHTS.find(({ term }) => match.toLowerCase() === escapeHtml(term).toLowerCase());
+    const ownerTitle = cookieHighlight ? ` title="${escapeHtml(cookieHighlight.owner)}"` : "";
+    return `<span class="artifactToken ${highlight.className}"${ownerTitle}>${match}</span>`;
   });
 }
 

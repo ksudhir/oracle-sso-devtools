@@ -13,6 +13,16 @@
   --oam-bg: #fff2cc;
   --webgate: #9d2f2f;
   --webgate-bg: #ffe5e2;
+  --cookie-oam: #075985;
+  --cookie-oam-bg: #e0f2fe;
+  --cookie-webgate: #9f1239;
+  --cookie-webgate-bg: #ffe4e6;
+  --cookie-dcc: #5b21b6;
+  --cookie-dcc-bg: #ede9fe;
+  --cookie-related: #4b5563;
+  --cookie-related-bg: #eef0f2;
+  --ecid: #86198f;
+  --ecid-bg: #fae8ff;
   --oauth: #386641;
   --oauth-bg: #e3f3df;
   --fed: #6d3fb2;
@@ -51,6 +61,16 @@
     --oam-bg: #493813;
     --webgate: #ffaba5;
     --webgate-bg: #4c2524;
+    --cookie-oam: #7dd3fc;
+    --cookie-oam-bg: #17384a;
+    --cookie-webgate: #fda4af;
+    --cookie-webgate-bg: #4a1f2a;
+    --cookie-dcc: #c4b5fd;
+    --cookie-dcc-bg: #33265a;
+    --cookie-related: #d1d5db;
+    --cookie-related-bg: #343a40;
+    --ecid: #f0abfc;
+    --ecid-bg: #4a174f;
     --oauth: #a7e5a3;
     --oauth-bg: #203d24;
     --fed: #d6b8ff;
@@ -406,6 +426,46 @@ button:hover,
   color: var(--webgate);
 }
 
+.cookieNameOamServer {
+  background: var(--cookie-oam-bg);
+  color: var(--cookie-oam);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cookie-oam) 38%, transparent);
+}
+
+.cookieNameWebgate {
+  background: var(--cookie-webgate-bg);
+  color: var(--cookie-webgate);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cookie-webgate) 38%, transparent);
+}
+
+.cookieNameDcc {
+  background: var(--cookie-dcc-bg);
+  color: var(--cookie-dcc);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cookie-dcc) 35%, transparent);
+}
+
+.cookieNameOamRelated {
+  background: var(--cookie-related-bg);
+  color: var(--cookie-related);
+}
+
+.tokenEcid,
+.ecidValue {
+  background: var(--ecid-bg);
+  color: var(--ecid);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ecid) 36%, transparent);
+}
+
+.ecidValue {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 4px;
+  padding: 2px 4px;
+  overflow-wrap: anywhere;
+  font-weight: 800;
+  white-space: normal;
+}
+
 .badgeOauth,
 .tokenOauth {
   background: var(--oauth-bg);
@@ -418,6 +478,7 @@ button:hover,
   color: var(--fed);
 }
 
+.badgeWna,
 .badgeKerberos,
 .tokenKerberos {
   background: var(--kerberos-bg);
@@ -967,8 +1028,11 @@ button:hover,
 
 .traceIdentifiers code {
   overflow-wrap: anywhere;
-  color: var(--fed);
   font-weight: 800;
+}
+
+.traceIdentifiers .ridValue {
+  color: var(--accent);
 }
 
 .traceIdentifiers small {
@@ -983,8 +1047,8 @@ button:hover,
   min-width: 38px;
   padding: 2px 5px;
   border-radius: 3px;
-  background: var(--fed-bg);
-  color: var(--fed);
+  background: var(--ecid-bg);
+  color: var(--ecid);
   font-size: 9px;
   font-weight: 900;
 }
