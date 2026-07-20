@@ -6,7 +6,7 @@ Enterprise Authentication Flow Inspector
 
 ## Package Summary
 
-Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAuth/OIDC, WNA, X.509, Okta, and Microsoft Entra ID.
+Correlate enterprise authentication flows: SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Microsoft Entra ID.
 
 ## Short Promotional Description
 
