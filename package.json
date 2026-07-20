@@ -1,8 +1,8 @@
 {
-  "name": "llm-chat-interface",
+  "name": "authentication-flow-inspector",
   "version": "1.0.0",
   "private": true,
-  "description": "Minimal chat interface for querying a configurable LLM endpoint.",
+  "description": "Chrome DevTools extension for inspecting browser-visible authentication, SSO, and federation flows.",
   "scripts": {
     "start": "node server.js"
   },
