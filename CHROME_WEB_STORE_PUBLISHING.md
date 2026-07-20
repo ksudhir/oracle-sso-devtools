@@ -5,9 +5,9 @@ This guide covers publishing and updating **Authentication Flow Inspector for SS
 ## Current Package Information
 
 - Extension name: `Authentication Flow Inspector for SSO & Federation`
-- Version: `0.4.0`
+- Version: `1.0.0`
 - Package directory: `dist/`
-- Upload archive: `oracle-sso-devtools-v0.4.0.zip`
+- Upload archive: `oracle-sso-devtools-v1.0.0.zip`
 - Privacy policy: `PRIVACY.md`
 - Public privacy-policy URL: <https://github.com/ksudhir/oracle-sso-devtools/blob/main/PRIVACY.md>
 
@@ -25,20 +25,22 @@ Manifest summary:
 
 ## 2. Test the Extension Locally
 
-1. Open `chrome://extensions` in Chrome.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Select this project's `dist` directory.
-5. Open a normal browser tab and then open DevTools.
-6. Confirm that the **Auth Flow Inspector** panel appears.
-7. Test live capture, Start/Stop capture, filters, HAR import/export, Flow Analysis with OAM/WNA details and ECID/RID, SAML decoding, cookies, Kerberos / X.509, OAuth Token, and OIDC Details.
-8. Check DevTools and `chrome://extensions` for errors.
+1. Run `npm run build` to regenerate `dist/` from the root source files.
+2. Run `npm test` to verify JavaScript, flow analysis, and distribution integrity.
+3. Open `chrome://extensions` in Chrome.
+4. Enable **Developer mode**.
+5. Click **Load unpacked**.
+6. Select this project's `dist` directory.
+7. Open a normal browser tab and then open DevTools.
+8. Confirm that the **Auth Flow Inspector** panel appears.
+9. Test live capture, Start/Stop capture, filters, HAR import/export, Flow Analysis with OAM/WNA details and ECID/RID, SAML decoding, cookies, Kerberos / X.509, OAuth Token, and OIDC Details.
+10. Check DevTools and `chrome://extensions` for errors.
 
 Test both a live authentication flow and the supplied HAR-import workflow before every release.
 
 ## 3. Review the Manifest
 
-Before packaging, verify `dist/manifest.json`:
+Before packaging, update and verify the canonical root `manifest.json`, then run `npm run build`. The generated `dist/manifest.json` must have:
 
 - `name` is correct.
 - `description` is no more than 132 characters.
@@ -48,15 +50,17 @@ Before packaging, verify `dist/manifest.json`:
 - Only necessary permissions are declared.
 - The manifest is valid JSON and contains no comments.
 
-The current feature release is version `0.4.0`. For later releases, increase it, for example, to `0.4.1` or `0.5.0`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
+The current feature release is version `1.0.0`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `1.0.1` or `1.1.0`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
 
 ## 4. Create a Clean ZIP Archive
 
 The manifest must be at the root of the ZIP, not inside a `dist` folder. From the project directory, run:
 
 ```bash
+npm run build
+npm test
 cd dist
-zip -r ../oracle-sso-devtools-v0.4.0.zip \
+zip -r ../oracle-sso-devtools-v1.0.0.zip \
   manifest.json devtools.html devtools.js \
   panel.html panel.css panel.js README.md icons \
   -x '*.DS_Store'
@@ -66,8 +70,8 @@ cd ..
 Check the package:
 
 ```bash
-unzip -l oracle-sso-devtools-v0.4.0.zip
-unzip -p oracle-sso-devtools-v0.4.0.zip manifest.json
+unzip -l oracle-sso-devtools-v1.0.0.zip
+unzip -p oracle-sso-devtools-v1.0.0.zip manifest.json
 ```
 
 Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screenshots, or store-promotion assets in the extension ZIP.
@@ -76,7 +80,7 @@ Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screensh
 
 1. Open the Chrome Web Store Developer Dashboard.
 2. For the first release, click **New item**.
-3. Upload `oracle-sso-devtools-v0.4.0.zip`.
+3. Upload `oracle-sso-devtools-v1.0.0.zip`.
 4. For an existing item, open it, select **Package**, and click **Upload new package**.
 
 Keep using the same Web Store item for future production releases. Creating another item for the same extension can be treated as repetitive content.
@@ -194,9 +198,9 @@ Publishing choices:
 For every update:
 
 1. Make and test the code changes in the source files.
-2. Copy the final source files into `dist/`.
-3. Increase `version` in both `manifest.json` and `dist/manifest.json`.
-4. Test the unpacked `dist/` build in Chrome.
+2. Increase `version` in `package.json` and the root `manifest.json`.
+3. Run `npm run build` to regenerate `dist/`; never edit generated files directly.
+4. Run `npm test`, then test the unpacked `dist/` build in Chrome.
 5. Create a new versioned ZIP archive.
 6. Open the existing Web Store item.
 7. Select **Package** and **Upload new package**.
@@ -212,7 +216,7 @@ Uploading an update does not immediately replace the currently published version
 - [ ] No extension errors or DevTools console errors
 - [ ] Manifest name and summary checked
 - [ ] Manifest version increased when required
-- [ ] Source and `dist` manifests match
+- [ ] `npm run check:dist` confirms generated files are current and clean
 - [ ] ZIP has `manifest.json` at its root
 - [ ] ZIP contains no `.DS_Store`, secrets, HAR files, or private keys
 - [ ] Screenshots and promo images contain no confidential data

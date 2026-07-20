@@ -135,10 +135,21 @@ SAML HTTP Redirect binding values are Base64-encoded raw DEFLATE payloads. Chrom
 
 ## Files
 
+- Root runtime files are the canonical extension source. Do not edit files under `dist/` directly.
 - `manifest.json` declares the MV3 DevTools extension.
 - `devtools.html` and `devtools.js` register the DevTools panel.
 - `panel.html`, `panel.css`, and `panel.js` implement the panel UI and capture logic.
+- `scripts/build-dist.cjs` deterministically regenerates `dist/` from the approved root files and icons.
 - `scripts/test-flow-analysis.cjs` verifies OAM/SAML regressions, WNA success and NTLM fallback, consecutive WNA attempts, OIDC state correlation and mismatches, nested OIDC transactions, sanitized correlation aliases, and selected-request evidence rendering.
+
+After changing extension code, regenerate and verify the installable directory:
+
+```bash
+npm run build
+npm test
+```
+
+Use `npm run check:dist` in automation or before committing to confirm that `dist/` contains no stale, missing, or unexpected files.
 
 ## Marketing and Publishing
 
