@@ -1,4 +1,4 @@
-# Authentication Flow Inspector for SSO & Federation
+# Enterprise Authentication Flow Inspector
 
 A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise authentication and SSO troubleshooting. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, and HAR/JSON import and export.
 
@@ -47,7 +47,7 @@ A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise aut
 - Parses embedded X.509 certificates to show subject, issuer, serial number, issued-on date, expires-on date, SHA-1 thumbprint, and SHA-256 thumbprint.
 - Exports captured traffic as full JSON or as a sanitized JSON copy. Sanitized exports preserve request topology, endpoint paths, status, timing, sizes, header names, cookie names, protocol markers, recognized OAuth/OIDC parameter names, and stable pseudonymous correlation aliases while removing body values, decoded SAML XML, credentials, cookie values, tokens, certificates, real correlation values, deployment hostnames, non-allowlisted header values, and sensitive URL parameter values.
 - Exports the selected correlated login attempt as either a sanitized or full-diagnostic Markdown assessment. Reports include the outcome, validation evidence, prioritized next actions, request timeline, correlation keys, protocol-specific log locations, search guidance, capture limitations, and an explicit data-handling summary.
-- Imports Authentication Flow Inspector exports, raw entry arrays, and browser HAR files.
+- Imports Enterprise Authentication Flow Inspector exports, raw entry arrays, and browser HAR files.
 - Adds **Load Network HAR** to import entries currently available in Chrome DevTools' Network HAR model, including HAR files imported into the Network tab when Chrome exposes them to DevTools extensions.
 - Adds a multi-select **Protocol filter** for SAML, OAM/WebGate, WNA/Kerberos/NTLM, OAuth/OIDC/Bearer, and X.509. The OAuth family filter includes canonical OAuth endpoints, OIDC parameter/callback/token evidence, and APIs carrying a Bearer access token; matching rows identify the reason with distinct `OAuth`, `OIDC`, or `Bearer` tags. Multiple selected protocols use OR matching; Hide static and Search remain additional constraints.
 - Adds a **Search** field that filters captured entries across URL, request headers/body, response headers/body, status/mime fields, and decoded SAML data.

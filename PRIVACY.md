@@ -1,6 +1,6 @@
-# Privacy Policy for Authentication Flow Inspector
+# Privacy Policy for Enterprise Authentication Flow Inspector
 
-This extension is designed for local troubleshooting of enterprise single sign-on traffic inside Chrome Developer Tools.
+This extension is designed for local troubleshooting of enterprise authentication, single sign-on, federation, and authorization traffic inside Chrome Developer Tools.
 
 ## Data Processing
 

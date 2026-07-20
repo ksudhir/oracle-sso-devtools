@@ -2,7 +2,7 @@
 
 ## Title
 
-Authentication Flow Inspector for SSO & Federation
+Enterprise Authentication Flow Inspector
 
 ## Package Summary
 
@@ -10,13 +10,13 @@ Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAut
 
 ## Short Promotional Description
 
-Troubleshoot enterprise SSO and federation directly in Chrome DevTools. Correlate OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos/WNA, NTLM, and X.509 evidence.
+Troubleshoot enterprise authentication, SSO, and federation directly in Chrome DevTools. Correlate OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos/WNA, NTLM, and X.509 evidence.
 
 ## Full Store Description
 
-Authentication Flow Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
+Enterprise Authentication Flow Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
 
-### One panel for the complete browser-visible SSO flow
+### One panel for the complete browser-visible authentication flow
 
 - Capture requests and responses from the active inspected tab.
 - Start or stop processing without clearing the existing trace.
@@ -84,7 +84,7 @@ Created by Sudhir Kulkarni
 
 ## Single Purpose
 
-This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise SSO and federation traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, and HAR data.
+This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, and authorization traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, and HAR data.
 
 ## Permission Justification
 
@@ -96,7 +96,7 @@ No. All JavaScript, HTML, CSS, icons, and processing logic are packaged inside t
 
 ## Screenshot Captions
 
-1. **Complete SSO traffic view** — Follow OAM, WebGate, SAML, FED, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos, NTLM, and X.509 requests with provider badges, status, timing, size, and host-aware URL colors.
+1. **Complete authentication traffic view** — Follow OAM, WebGate, SAML, FED, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos, NTLM, and X.509 requests with provider badges, status, timing, size, and host-aware URL colors.
 2. **Decoded SAML intelligence** — Read formatted federation details, deployment-specific values, bindings, assertions, attributes, and certificate metadata.
 3. **Correlated OIDC flow analysis** — Connect Okta, Microsoft Entra ID, and standards-based authorization, callback, token, UserInfo, discovery, and JWKS traffic with state, nonce, PKCE, audience, issuer, and lifetime checks.
 4. **Windows authentication and X.509** — Inspect Negotiate/SPNEGO, Kerberos/WNA, NTLM fallback, credential-collection endpoints, and forwarded client-certificate headers.
@@ -110,7 +110,7 @@ Troubleshoot OAM, SAML, Okta, Entra & OIDC in Chrome DevTools
 
 ### Video Description
 
-See how Authentication Flow Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
+See how Enterprise Authentication Flow Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
 
 The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Okta, Microsoft Entra ID, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, and imported HAR sessions.
 

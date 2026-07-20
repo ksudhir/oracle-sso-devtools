@@ -1,6 +1,6 @@
 {
-  "product": "Authentication Flow Inspector for SSO & Federation",
-  "version": "0.4.0",
+  "product": "Enterprise Authentication Flow Inspector",
+  "version": "1.0.0",
   "reviewStatus": "store-ready-video-regeneration-pending",
   "copySource": "../STORE_LISTING.md",
   "assets": {
@@ -15,7 +15,7 @@
         "path": "screenshots/01-complete-sso-traffic.png",
         "width": 1280,
         "height": 800,
-        "topic": "Complete browser-visible SSO traffic with Okta and Microsoft Entra provider recognition"
+        "topic": "Complete browser-visible authentication traffic with Okta and Microsoft Entra provider recognition"
       },
       {
         "path": "screenshots/02-saml-federation-analysis.png",
