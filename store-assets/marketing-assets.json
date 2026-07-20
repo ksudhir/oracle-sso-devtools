@@ -1,7 +1,7 @@
 {
   "product": "Enterprise Authentication Flow Inspector",
   "version": "1.0.0",
-  "reviewStatus": "store-ready-video-regeneration-pending",
+  "reviewStatus": "store-ready",
   "copySource": "../STORE_LISTING.md",
   "assets": {
     "icon": {
@@ -63,7 +63,7 @@
       "durationSeconds": 54,
       "codec": "H.264",
       "metadataSource": "../STORE_LISTING.md",
-      "status": "Source updated for Okta and Microsoft Entra ID; MP4 regeneration pending compatible Apple toolchain"
+      "status": "Regenerated with Enterprise Authentication Flow Inspector branding and updated Okta and Microsoft Entra ID coverage"
     }
   },
   "generation": {
