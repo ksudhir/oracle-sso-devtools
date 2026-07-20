@@ -181,6 +181,28 @@ assert.deepEqual(
   JSON.parse(evaluate("JSON.stringify(testPersistedFlowScrollPositions)")),
   { navigator: 73, assessment: 418 }
 );
+context.testFlowScrollRoot.querySelector = (selector) => selector === ".flowNavigator"
+  ? { scrollTop: 0 }
+  : selector === ".flowAssessment"
+    ? { scrollTop: 0 }
+    : null;
+context.testPersistedFlowScrollPositions = evaluate("captureFlowScrollPositions(testFlowScrollRoot)");
+assert.deepEqual(
+  JSON.parse(evaluate("JSON.stringify(testPersistedFlowScrollPositions)")),
+  { navigator: 73, assessment: 418 }
+);
+context.testProgrammaticScrollEvent = {
+  isTrusted: true,
+  target: { scrollTop: 0, classList: { contains: (name) => name === "flowAssessment" } }
+};
+evaluate("state.workspaceMode = 'flow'; flowScrollRestorationPending = true; recordFlowUserScroll(testProgrammaticScrollEvent)");
+assert.equal(evaluate("state.flowScrollPositions.assessment"), 418);
+context.testTrustedScrollEvent = {
+  isTrusted: true,
+  target: { scrollTop: 241, classList: { contains: (name) => name === "flowAssessment" } }
+};
+evaluate("flowScrollRestorationPending = false; recordFlowUserScroll(testTrustedScrollEvent)");
+assert.equal(evaluate("state.flowScrollPositions.assessment"), 241);
 evaluate("resetFlowScrollPositions()");
 assert.deepEqual(
   JSON.parse(evaluate("JSON.stringify(state.flowScrollPositions)")),

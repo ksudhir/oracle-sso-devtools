@@ -108,14 +108,17 @@ detailOutput.addEventListener("click", (event) => {
   }
 });
 
-detailOutput.addEventListener("scroll", (event) => {
-  if (state.workspaceMode !== "flow") return;
+detailOutput.addEventListener("scroll", recordFlowUserScroll, true);
+
+function recordFlowUserScroll(event) {
+  if (state.workspaceMode !== "flow" || flowScrollRestorationPending || !event.isTrusted) return;
+  lastFlowUserScrollAt = Date.now();
   if (event.target.classList?.contains("flowNavigator")) {
     state.flowScrollPositions.navigator = event.target.scrollTop;
   } else if (event.target.classList?.contains("flowAssessment")) {
     state.flowScrollPositions.assessment = event.target.scrollTop;
   }
-}, true);
+}
 
 const OAM_WEBGATE_URL_PARTS = [
   "/oam",
@@ -357,6 +360,12 @@ const XML_ATTRIBUTE_PATTERN = /([A-Za-z_][\w:.-]*)(=)(&quot;.*?&quot;|&#039;.*?&
 const HTML_ENTITY_PATTERN = /&(quot|#039);/gu;
 const SAML_DECODE_TIMEOUT_MS = 1500;
 const HAR_ENTRY_TIMEOUT_MS = 3000;
+const FLOW_LIVE_RENDER_DELAY_MS = 350;
+const FLOW_SCROLL_SETTLE_MS = 800;
+
+let liveCaptureRenderTimer = null;
+let lastFlowUserScrollAt = 0;
+let flowScrollRestorationPending = false;
 
 chrome.devtools.network.onRequestFinished.addListener((request) => {
   request.getContent(async (body, encoding) => {
@@ -369,9 +378,31 @@ chrome.devtools.network.onRequestFinished.addListener((request) => {
       state.selectedId = entry.id;
     }
 
-    render();
+    scheduleLiveCaptureRender();
   });
 });
+
+function scheduleLiveCaptureRender() {
+  if (liveCaptureRenderTimer) clearTimeout(liveCaptureRenderTimer);
+  if (state.workspaceMode !== "flow") {
+    liveCaptureRenderTimer = null;
+    render();
+    return;
+  }
+
+  liveCaptureRenderTimer = setTimeout(flushLiveCaptureRender, FLOW_LIVE_RENDER_DELAY_MS);
+}
+
+function flushLiveCaptureRender() {
+  const scrollSettleRemaining = FLOW_SCROLL_SETTLE_MS - (Date.now() - lastFlowUserScrollAt);
+  if (state.workspaceMode === "flow" && scrollSettleRemaining > 0) {
+    liveCaptureRenderTimer = setTimeout(flushLiveCaptureRender, scrollSettleRemaining);
+    return;
+  }
+
+  liveCaptureRenderTimer = null;
+  render();
+}
 
 captureButton.addEventListener("click", () => {
   state.isCapturing = !state.isCapturing;
@@ -1361,6 +1392,7 @@ function render({ preserveFlowScroll = true } = {}) {
   const flowScrollPositions = preserveFlowScroll && isFlowWorkspace
     ? captureFlowScrollPositions()
     : null;
+  flowScrollRestorationPending = Boolean(flowScrollPositions);
   const visibleEntries = getVisibleEntries();
   const filteredEntryCount = state.entries.filter(matchesActiveFilters).length;
   const timingStats = getTimingStats(visibleEntries);
@@ -1474,11 +1506,17 @@ function captureFlowScrollPositions(root = detailOutput) {
   const navigator = root.querySelector?.(".flowNavigator");
   const assessment = root.querySelector?.(".flowAssessment");
   const positions = {
-    navigator: navigator ? Number(navigator.scrollTop || 0) : state.flowScrollPositions.navigator,
-    assessment: assessment ? Number(assessment.scrollTop || 0) : state.flowScrollPositions.assessment
+    navigator: captureFlowScrollPosition(navigator, state.flowScrollPositions.navigator),
+    assessment: captureFlowScrollPosition(assessment, state.flowScrollPositions.assessment)
   };
   state.flowScrollPositions = positions;
   return { ...positions };
+}
+
+function captureFlowScrollPosition(element, savedPosition) {
+  if (!element) return savedPosition;
+  const currentPosition = Number(element.scrollTop || 0);
+  return currentPosition === 0 && savedPosition > 0 ? savedPosition : currentPosition;
 }
 
 function restoreFlowScrollPositions(positions, root = detailOutput) {
@@ -1494,10 +1532,16 @@ function resetFlowScrollPositions() {
 }
 
 function scheduleFlowScrollRestoration(positions, version, root = detailOutput) {
-  if (!positions || typeof requestAnimationFrame !== "function") return;
+  if (!positions || typeof requestAnimationFrame !== "function") {
+    flowScrollRestorationPending = false;
+    return;
+  }
   requestAnimationFrame(() => {
     if (version !== renderVersion || state.workspaceMode !== "flow") return;
     restoreFlowScrollPositions(state.flowScrollPositions, root);
+    requestAnimationFrame(() => {
+      if (version === renderVersion) flowScrollRestorationPending = false;
+    });
   });
 }
 
