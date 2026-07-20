@@ -100,11 +100,11 @@ vm.runInContext(fs.readFileSync(panelPath, "utf8"), context, { filename: panelPa
 const panelMarkup = fs.readFileSync(path.join(__dirname, "..", "panel.html"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"));
 const devtoolsSource = fs.readFileSync(path.join(__dirname, "..", "devtools.js"), "utf8");
-assert.equal(manifest.name, "Authentication Flow Inspector for SSO & Federation");
+assert.equal(manifest.name, "Enterprise Authentication Flow Inspector");
 assert.ok(manifest.description.length <= 132);
 assert.match(manifest.description, /authentication, SSO, and federation flows/u);
 assert.match(devtoolsSource, /"Auth Flow Inspector"/u);
-assert.match(panelMarkup, /<title>Authentication Flow Inspector<\/title>/u);
+assert.match(panelMarkup, /<title>Enterprise Authentication Flow Inspector<\/title>/u);
 assert.match(panelMarkup, /data-workspace-mode="traffic">Traffic Inspector</u);
 assert.match(panelMarkup, /data-workspace-mode="flow">Flow Analysis</u);
 assert.doesNotMatch(panelMarkup, /data-tab="flowAnalysis"/u);
@@ -210,7 +210,7 @@ assert.deepEqual(
 );
 
 const renderedAbout = evaluate("renderAbout()");
-assert.match(renderedAbout, /Authentication Flow Inspector/u);
+assert.match(renderedAbout, /Enterprise Authentication Flow Inspector/u);
 assert.match(renderedAbout, /Color Legend/u);
 assert.match(renderedAbout, /Standard protocol value/u);
 assert.match(renderedAbout, /Deployment or transaction value/u);

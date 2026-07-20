@@ -1060,7 +1060,7 @@ async function parseImportedEntries(imported) {
     return normalizeHarEntries(imported.log.entries);
   }
 
-  throw new Error("Expected an Authentication Flow Inspector export, an entries array, or a HAR file with log.entries.");
+  throw new Error("Expected an Enterprise Authentication Flow Inspector export, an entries array, or a HAR file with log.entries.");
 }
 
 async function normalizeHarEntries(entries) {
@@ -2302,7 +2302,7 @@ function renderAbout() {
     `<div class="samlInfo">`,
     `<h3 class="samlInfoTitle">About</h3>`,
     `<div class="samlInfoGrid">`,
-    renderInfoCard("Authentication Flow Inspector", [
+    renderInfoCard("Enterprise Authentication Flow Inspector", [
       ["Created by", "Sudhir Kulkarni"],
       ["Contact", "ksudhir@gmail.com"]
     ], true),
@@ -4609,7 +4609,7 @@ function buildAssessmentMarkdown(flow, analysis, options = {}) {
     ]),
     "",
     "---",
-    "Generated locally by Authentication Flow Inspector for SSO & Federation."
+    "Generated locally by Enterprise Authentication Flow Inspector."
   );
 
   return `${lines.join("\n").replace(/\n{3,}/gu, "\n\n").trim()}\n`;

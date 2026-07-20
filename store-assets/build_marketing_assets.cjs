@@ -139,7 +139,7 @@ function promoPage(small) {
     ".proof{position:absolute;right:55px;top:58px;width:540px;height:420px;border:1px solid #34434d;border-radius:8px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.5);transform:rotate(-1deg)}.proof img{width:100%;height:100%;object-fit:cover;object-position:46% 50%}" +
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
     '</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">Chrome DevTools Extension</div></div>' +
-    "<h1>" + (small ? "Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
+    "<h1>" + (small ? "Enterprise Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
     (small ? "OAM · SAML · OAuth/OIDC · Okta · Entra" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra, Kerberos/WNA, X.509, and HAR evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
 }

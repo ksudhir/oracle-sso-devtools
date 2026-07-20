@@ -1,10 +1,10 @@
 # Chrome Web Store Publishing Guide
 
-This guide covers publishing and updating **Authentication Flow Inspector for SSO & Federation** in the Chrome Web Store.
+This guide covers publishing and updating **Enterprise Authentication Flow Inspector** in the Chrome Web Store.
 
 ## Current Package Information
 
-- Extension name: `Authentication Flow Inspector for SSO & Federation`
+- Extension name: `Enterprise Authentication Flow Inspector`
 - Version: `1.0.0`
 - Package directory: `dist/`
 - Upload archive: `oracle-sso-devtools-v1.0.0.zip`
@@ -89,7 +89,7 @@ Keep using the same Web Store item for future production releases. Creating anot
 
 Use the following title:
 
-> Authentication Flow Inspector for SSO & Federation
+> Enterprise Authentication Flow Inspector
 
 Use the package summary:
 

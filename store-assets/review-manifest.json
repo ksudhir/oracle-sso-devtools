@@ -2,7 +2,7 @@
   {
     "id": "complete-sso-traffic",
     "index": 1,
-    "title": "Complete SSO Traffic",
+    "title": "Complete Authentication Traffic",
     "src": "screenshots/01-complete-sso-traffic.png",
     "href": "screenshots/01-complete-sso-traffic.png"
   },
