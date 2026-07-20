@@ -102,7 +102,8 @@ const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest
 const devtoolsSource = fs.readFileSync(path.join(__dirname, "..", "devtools.js"), "utf8");
 assert.equal(manifest.name, "Enterprise Authentication Flow Inspector");
 assert.ok(manifest.description.length <= 132);
-assert.match(manifest.description, /authentication, SSO, and federation flows/u);
+assert.match(manifest.description, /Correlate enterprise authentication flows/u);
+assert.match(manifest.description, /SAML, OAuth\/OIDC, OAM\/WebGate, Kerberos\/WNA, NTLM, X\.509, Okta, and Microsoft Entra ID/u);
 assert.match(devtoolsSource, /"Auth Flow Inspector"/u);
 assert.match(panelMarkup, /<title>Enterprise Authentication Flow Inspector<\/title>/u);
 assert.match(panelMarkup, /data-workspace-mode="traffic">Traffic Inspector</u);

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Enterprise Authentication Flow Inspector",
   "version": "1.0.0",
-  "description": "Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAuth/OIDC, WNA, X.509, Okta, and Microsoft Entra ID.",
+  "description": "Correlate enterprise authentication flows: SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Microsoft Entra ID.",
   "devtools_page": "devtools.html",
   "permissions": [],
   "icons": {
