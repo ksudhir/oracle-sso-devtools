@@ -13,7 +13,7 @@ This guide covers publishing and updating **Enterprise Authentication Flow Inspe
 
 Manifest summary:
 
-> Correlate enterprise authentication flows: SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Microsoft Entra ID.
+> Troubleshoot and correlate authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Entra ID.
 
 ## 1. Prepare the Google Developer Account
 
@@ -93,7 +93,7 @@ Use the following title:
 
 Use the package summary:
 
-> Correlate enterprise authentication flows: SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Microsoft Entra ID.
+> Troubleshoot and correlate authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Entra ID.
 
 Use the complete approved copy in `STORE_LISTING.md` for the full description, screenshot captions, single-purpose statement, permission justification, remote-code declaration, and YouTube metadata.
 
