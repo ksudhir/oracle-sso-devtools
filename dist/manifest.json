@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Authentication Flow Inspector for SSO & Federation",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "description": "Inspect authentication, SSO, and federation flows across OAM/WebGate, SAML, OAuth/OIDC, WNA, X.509, Okta, and Microsoft Entra ID.",
   "devtools_page": "devtools.html",
   "permissions": [],

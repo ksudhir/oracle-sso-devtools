@@ -4,6 +4,9 @@
   "private": true,
   "description": "Chrome DevTools extension for inspecting browser-visible authentication, SSO, and federation flows.",
   "scripts": {
+    "build": "node scripts/build-dist.cjs",
+    "check:dist": "node scripts/build-dist.cjs --check",
+    "test": "node scripts/test-project.cjs",
     "start": "node server.js"
   },
   "engines": {
