@@ -171,6 +171,21 @@ context.testFlowAssessmentScroll.scrollTop = 0;
 evaluate("restoreFlowScrollPositions(testFlowScrollPositions, testFlowScrollRoot)");
 assert.equal(context.testFlowNavigatorScroll.scrollTop, 73);
 assert.equal(context.testFlowAssessmentScroll.scrollTop, 418);
+assert.deepEqual(
+  JSON.parse(evaluate("JSON.stringify(state.flowScrollPositions)")),
+  { navigator: 73, assessment: 418 }
+);
+context.testFlowScrollRoot.querySelector = () => null;
+context.testPersistedFlowScrollPositions = evaluate("captureFlowScrollPositions(testFlowScrollRoot)");
+assert.deepEqual(
+  JSON.parse(evaluate("JSON.stringify(testPersistedFlowScrollPositions)")),
+  { navigator: 73, assessment: 418 }
+);
+evaluate("resetFlowScrollPositions()");
+assert.deepEqual(
+  JSON.parse(evaluate("JSON.stringify(state.flowScrollPositions)")),
+  { navigator: 0, assessment: 0 }
+);
 
 const renderedAbout = evaluate("renderAbout()");
 assert.match(renderedAbout, /Authentication Flow Inspector/u);
