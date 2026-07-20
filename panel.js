@@ -12,6 +12,7 @@ const state = {
   flowProtocol: "auto",
   selectedFlowKey: null,
   flowNavigatorWidth: null,
+  flowScrollPositions: { navigator: 0, assessment: 0 },
   captureSource: "Live DevTools traffic"
 };
 
@@ -106,6 +107,15 @@ detailOutput.addEventListener("click", (event) => {
     render();
   }
 });
+
+detailOutput.addEventListener("scroll", (event) => {
+  if (state.workspaceMode !== "flow") return;
+  if (event.target.classList?.contains("flowNavigator")) {
+    state.flowScrollPositions.navigator = event.target.scrollTop;
+  } else if (event.target.classList?.contains("flowAssessment")) {
+    state.flowScrollPositions.assessment = event.target.scrollTop;
+  }
+}, true);
 
 const OAM_WEBGATE_URL_PARTS = [
   "/oam",
@@ -1347,6 +1357,7 @@ let renderVersion = 0;
 function render({ preserveFlowScroll = true } = {}) {
   const version = ++renderVersion;
   const isFlowWorkspace = state.workspaceMode === "flow";
+  if (isFlowWorkspace && !preserveFlowScroll) resetFlowScrollPositions();
   const flowScrollPositions = preserveFlowScroll && isFlowWorkspace
     ? captureFlowScrollPositions()
     : null;
@@ -1390,11 +1401,17 @@ function render({ preserveFlowScroll = true } = {}) {
     button.setAttribute("aria-current", active ? "page" : "false");
   });
 
-  Promise.resolve(renderDetails(version))
+  const detailRender = renderDetails(version);
+  if (version === renderVersion && isFlowWorkspace) {
+    restoreFlowScrollPositions(flowScrollPositions);
+  }
+
+  Promise.resolve(detailRender)
     .catch((error) => renderDetailFailure(version, isFlowWorkspace, error))
     .then(() => {
       if (version === renderVersion && isFlowWorkspace) {
         restoreFlowScrollPositions(flowScrollPositions);
+        scheduleFlowScrollRestoration(flowScrollPositions, version);
       }
     });
 }
@@ -1454,10 +1471,14 @@ function hasNonDefaultFilters() {
 }
 
 function captureFlowScrollPositions(root = detailOutput) {
-  return {
-    navigator: Number(root.querySelector?.(".flowNavigator")?.scrollTop || 0),
-    assessment: Number(root.querySelector?.(".flowAssessment")?.scrollTop || 0)
+  const navigator = root.querySelector?.(".flowNavigator");
+  const assessment = root.querySelector?.(".flowAssessment");
+  const positions = {
+    navigator: navigator ? Number(navigator.scrollTop || 0) : state.flowScrollPositions.navigator,
+    assessment: assessment ? Number(assessment.scrollTop || 0) : state.flowScrollPositions.assessment
   };
+  state.flowScrollPositions = positions;
+  return { ...positions };
 }
 
 function restoreFlowScrollPositions(positions, root = detailOutput) {
@@ -1466,6 +1487,18 @@ function restoreFlowScrollPositions(positions, root = detailOutput) {
   const assessment = root.querySelector?.(".flowAssessment");
   if (navigator) navigator.scrollTop = positions.navigator;
   if (assessment) assessment.scrollTop = positions.assessment;
+}
+
+function resetFlowScrollPositions() {
+  state.flowScrollPositions = { navigator: 0, assessment: 0 };
+}
+
+function scheduleFlowScrollRestoration(positions, version, root = detailOutput) {
+  if (!positions || typeof requestAnimationFrame !== "function") return;
+  requestAnimationFrame(() => {
+    if (version !== renderVersion || state.workspaceMode !== "flow") return;
+    restoreFlowScrollPositions(state.flowScrollPositions, root);
+  });
 }
 
 function getVisibleEntries() {
