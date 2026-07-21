@@ -157,3 +157,17 @@ Use `npm run check:dist` in automation or before committing to confirm that `dis
 - `CHROME_WEB_STORE_PUBLISHING.md` contains the release and review workflow.
 - `store-assets/build_marketing_assets.cjs` deterministically regenerates sanitized screenshots and promotional tiles from the real panel code.
 - `store-assets/video/create_promo_video.swift` regenerates the YouTube-ready product video.
+
+## Project Website
+
+- `website/` contains the static product, documentation, and privacy website.
+- `.github/workflows/deploy-pages.yml` publishes `website/` to GitHub Pages after changes reach `main`.
+- The site uses sanitized, synthetic product screenshots and does not load analytics, tracking, or remote JavaScript.
+
+Preview the website locally from the repository root:
+
+```bash
+python3 -m http.server 4173 --directory website
+```
+
+Then open `http://127.0.0.1:4173/`.

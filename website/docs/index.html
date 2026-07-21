@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Installation and usage documentation for Enterprise Authentication Flow Inspector." />
+    <meta name="theme-color" content="#0b1218" />
+    <link rel="icon" href="../assets/icon128.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <title>Documentation | Enterprise Authentication Flow Inspector</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+        <img src="../assets/icon128.png" alt="" width="40" height="40" />
+        <span>Auth Flow Inspector</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a href="../#capabilities">Capabilities</a>
+        <a href="../#protocols">Protocols</a>
+        <a href="./">Documentation</a>
+        <a href="../privacy/">Privacy</a>
+        <a class="nav-github" href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main" class="doc-main">
+      <div class="section-inner doc-layout">
+        <nav class="doc-nav" aria-label="Documentation sections">
+          <strong>Documentation</strong>
+          <a href="#install">Install</a>
+          <a href="#capture">Capture traffic</a>
+          <a href="#import">Import HAR/JSON</a>
+          <a href="#inspect">Inspect requests</a>
+          <a href="#flows">Flow Analysis</a>
+          <a href="#export">Export evidence</a>
+          <a href="#scope">Scope and limits</a>
+        </nav>
+
+        <article class="doc-content">
+          <p class="eyebrow dark">Version 1.0.0</p>
+          <h1>Documentation</h1>
+          <p>
+            Enterprise Authentication Flow Inspector is a Manifest V3 Chrome DevTools extension for
+            investigating browser-visible authentication, SSO, federation and authorization traffic.
+          </p>
+
+          <h2 id="install">Install the extension locally</h2>
+          <ol>
+            <li>Download or clone the project from GitHub.</li>
+            <li>Open <code>chrome://extensions</code> in Chrome.</li>
+            <li>Enable <strong>Developer mode</strong>.</li>
+            <li>Select <strong>Load unpacked</strong>.</li>
+            <li>Choose the project <code>dist</code> directory.</li>
+            <li>Open DevTools and select <strong>Auth Flow Inspector</strong>.</li>
+          </ol>
+          <div class="doc-callout">
+            <strong>DevTools placement</strong>
+            Chrome can place the panel under the overflow menu when the DevTools window is narrow. Select the
+            double-chevron menu if the panel is not immediately visible.
+          </div>
+
+          <h2 id="capture">Capture live traffic</h2>
+          <ol>
+            <li>Open DevTools before beginning the authentication attempt.</li>
+            <li>Select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Confirm that capture is running.</li>
+            <li>Perform the login or reproduce the failure in the inspected tab.</li>
+            <li>Stop capture when the relevant application return or failure is visible.</li>
+          </ol>
+          <p>
+            Start and stop control processing without clearing the existing trace. Use <strong>Clear</strong>
+            only when you want to begin a separate investigation.
+          </p>
+
+          <h2 id="import">Import HAR or JSON</h2>
+          <p>
+            Use <strong>Load Network HAR</strong> to read traffic currently available in Chrome's Network panel.
+            Use <strong>Import File</strong> for a HAR file, a panel JSON export, a raw entry array, or a JSON object
+            containing an <code>entries</code> array.
+          </p>
+          <ul>
+            <li>Keep request and response headers when exporting a HAR for authentication analysis.</li>
+            <li>Preserve response content when SAML forms, error payloads or token responses are relevant.</li>
+            <li>Treat HAR and full-diagnostic exports as sensitive authentication evidence.</li>
+          </ul>
+
+          <h2 id="inspect">Inspect individual requests</h2>
+          <p>
+            The Traffic Inspector is the selected-request workspace. The request list displays method, HTTP
+            status, duration, content size, protocol tags and a color associated with each host and port.
+          </p>
+          <p>The detail tabs provide request-level evidence:</p>
+          <ul>
+            <li><strong>Request and Response:</strong> structured headers, query parameters, forms, bodies and timing.</li>
+            <li><strong>Cookies:</strong> request and response cookies with OAM and WebGate-specific highlighting.</li>
+            <li><strong>Kerberos / X.509:</strong> browser-visible challenges, authorization schemes and forwarded certificates.</li>
+            <li><strong>SAML XML and SAML Details:</strong> decoded messages and organized federation attributes.</li>
+            <li><strong>OAuth Token and OIDC Details:</strong> parameters, JWT claims, lifetime and provider evidence.</li>
+          </ul>
+
+          <h2 id="flows">Use Flow Analysis</h2>
+          <p>
+            Flow Analysis evaluates related requests as a browser-visible transaction. Select Auto, OAM, SAML,
+            WNA or OIDC to review the detected flows for that protocol.
+          </p>
+          <ul>
+            <li>The Flow Navigator lists correlated transactions and their request sequence.</li>
+            <li>Selecting flow evidence focuses the corresponding request in the Traffic Inspector.</li>
+            <li>Validation checks distinguish passed evidence, failures and items requiring review.</li>
+            <li>Recommended next actions connect an issue to evidence and a practical troubleshooting step.</li>
+            <li>Expandable protocol details retain OAM and WNA-specific context without duplicating request tabs.</li>
+          </ul>
+
+          <h2 id="export">Export evidence and assessments</h2>
+          <h3>Traffic export</h3>
+          <p>
+            Export the captured entries as JSON for repeatable offline analysis. Use the sanitized option when
+            the trace will leave the controlled troubleshooting team.
+          </p>
+          <h3>Assessment export</h3>
+          <ul>
+            <li><strong>Markdown Report - Sanitized:</strong> redacts sensitive values while retaining analysis, timeline and next actions.</li>
+            <li><strong>Markdown Report - Full Diagnostic:</strong> retains correlation values needed for controlled server-side log investigation.</li>
+          </ul>
+
+          <h2 id="scope">Browser-visible scope and limits</h2>
+          <p>The inspector does not claim visibility into exchanges that never reach Chrome DevTools.</p>
+          <ul>
+            <li>Server-to-server token exchanges and federation calls may be absent.</li>
+            <li>Kerberos ticket caches, KDC traffic and PAC data are not decrypted or validated.</li>
+            <li>Backend OAM, WebGate, application and identity-provider logs remain separate evidence sources.</li>
+            <li>JWT, SAML and certificate material is decoded and summarized; cryptographic trust is not validated.</li>
+          </ul>
+          <p>
+            When an ECID, request ID, trace ID or provider correlation ID is visible, preserve it and use it to
+            locate the corresponding server-side event.
+          </p>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../privacy/">Privacy</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
+      </div>
+    </footer>
+    <script src="../app.js"></script>
+  </body>
+</html>
