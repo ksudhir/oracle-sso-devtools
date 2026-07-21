@@ -110,7 +110,7 @@ button { font: inherit; }
 
 .site-nav a:hover, .site-nav a:focus-visible { color: var(--white); }
 
-.site-nav .nav-github {
+.site-nav .nav-store {
   padding: 8px 13px;
   color: #071316;
   background: var(--cyan);
@@ -396,7 +396,7 @@ h3 { font-size: 20px; }
   .site-nav { position: absolute; top: 100%; left: 0; right: 0; display: none; align-items: stretch; max-height: calc(100vh - 68px); padding: 18px 22px 24px; overflow-y: auto; background: var(--ink); border-bottom: 1px solid var(--line-dark); }
   .site-nav.open { display: grid; gap: 6px; }
   .site-nav a { padding: 11px 8px; font-size: 15px; }
-  .site-nav .nav-github { margin-top: 8px; text-align: center; }
+  .site-nav .nav-store { margin-top: 8px; text-align: center; }
   .hero { min-height: 760px; }
   .hero-copy { padding-top: 58px; padding-bottom: 350px; }
   .hero-visual { bottom: -360px; width: 1060px; max-width: none; }
