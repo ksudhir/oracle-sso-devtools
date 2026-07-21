@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Step-by-step guide to capturing, inspecting, analyzing, and exporting authentication flows with Enterprise Authentication Flow Inspector." />
+    <meta name="theme-color" content="#0b1218" />
+    <link rel="icon" href="../assets/icon128.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <title>Getting Started | Enterprise Authentication Flow Inspector</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+        <img src="../assets/icon128.png" alt="" width="40" height="40" />
+        <span>Auth Flow Inspector</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a href="../#capabilities">Capabilities</a>
+        <a href="./">Getting Started</a>
+        <a href="../docs/">Documentation</a>
+        <a href="../privacy/">Privacy</a>
+        <a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a>
+        <a class="nav-store" href="https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha" target="_blank" rel="noopener">Add to Chrome</a>
+      </nav>
+    </header>
+
+    <main id="main" class="doc-main">
+      <div class="section-inner doc-layout tutorial-layout">
+        <nav class="doc-nav" aria-label="Getting started sections">
+          <strong>Getting Started</strong>
+          <a href="#prepare">Prepare</a>
+          <a href="#open">Open the panel</a>
+          <a href="#capture">Capture a login</a>
+          <a href="#traffic">Read the traffic</a>
+          <a href="#evidence">Inspect evidence</a>
+          <a href="#flow">Analyze the flow</a>
+          <a href="#protocols">Protocol clues</a>
+          <a href="#export">Export a report</a>
+          <a href="#troubleshoot">No data?</a>
+        </nav>
+
+        <article class="doc-content tutorial-content">
+          <p class="eyebrow dark">First investigation</p>
+          <h1>From login attempt to actionable evidence</h1>
+          <p class="tutorial-lede">
+            This walkthrough shows where to open the extension, how to capture one clean authentication attempt,
+            what to inspect in each workspace, and how to export the result for further troubleshooting.
+          </p>
+          <div class="tutorial-route" aria-label="Investigation sequence">
+            <span>1. Open</span><span>2. Capture</span><span>3. Inspect</span><span>4. Analyze</span><span>5. Export</span>
+          </div>
+
+          <h2 id="prepare">Before you begin</h2>
+          <p>
+            Install from the <a class="text-link" href="https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha" target="_blank" rel="noopener">Chrome Web Store</a>,
+            or follow the <a class="text-link" href="../docs/#offline">offline installation guide</a>. Use a test
+            account when possible and handle captured cookies, tokens, SAML messages, and certificates as sensitive data.
+          </p>
+          <div class="doc-callout">
+            <strong>Capture one attempt at a time</strong>
+            Start with an empty request list, reproduce one login or failure, and stop capture after the application
+            returns or the failure appears. A focused trace produces clearer correlation and fewer false associations.
+          </div>
+
+          <h2 id="open">1. Open the panel</h2>
+          <ol>
+            <li>Open the application page whose authentication flow you want to inspect.</li>
+            <li>Open Chrome DevTools with <strong>View &gt; Developer &gt; Developer Tools</strong>, the page's <strong>Inspect</strong> command, or the operating-system keyboard shortcut.</li>
+            <li>Select <strong>Auth Flow Inspector</strong> in the DevTools tab strip.</li>
+            <li>If it is not visible, open the DevTools double-chevron overflow menu and select it there.</li>
+            <li>Keep DevTools attached to the application tab throughout the login attempt. Undocking DevTools can provide more space without changing capture behavior.</li>
+          </ol>
+          <p>
+            The extension inspects only the tab to which DevTools is attached. Authentication steps that open a
+            separate browser tab are outside that panel's capture unless DevTools is also opened for the new tab.
+          </p>
+
+          <h2 id="capture">2. Capture a clean login attempt</h2>
+          <ol>
+            <li>Select <strong>Traffic Inspector</strong>.</li>
+            <li>Select <strong>Clear</strong> to remove requests from an earlier investigation.</li>
+            <li>Select <strong>Start capture</strong> if capture is paused.</li>
+            <li>Reload the protected application page or begin the sign-in action.</li>
+            <li>Complete the login, reproduce the failure, or stop at the exact stage you are investigating.</li>
+            <li>Select <strong>Stop capture</strong> so incoming application traffic no longer changes the evidence.</li>
+          </ol>
+          <figure class="tutorial-figure">
+            <img src="../assets/traffic-inspector.png" alt="Traffic Inspector showing authentication requests on the left and selected-request evidence on the right" width="1280" height="800" />
+            <figcaption><strong>Traffic Inspector</strong><span>The request timeline is on the left; evidence for the selected request is on the right.</span></figcaption>
+          </figure>
+
+          <h2 id="traffic">3. Read the request timeline</h2>
+          <p>Begin at the first protected-resource request and read downward in browser sequence.</p>
+          <div class="guide-table-wrap">
+            <table class="guide-table">
+              <thead><tr><th>Column or marker</th><th>What to look for</th></tr></thead>
+              <tbody>
+                <tr><td>Method</td><td><strong>GET</strong> commonly follows redirects; <strong>POST</strong> may carry credentials, SAML responses, or token requests.</td></tr>
+                <tr><td>HTTP status</td><td><strong>200/204</strong> success, <strong>3xx</strong> redirect, <strong>401/403</strong> authentication or authorization evidence, and <strong>5xx</strong> server failure.</td></tr>
+                <tr><td>Duration</td><td>Longer and highlighted requests may identify a slow identity provider, OAM server, callback, or application return.</td></tr>
+                <tr><td>Size</td><td>A zero-byte redirect can be normal; a response body may contain an error, SAML form, or token payload.</td></tr>
+                <tr><td>Tags</td><td>Use OAM, WebGate, SAML, FED, OAuth, OIDC, Kerberos, NTLM, X.509, Okta, and Entra tags to locate protocol evidence.</td></tr>
+                <tr><td>URL color</td><td>The same host and port retain the same readable URL color, helping you follow browser transitions between application, gateway, and identity-provider hosts.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Use <strong>Protocols</strong> to narrow the list, <strong>Hide static</strong> to remove scripts, fonts, and
+            images, and <strong>Search</strong> to find a URL, header, cookie, request ID, ECID, issuer, or response text.
+            Reset filters before concluding that a request was not captured.
+          </p>
+
+          <h2 id="evidence">4. Inspect the selected request</h2>
+          <p>Select a request on the left, then review the right-side tabs in this order:</p>
+          <ol>
+            <li><strong>Request:</strong> confirm the complete URL, query parameters, request headers, form data, body, timing, and method.</li>
+            <li><strong>Response:</strong> check the status, <code>Location</code> redirect, <code>WWW-Authenticate</code> challenge, response headers, body, and timing.</li>
+            <li><strong>Cookies:</strong> compare cookies sent by the browser with cookies returned by the server. OAM and WebGate cookie names use distinct highlights.</li>
+            <li><strong>Protocol details:</strong> open Kerberos/X.509, SAML, OAuth Token, or OIDC Details when the corresponding evidence exists.</li>
+          </ol>
+          <div class="doc-callout">
+            <strong>Preserve correlation identifiers</strong>
+            Record any ECID, request ID, provider trace ID, SAML message ID, OIDC state, or correlation ID associated
+            with a failure. These values are the bridge from browser evidence to OAM, WebGate, identity-provider,
+            reverse-proxy, and application logs.
+          </div>
+
+          <h2 id="flow">5. Analyze the complete authentication flow</h2>
+          <ol>
+            <li>Select the primary <strong>Flow Analysis</strong> workspace.</li>
+            <li>Start with <strong>Auto</strong>, or choose OAM, SAML, WNA, or OIDC to focus on one protocol.</li>
+            <li>Select a transaction in <strong>Flow Navigator</strong>.</li>
+            <li>Read its request sequence from top to bottom. Selecting an evidence request focuses the matching entry in Traffic Inspector.</li>
+            <li>Review the assessment reason and confidence, then inspect every <strong>Pass</strong>, <strong>Review</strong>, or <strong>Fail</strong> validation check.</li>
+            <li>Use <strong>Recommended Next Actions</strong> to identify the next configuration, browser, or server-log check.</li>
+          </ol>
+          <figure class="tutorial-figure">
+            <img src="../assets/oam-diagnostics.png" alt="Flow Analysis showing an OAM and WebGate transaction, validation checks, and diagnostic evidence" width="1280" height="800" />
+            <figcaption><strong>Flow Analysis</strong><span>Choose a correlated transaction, verify its request sequence, then work through its assessment and next actions.</span></figcaption>
+          </figure>
+          <p>
+            Flow Analysis evaluates related requests across the capture; the Traffic Inspector tabs remain precise
+            to the currently selected request. Use both views together rather than treating either as a replacement for the other.
+          </p>
+
+          <h2 id="protocols">6. Know what evidence matters</h2>
+          <div class="guide-table-wrap">
+            <table class="guide-table protocol-guide">
+              <thead><tr><th>Flow</th><th>Browser-visible evidence to inspect</th><th>Typical failure clues</th></tr></thead>
+              <tbody>
+                <tr><td><strong>OAM / WebGate</strong></td><td>Protected-resource redirect, <code>obrareq.cgi</code>/<code>obrar.cgi</code>, credential collection, request IDs, ECIDs, OAM and WebGate cookies, and application return.</td><td>Redirect loop, missing session cookie, OAM error response, failed credential submission, or no application return.</td></tr>
+                <tr><td><strong>SAML</strong></td><td><code>SAMLRequest</code>, <code>SAMLResponse</code>, RelayState, issuer, destination, InResponseTo, status, conditions, audience, signatures, and certificate dates.</td><td>Missing response, ID mismatch, non-success status, expired conditions, wrong destination/audience, or absent expected signature.</td></tr>
+                <tr><td><strong>OAuth / OIDC</strong></td><td>Authorization request, redirect URI, callback, state, nonce, PKCE, token evidence, issuer, audience, scopes, and token lifetime.</td><td>Missing callback, state/nonce mismatch, missing PKCE, provider error, wrong issuer/audience, or expired token.</td></tr>
+                <tr><td><strong>Kerberos / WNA</strong></td><td>Initial <code>401</code>, <code>WWW-Authenticate: Negotiate</code>, browser Authorization response, WNA collector endpoint, and final authorization/session evidence.</td><td>Repeated 401, no browser token, NTLM fallback, token scheme mismatch, or no authenticated application return.</td></tr>
+                <tr><td><strong>X.509</strong></td><td>X.509 collector endpoint, forwarded client-certificate headers, subject, issuer, serial number, validity dates, and final session evidence.</td><td>Certificate not forwarded, expired/not-yet-valid certificate, unexpected issuer/subject, or rejected credential collection.</td></tr>
+                <tr><td><strong>Okta / Entra</strong></td><td>Provider authority and endpoints, issuer metadata, provider error codes, request IDs, Entra trace/correlation IDs, and redirect context.</td><td>Provider error, tenant or authorization-server mismatch, policy denial, or callback failure. Preserve provider IDs for administrator logs.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tutorial-gallery" aria-label="Protocol analysis examples">
+            <figure class="tutorial-figure"><img src="../assets/saml-analysis.png" alt="Organized SAML request and response details" width="1280" height="800" /><figcaption><strong>SAML Details</strong><span>Separate standard protocol values from deployment-specific issuer, destination, IDs, and identities.</span></figcaption></figure>
+            <figure class="tutorial-figure"><img src="../assets/oidc-analysis.png" alt="OIDC flow assessment with callback and token validation checks" width="1280" height="800" /><figcaption><strong>OIDC assessment</strong><span>Correlate authorization and callback evidence before interpreting token and validation results.</span></figcaption></figure>
+            <figure class="tutorial-figure"><img src="../assets/wna-x509-analysis.png" alt="Kerberos WNA NTLM and X.509 authentication evidence" width="1280" height="800" /><figcaption><strong>Kerberos / X.509</strong><span>Distinguish an expected Negotiate challenge from repeated failures or red NTLM fallback evidence.</span></figcaption></figure>
+          </div>
+
+          <h2 id="export">7. Export an assessment</h2>
+          <ol>
+            <li>In Flow Analysis, select the transaction you want to report.</li>
+            <li>Open <strong>Export Assessment</strong>.</li>
+            <li>Choose <strong>Markdown Report - Sanitized</strong> for broader collaboration or support handoff.</li>
+            <li>Choose <strong>Markdown Report - Full Diagnostic</strong> only for a restricted troubleshooting team that needs deployment and identity context.</li>
+            <li>Review the exported report before sharing it and preserve the original HAR or full traffic export in a controlled location when deeper analysis may be required.</li>
+          </ol>
+          <p>
+            The report includes the selected flow outcome, validation evidence, request timeline, correlation keys,
+            recommended next actions, relevant log locations, and known browser-capture limitations.
+          </p>
+
+          <h2 id="troubleshoot">If the panel shows no useful data</h2>
+          <ul>
+            <li>Confirm that DevTools is attached to the tab performing the login.</li>
+            <li>Open the panel before starting the authentication flow, then reload the protected page.</li>
+            <li>Confirm that the button says <strong>Stop capture</strong>, which means capture is currently running.</li>
+            <li>Select <strong>Reset filters</strong> and temporarily clear <strong>Hide static</strong>.</li>
+            <li>Check whether the authentication flow opened a different tab or window.</li>
+            <li>For offline evidence, use <strong>Import File</strong> for HAR/JSON or <strong>Load Network HAR</strong> for entries visible to the Chrome Network panel.</li>
+          </ul>
+          <div class="doc-callout completion-checklist">
+            <strong>A useful investigation should answer</strong>
+            Which hosts participated? Which protocol and provider were detected? Where did the browser redirect?
+            Which request first failed or became incomplete? Which cookies, token claims, SAML fields, authentication
+            challenges, or certificate details support that conclusion? Which correlation ID should be searched in server logs?
+          </div>
+          <p><a class="button button-primary" href="../docs/">Open reference documentation</a></p>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../docs/">Documentation</a><a href="../privacy/">Privacy</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
+      </div>
+    </footer>
+    <script src="../app.js"></script>
+  </body>
+</html>
