@@ -2,7 +2,7 @@
 
 A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise authentication and SSO troubleshooting. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, and HAR/JSON import and export.
 
-[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
+[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 
 ## Install In Chrome
 

@@ -373,6 +373,27 @@ h3 { font-size: 20px; }
 .doc-callout { margin: 24px 0; padding: 18px 20px; background: #dce8e5; border-left: 3px solid var(--cyan-dark); }
 .doc-callout strong { display: block; margin-bottom: 6px; }
 
+.tutorial-layout { grid-template-columns: 230px minmax(0, 900px); }
+.tutorial-content { min-width: 0; }
+.tutorial-lede { max-width: 780px; font-size: 19px; }
+.tutorial-route { display: flex; flex-wrap: wrap; gap: 8px; margin: 28px 0 10px; }
+.tutorial-route span { padding: 7px 10px; color: #0b5962; background: #d6e7e4; border: 1px solid #b5cfca; border-radius: 4px; font-size: 12px; font-weight: 800; }
+.tutorial-figure { margin: 30px 0; overflow: hidden; background: #1c2429; border: 1px solid #9eaeaa; }
+.tutorial-figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
+.tutorial-figure figcaption { display: grid; grid-template-columns: 180px 1fr; gap: 20px; padding: 15px 17px; color: #b9c6ca; background: #182229; }
+.tutorial-figure figcaption strong { color: var(--cyan); }
+.guide-table-wrap { max-width: 100%; margin: 26px 0; overflow-x: auto; border: 1px solid #b9c6c2; }
+.guide-table { width: 100%; border-collapse: collapse; background: #f7f9f7; font-size: 14px; }
+.guide-table th, .guide-table td { padding: 13px 15px; text-align: left; vertical-align: top; border-bottom: 1px solid #c8d2cf; }
+.guide-table th { color: #18343b; background: #dbe7e4; font-size: 12px; text-transform: uppercase; }
+.guide-table tr:last-child td { border-bottom: 0; }
+.guide-table td:first-child { width: 180px; color: #263d43; }
+.guide-table code { overflow-wrap: anywhere; }
+.protocol-guide { min-width: 720px; }
+.protocol-guide td:first-child { width: 145px; }
+.tutorial-gallery { margin-top: 36px; }
+.completion-checklist { margin-top: 34px; border-left-color: var(--green); }
+
 .not-found {
   display: grid;
   min-height: 100vh;
@@ -386,6 +407,12 @@ h3 { font-size: 20px; }
 .not-found img { margin-bottom: 30px; border-radius: 8px; }
 .not-found h1 { margin-bottom: 18px; font-size: 52px; }
 .not-found p:not(.eyebrow) { max-width: 580px; margin-bottom: 28px; color: var(--muted-dark); font-size: 18px; }
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .site-nav { gap: 12px; }
+  .site-nav a { font-size: 12px; }
+  .site-nav .nav-store { padding-inline: 10px; }
+}
 
 @media (max-width: 900px) {
   h1 { font-size: 48px; }
@@ -408,6 +435,7 @@ h3 { font-size: 20px; }
   .doc-layout { grid-template-columns: 1fr; gap: 36px; }
   .doc-nav { position: static; display: flex; flex-wrap: wrap; gap: 8px 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line-light); }
   .doc-nav strong { width: 100%; margin: 0; }
+  .tutorial-figure figcaption { grid-template-columns: 1fr; gap: 5px; }
   .doc-nav a { padding: 0; }
 }
 
