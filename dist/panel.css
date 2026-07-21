@@ -1009,6 +1009,75 @@ button:disabled {
   color: var(--muted);
 }
 
+.aboutLinksCard h4 {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.aboutLinkList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.aboutLink {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.aboutLink:nth-child(odd) {
+  border-right: 1px solid var(--line);
+}
+
+.aboutLink:hover,
+.aboutLink:focus-visible {
+  background: color-mix(in srgb, var(--accent-soft) 62%, transparent);
+  outline: none;
+}
+
+.aboutLink:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.aboutLink strong,
+.aboutLink small {
+  display: block;
+}
+
+.aboutLink strong {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.aboutLink small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.aboutLinkAction {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+@media (max-width: 720px) {
+  .aboutLinkList {
+    grid-template-columns: 1fr;
+  }
+
+  .aboutLink:nth-child(odd) {
+    border-right: 0;
+  }
+}
+
 .colorLegendCard h4 {
   color: var(--accent);
   background: var(--accent-soft);

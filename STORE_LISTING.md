@@ -78,6 +78,14 @@ All analysis runs locally inside the extension. Captured traffic, cookies, token
 
 The extension analyzes traffic visible to Chrome DevTools. Server-to-server exchanges, domain-controller traffic, Kerberos ticket caches, private signing keys, and backend logs are outside that browser-visible scope. JWT and certificate information is decoded and summarized; cryptographic trust validation is not performed.
 
+Product website: https://ksudhir.github.io/oracle-sso-devtools/
+
+Getting Started: https://ksudhir.github.io/oracle-sso-devtools/getting-started/
+
+Documentation: https://ksudhir.github.io/oracle-sso-devtools/docs/
+
+Support: https://github.com/ksudhir/oracle-sso-devtools/issues
+
 Open source: https://github.com/ksudhir/oracle-sso-devtools
 
 Created by Sudhir Kulkarni

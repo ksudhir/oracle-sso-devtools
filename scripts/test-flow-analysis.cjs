@@ -212,6 +212,21 @@ assert.deepEqual(
 
 const renderedAbout = evaluate("renderAbout()");
 assert.match(renderedAbout, /Enterprise Authentication Flow Inspector/u);
+assert.match(renderedAbout, /Resources and Support/u);
+for (const resource of ["Product website", "Getting Started", "Documentation", "Privacy Policy", "Source code", "Report an issue"]) {
+  assert.match(renderedAbout, new RegExp(`>${resource}<`, "u"));
+}
+for (const resourceUrl of [
+  "https://ksudhir.github.io/oracle-sso-devtools/",
+  "https://ksudhir.github.io/oracle-sso-devtools/getting-started/",
+  "https://ksudhir.github.io/oracle-sso-devtools/docs/",
+  "https://ksudhir.github.io/oracle-sso-devtools/privacy/",
+  "https://github.com/ksudhir/oracle-sso-devtools",
+  "https://github.com/ksudhir/oracle-sso-devtools/issues"
+]) {
+  assert.match(renderedAbout, new RegExp(`href="${resourceUrl.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}"`, "u"));
+}
+assert.equal((renderedAbout.match(/target="_blank" rel="noopener noreferrer"/gu) || []).length, 6);
 assert.match(renderedAbout, /Color Legend/u);
 assert.match(renderedAbout, /Standard protocol value/u);
 assert.match(renderedAbout, /Deployment or transaction value/u);

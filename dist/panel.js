@@ -2176,6 +2176,11 @@ function getEntrySearchText(entry) {
 }
 
 async function renderDetails(version = renderVersion) {
+  if (state.workspaceMode !== "flow" && state.activeTab === "about") {
+    commitDetailHtml(version, renderAbout());
+    return;
+  }
+
   const selected = state.entries.find((entry) => entry.id === state.selectedId);
   if (!selected) {
     commitDetailText(version, state.entries.length
@@ -2200,8 +2205,6 @@ async function renderDetails(version = renderVersion) {
     commitDetailHtml(version, renderCookiesInfo(selected));
   } else if (state.activeTab === "authInfo") {
     commitDetailHtml(version, await renderAuthInfo(selected));
-  } else if (state.activeTab === "about") {
-    commitDetailHtml(version, renderAbout());
   } else if (state.activeTab === "request") {
     commitDetailHtml(version, renderRequestTable(selected));
   } else {
@@ -2306,10 +2309,36 @@ function renderAbout() {
       ["Created by", "Sudhir Kulkarni"],
       ["Contact", "ksudhir@gmail.com"]
     ], true),
+    renderAboutLinks(),
     renderColorLegend(),
     renderLabelAndTagLegend(),
     `</div>`,
     `</div>`
+  ].join("");
+}
+
+function renderAboutLinks() {
+  const links = [
+    ["Product website", "Overview, capabilities, and installation", "https://ksudhir.github.io/oracle-sso-devtools/"],
+    ["Getting Started", "Capture, inspect, analyze, and export a first authentication flow", "https://ksudhir.github.io/oracle-sso-devtools/getting-started/"],
+    ["Documentation", "Installation, imports, workspaces, exports, and capture scope", "https://ksudhir.github.io/oracle-sso-devtools/docs/"],
+    ["Privacy Policy", "Local processing, sensitive data, and user-controlled exports", "https://ksudhir.github.io/oracle-sso-devtools/privacy/"],
+    ["Source code", "Review the project and its release history on GitHub", "https://github.com/ksudhir/oracle-sso-devtools"],
+    ["Report an issue", "Request support or provide reproducible technical feedback", "https://github.com/ksudhir/oracle-sso-devtools/issues"]
+  ];
+
+  return [
+    `<section class="samlInfoCard isWide aboutLinksCard">`,
+    `<h4>Resources and Support</h4>`,
+    `<div class="aboutLinkList">`,
+    links.map(([label, description, url]) => [
+      `<a class="aboutLink" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">`,
+      `<span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(description)}</small></span>`,
+      `<span class="aboutLinkAction">Open</span>`,
+      `</a>`
+    ].join("")).join(""),
+    `</div>`,
+    `</section>`
   ].join("");
 }
 
