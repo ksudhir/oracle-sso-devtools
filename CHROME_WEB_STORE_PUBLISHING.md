@@ -5,11 +5,11 @@ This guide covers publishing and updating **Enterprise Authentication Flow Inspe
 ## Current Package Information
 
 - Extension name: `Enterprise Authentication Flow Inspector`
-- Version: `1.0.0`
+- Version: `1.0.1`
 - Package directory: `dist/`
-- Upload archive: `oracle-sso-devtools-v1.0.0.zip`
+- Upload archive: `oracle-sso-devtools-v1.0.1.zip`
 - Privacy policy: `PRIVACY.md`
-- Public privacy-policy URL: <https://github.com/ksudhir/oracle-sso-devtools/blob/main/PRIVACY.md>
+- Public privacy-policy URL: <https://ksudhir.github.io/oracle-sso-devtools/privacy/>
 
 Manifest summary:
 
@@ -50,7 +50,7 @@ Before packaging, update and verify the canonical root `manifest.json`, then run
 - Only necessary permissions are declared.
 - The manifest is valid JSON and contains no comments.
 
-The current feature release is version `1.0.0`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `1.0.1` or `1.1.0`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
+The current feature release is version `1.0.1`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `1.0.2` or `1.1.0`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
 
 ## 4. Create a Clean ZIP Archive
 
@@ -60,7 +60,7 @@ The manifest must be at the root of the ZIP, not inside a `dist` folder. From th
 npm run build
 npm test
 cd dist
-zip -r ../oracle-sso-devtools-v1.0.0.zip \
+zip -r ../oracle-sso-devtools-v1.0.1.zip \
   manifest.json devtools.html devtools.js \
   panel.html panel.css panel.js README.md icons \
   -x '*.DS_Store'
@@ -70,8 +70,8 @@ cd ..
 Check the package:
 
 ```bash
-unzip -l oracle-sso-devtools-v1.0.0.zip
-unzip -p oracle-sso-devtools-v1.0.0.zip manifest.json
+unzip -l oracle-sso-devtools-v1.0.1.zip
+unzip -p oracle-sso-devtools-v1.0.1.zip manifest.json
 ```
 
 Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screenshots, or store-promotion assets in the extension ZIP.
@@ -80,7 +80,7 @@ Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screensh
 
 1. Open the Chrome Web Store Developer Dashboard.
 2. For the first release, click **New item**.
-3. Upload `oracle-sso-devtools-v1.0.0.zip`.
+3. Upload `oracle-sso-devtools-v1.0.1.zip`.
 4. For an existing item, open it, select **Package**, and click **Upload new package**.
 
 Keep using the same Web Store item for future production releases. Creating another item for the same extension can be treated as repetitive content.
@@ -98,6 +98,13 @@ Use the package summary:
 Use the complete approved copy in `STORE_LISTING.md` for the full description, screenshot captions, single-purpose statement, permission justification, remote-code declaration, and YouTube metadata.
 
 Add the full store description, category, language, support contact, and project website or GitHub repository.
+
+Use these public links in the Store listing:
+
+- Homepage URL: <https://ksudhir.github.io/oracle-sso-devtools/>
+- Support URL: <https://github.com/ksudhir/oracle-sso-devtools/issues>
+- Getting Started: <https://ksudhir.github.io/oracle-sso-devtools/getting-started/>
+- Documentation: <https://ksudhir.github.io/oracle-sso-devtools/docs/>
 
 Upload the prepared assets:
 
@@ -132,7 +139,7 @@ Remote-code declaration:
 
 Privacy-policy URL:
 
-> https://github.com/ksudhir/oracle-sso-devtools/blob/main/PRIVACY.md
+> https://ksudhir.github.io/oracle-sso-devtools/privacy/
 
 Answer every data-use question according to the extension's actual behavior. The panel can process browsing activity, URLs, request and response headers, cookies, authentication information, and imported HAR content. Google requires disclosure of handled user data even when it is processed only locally and is not transmitted to the developer or a third party.
 

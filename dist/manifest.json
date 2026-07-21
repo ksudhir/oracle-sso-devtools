@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Enterprise Authentication Flow Inspector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Troubleshoot and correlate authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Entra ID.",
   "devtools_page": "devtools.html",
   "permissions": [],
