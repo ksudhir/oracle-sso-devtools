@@ -34,6 +34,7 @@
         <nav class="doc-nav" aria-label="Documentation sections">
           <strong>Documentation</strong>
           <a href="#install">Install</a>
+          <a href="#offline">Install offline</a>
           <a href="#capture">Capture traffic</a>
           <a href="#import">Import HAR/JSON</a>
           <a href="#inspect">Inspect requests</a>
@@ -66,6 +67,40 @@
             <li>Choose the project <code>dist</code> directory.</li>
             <li>Open DevTools and select <strong>Auth Flow Inspector</strong>.</li>
           </ol>
+
+          <h2 id="offline">Install on an offline computer</h2>
+          <p>
+            Prepare the extension package on an internet-connected computer, then transfer it through your
+            organization's approved removable-media or secure file-transfer process.
+          </p>
+          <h3>Prepare the files</h3>
+          <ol>
+            <li>Open the <a class="text-link" href="https://github.com/ksudhir/oracle-sso-devtools">GitHub repository</a>.</li>
+            <li>Select <strong>Code</strong>, then <strong>Download ZIP</strong>. A trusted internal administrator can instead clone a reviewed release or commit.</li>
+            <li>Scan and inspect the downloaded archive according to your organization's software-approval process.</li>
+            <li>Transfer the archive to the offline computer and extract it to a permanent local directory.</li>
+            <li>Confirm that the extracted project contains <code>dist/manifest.json</code>.</li>
+          </ol>
+          <h3>Load the offline copy</h3>
+          <ol>
+            <li>Open <code>chrome://extensions</code> on the offline computer.</li>
+            <li>Enable <strong>Developer mode</strong>.</li>
+            <li>Select <strong>Load unpacked</strong>.</li>
+            <li>Select the extracted project <code>dist</code> directory, not the ZIP file or repository root.</li>
+            <li>Open DevTools and select <strong>Auth Flow Inspector</strong>. Check the DevTools overflow menu if the panel is hidden.</li>
+          </ol>
+          <div class="doc-callout">
+            <strong>Offline updates are manual</strong>
+            An unpacked installation does not receive Chrome Web Store updates. To upgrade, obtain and review a
+            newer project archive, replace the extracted files, then select <strong>Reload</strong> for the extension
+            on <code>chrome://extensions</code>. Keep the directory in place while the extension is installed.
+          </div>
+          <p>
+            Managed enterprise environments may disable Developer mode or unpacked extensions. In that case,
+            ask the Chrome administrator to approve and deploy the extension through the organization's managed
+            browser policy. Do not download or install a third-party CRX presented as this project.
+          </p>
+
           <div class="doc-callout">
             <strong>DevTools placement</strong>
             Chrome can place the panel under the overflow menu when the DevTools window is narrow. Select the
