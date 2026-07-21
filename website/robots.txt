@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ksudhir.github.io/oracle-sso-devtools/sitemap.xml

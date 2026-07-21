@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Troubleshoot and correlate browser-visible enterprise authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Microsoft Entra ID."
+    />
+    <meta name="theme-color" content="#0b1218" />
+    <meta property="og:title" content="Enterprise Authentication Flow Inspector" />
+    <meta
+      property="og:description"
+      content="A focused Chrome DevTools workspace for browser-visible authentication troubleshooting."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ksudhir.github.io/oracle-sso-devtools/" />
+    <meta property="og:image" content="https://ksudhir.github.io/oracle-sso-devtools/assets/social-preview.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://ksudhir.github.io/oracle-sso-devtools/" />
+    <link rel="icon" href="./assets/icon128.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Enterprise Authentication Flow Inspector</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <a class="brand" href="./" aria-label="Enterprise Authentication Flow Inspector home">
+        <img src="./assets/icon128.png" alt="" width="40" height="40" />
+        <span>Auth Flow Inspector</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span>
+        <span></span><span></span><span></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a href="#capabilities">Capabilities</a>
+        <a href="#protocols">Protocols</a>
+        <a href="#workflow">How it works</a>
+        <a href="./docs/">Documentation</a>
+        <a href="./privacy/">Privacy</a>
+        <a class="nav-github" href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Chrome DevTools extension</p>
+          <h1 id="hero-title">Enterprise Authentication Flow Inspector</h1>
+          <p class="hero-lede">
+            Troubleshoot the browser-visible authentication story, from the first protected-resource
+            request through redirects, credentials, tokens, cookies, callbacks, and the final application return.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="https://github.com/ksudhir/oracle-sso-devtools">View on GitHub</a>
+            <a class="button button-secondary" href="./docs/#install">Install locally</a>
+          </div>
+          <ul class="hero-proof" aria-label="Product characteristics">
+            <li>Local analysis</li>
+            <li>No remote code</li>
+            <li>Open source</li>
+          </ul>
+        </div>
+        <div class="hero-visual" aria-label="Traffic Inspector showing authentication requests and response evidence">
+          <img
+            src="./assets/traffic-inspector.png"
+            alt="Authentication Flow Inspector showing tagged requests and structured request details in Chrome DevTools"
+            width="1280"
+            height="800"
+          />
+        </div>
+      </section>
+
+      <section class="signal-band" aria-label="Supported authentication technologies">
+        <div class="section-inner signal-list">
+          <span>SAML</span><span>OAuth / OIDC</span><span>OAM / WebGate</span><span>Kerberos / WNA</span>
+          <span>NTLM</span><span>X.509</span><span>Okta</span><span>Microsoft Entra ID</span>
+        </div>
+      </section>
+
+      <section id="capabilities" class="section section-light">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow dark">Selected-request evidence and complete-flow context</p>
+              <h2>See what happened. Keep the evidence attached.</h2>
+            </div>
+            <p>
+              Move from raw browser traffic to a correlated assessment without losing the exact request,
+              response, cookie, token, certificate, or correlation identifier behind each conclusion.
+            </p>
+          </div>
+
+          <div class="gallery" data-gallery>
+            <div class="gallery-tabs" role="tablist" aria-label="Inspector views">
+              <button role="tab" aria-selected="true" aria-controls="gallery-panel" data-image="./assets/traffic-inspector.png" data-alt="Traffic Inspector with tagged authentication requests" data-caption="Traffic Inspector" data-description="Scan status, timing, size, method, provider and protocol tags while host-specific URL colors preserve redirect context.">Traffic</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/saml-analysis.png" data-alt="Decoded SAML federation analysis" data-caption="SAML Details" data-description="Decode SAML messages and surface issuer, destination, bindings, assertions, conditions, signatures, attributes and certificate metadata.">SAML</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oidc-analysis.png" data-alt="Correlated OIDC flow analysis" data-caption="OIDC Flow Analysis" data-description="Correlate authorization, callback, token and provider evidence with state, nonce, PKCE, audience, issuer and lifetime checks.">OIDC</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/wna-x509-analysis.png" data-alt="Kerberos WNA NTLM and X.509 authentication assessment" data-caption="Kerberos / X.509" data-description="Inspect browser-visible Negotiate challenges, Kerberos or NTLM selection, repeated 401s, WNA endpoints and forwarded certificates.">WNA / X.509</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oam-diagnostics.png" data-alt="OAM and WebGate flow diagnostics" data-caption="OAM / WebGate" data-description="Follow request identifiers, WebGate and OAM transitions, authentication cookies, credential collection, ECIDs and the application return.">OAM</button>
+            </div>
+            <div id="gallery-panel" class="gallery-panel" role="tabpanel" tabindex="0">
+              <figure>
+                <img data-gallery-image src="./assets/traffic-inspector.png" alt="Traffic Inspector with tagged authentication requests" width="1280" height="800" />
+                <figcaption>
+                  <strong data-gallery-caption>Traffic Inspector</strong>
+                  <span data-gallery-description>Scan status, timing, size, method, provider and protocol tags while host-specific URL colors preserve redirect context.</span>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="protocols" class="section section-ink">
+        <div class="section-inner">
+          <div class="section-heading inverse">
+            <div>
+              <p class="eyebrow">Protocol-aware, vendor-aware</p>
+              <h2>One investigation surface for mixed enterprise identity stacks.</h2>
+            </div>
+            <p>
+              Authentication failures rarely stay inside one product boundary. The inspector keeps evidence
+              from redirects, cookies, headers and payloads in a single sequence.
+            </p>
+          </div>
+
+          <div class="capability-grid">
+            <article>
+              <span class="protocol-mark mark-blue">SAML</span>
+              <h3>Federation messages</h3>
+              <p>HTTP-POST and Redirect bindings, assertions, conditions, signatures, attributes and embedded certificates.</p>
+            </article>
+            <article>
+              <span class="protocol-mark mark-green">OIDC</span>
+              <h3>OAuth and OpenID Connect</h3>
+              <p>Authorization, callbacks, JWT claims, state, nonce, PKCE, issuer, audience and token lifetime signals.</p>
+            </article>
+            <article>
+              <span class="protocol-mark mark-amber">OAM</span>
+              <h3>OAM and WebGate</h3>
+              <p>Protected resources, server endpoints, authentication cookies, request IDs, ECIDs and application returns.</p>
+            </article>
+            <article>
+              <span class="protocol-mark mark-red">WNA</span>
+              <h3>Kerberos and NTLM</h3>
+              <p>Negotiate challenges, browser responses, protocol selection, NTLM fallback and repeated authorization failures.</p>
+            </article>
+            <article>
+              <span class="protocol-mark mark-violet">X.509</span>
+              <h3>Client certificates</h3>
+              <p>Credential-collection endpoints, forwarded certificate headers and browser-visible certificate metadata.</p>
+            </article>
+            <article>
+              <span class="protocol-mark mark-cyan">IDP</span>
+              <h3>Okta and Entra ID</h3>
+              <p>Provider recognition, tenant or organization context, provider errors and log correlation identifiers.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow" class="section section-paper">
+        <div class="section-inner workflow-layout">
+          <div class="workflow-intro">
+            <p class="eyebrow dark">A repeatable investigation path</p>
+            <h2>From capture to an engineer-ready assessment.</h2>
+            <p>
+              Work live in DevTools or import a HAR from another environment. Export a sanitized report for
+              collaboration or retain full correlation values for controlled diagnostic work.
+            </p>
+            <a class="text-link" href="./docs/">Read the documentation <span aria-hidden="true">&rarr;</span></a>
+          </div>
+          <ol class="workflow-steps">
+            <li><span>01</span><div><h3>Capture or import</h3><p>Record the active inspected tab, load the Network HAR, or import a saved HAR/JSON trace.</p></div></li>
+            <li><span>02</span><div><h3>Reduce the noise</h3><p>Filter by protocol, hide static resources and search across browser-visible requests and responses.</p></div></li>
+            <li><span>03</span><div><h3>Correlate the flow</h3><p>Use Flow Analysis to group related exchanges, validation checks, evidence and recommended next actions.</p></div></li>
+            <li><span>04</span><div><h3>Share the assessment</h3><p>Export sanitized or full-diagnostic Markdown with timelines, correlation keys and server-log guidance.</p></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section section-white">
+        <div class="section-inner boundary-layout">
+          <div>
+            <p class="eyebrow dark">Privacy by design</p>
+            <h2>Authentication data stays in your browser.</h2>
+          </div>
+          <div class="boundary-copy">
+            <p>
+              Analysis runs locally inside the extension. Captured traffic, cookies, tokens, SAML messages,
+              authentication headers and imported HAR data are not sent to the developer or third parties.
+            </p>
+            <p class="scope-note">
+              The inspector analyzes browser-visible evidence. Server-to-server exchanges, KDC traffic,
+              backend logs and cryptographic trust validation remain outside that scope.
+            </p>
+            <a class="text-link" href="./privacy/">Read the privacy policy <span aria-hidden="true">&rarr;</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta">
+        <div class="section-inner final-cta-inner">
+          <div>
+            <p class="eyebrow">Open source Chrome DevTools extension</p>
+            <h2>Make the next authentication failure explain itself.</h2>
+          </div>
+          <div class="final-actions">
+            <a class="button button-primary" href="https://github.com/ksudhir/oracle-sso-devtools">Explore the project</a>
+            <a class="button button-secondary" href="https://github.com/ksudhir/oracle-sso-devtools/issues">Report an issue</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <div class="footer-brand">
+          <img src="./assets/icon128.png" alt="" width="36" height="36" />
+          <div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div>
+        </div>
+        <nav aria-label="Footer navigation">
+          <a href="./docs/">Documentation</a>
+          <a href="./privacy/">Privacy</a>
+          <a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

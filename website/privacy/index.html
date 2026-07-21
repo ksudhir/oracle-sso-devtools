@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Privacy policy for Enterprise Authentication Flow Inspector." />
+    <meta name="theme-color" content="#0b1218" />
+    <link rel="icon" href="../assets/icon128.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <title>Privacy | Enterprise Authentication Flow Inspector</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+        <img src="../assets/icon128.png" alt="" width="40" height="40" />
+        <span>Auth Flow Inspector</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a href="../#capabilities">Capabilities</a>
+        <a href="../#protocols">Protocols</a>
+        <a href="../docs/">Documentation</a>
+        <a href="./">Privacy</a>
+        <a class="nav-github" href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main" class="doc-main">
+      <div class="section-inner doc-layout">
+        <nav class="doc-nav" aria-label="Privacy policy sections">
+          <strong>Privacy policy</strong>
+          <a href="#processing">Data processing</a>
+          <a href="#collection">Collection</a>
+          <a href="#exports">Import and export</a>
+          <a href="#sensitive">Sensitive data</a>
+          <a href="#remote-code">Remote code</a>
+          <a href="#contact">Contact</a>
+        </nav>
+
+        <article class="doc-content">
+          <p class="eyebrow dark">Effective July 20, 2026</p>
+          <h1>Privacy Policy</h1>
+          <p>
+            Enterprise Authentication Flow Inspector is designed to analyze browser-visible authentication
+            traffic locally in Chrome DevTools. It does not operate a developer-controlled collection service.
+          </p>
+
+          <h2 id="processing">Data processing</h2>
+          <p>
+            While Chrome DevTools is open for the active inspected tab, the extension processes request and
+            response information exposed by the Chrome DevTools APIs. This can include URLs, headers, cookies,
+            bodies, SAML messages, OAuth/OIDC tokens, authentication challenges, timing and imported HAR data.
+          </p>
+          <p>Processing is performed locally inside the extension for display, filtering, decoding and flow analysis.</p>
+
+          <h2 id="collection">Data collection and transmission</h2>
+          <p>
+            The extension does not transmit captured traffic, credentials, cookies, tokens, SAML messages,
+            certificate data, imported files or assessment results to the developer or third parties.
+          </p>
+          <p>The extension does not include analytics, advertising, tracking, telemetry or remote code.</p>
+
+          <h2 id="exports">User-controlled import and export</h2>
+          <p>
+            Users may explicitly import HAR or JSON files and export traffic or Markdown assessment reports.
+            These actions are initiated by the user. Exported files are written through the browser's download
+            behavior and are not uploaded by the extension.
+          </p>
+          <p>
+            Sanitized exports reduce sensitive values for collaboration. Full-diagnostic exports intentionally
+            preserve evidence that may be needed to correlate server-side logs.
+          </p>
+
+          <h2 id="sensitive">Sensitive data notice</h2>
+          <p>
+            Authentication traces can contain credentials, session cookies, bearer tokens, identity attributes,
+            internal hostnames and correlation identifiers. Users are responsible for storing and sharing captured
+            or exported data according to their organization's security requirements.
+          </p>
+
+          <h2 id="remote-code">Remote code</h2>
+          <p>
+            All JavaScript, HTML, CSS, icons and processing logic required by the extension are packaged with it.
+            The extension does not download or execute remote code.
+          </p>
+
+          <h2 id="contact">Contact</h2>
+          <p>
+            Privacy questions and project issues can be submitted through
+            <a class="text-link" href="https://github.com/ksudhir/oracle-sso-devtools/issues">GitHub Issues</a>
+            or by email to <a class="text-link" href="mailto:ksudhir@gmail.com">ksudhir@gmail.com</a>.
+          </p>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../docs/">Documentation</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
+      </div>
+    </footer>
+    <script src="../app.js"></script>
+  </body>
+</html>
