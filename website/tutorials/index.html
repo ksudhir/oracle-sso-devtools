@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Step-by-step troubleshooting tutorials for SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and offline HAR analysis with Enterprise Authentication Flow Inspector."
+    />
+    <meta name="theme-color" content="#0b1218" />
+    <link rel="canonical" href="https://ksudhir.github.io/oracle-sso-devtools/tutorials/" />
+    <link rel="icon" href="../assets/icon128.png" />
+    <link rel="stylesheet" href="../styles.css" />
+    <title>Troubleshooting Tutorials | Enterprise Authentication Flow Inspector</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+        <img src="../assets/icon128.png" alt="" width="40" height="40" />
+        <span>Auth Flow Inspector</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation">
+        <a href="../#capabilities">Capabilities</a>
+        <a href="../#protocols">Protocols</a>
+        <a href="../#workflow">How it works</a>
+        <a href="../getting-started/">Getting Started</a>
+        <a href="../docs/">Documentation</a>
+        <a href="../privacy/">Privacy</a>
+        <a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a>
+        <a class="nav-store" href="https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha" target="_blank" rel="noopener">Add to Chrome</a>
+      </nav>
+    </header>
+
+    <main id="main" class="doc-main">
+      <div class="section-inner doc-layout tutorial-layout">
+        <nav class="doc-nav" aria-label="Troubleshooting tutorial sections">
+          <strong>Troubleshooting</strong>
+          <a href="#method">Investigation method</a>
+          <a href="#saml">SAML failure</a>
+          <a href="#oidc">OAuth / OIDC</a>
+          <a href="#oam">OAM / WebGate</a>
+          <a href="#wna">Kerberos / WNA</a>
+          <a href="#x509">X.509 certificate</a>
+          <a href="#har">Offline HAR</a>
+          <a href="#handoff">Engineering handoff</a>
+        </nav>
+
+        <article class="doc-content tutorial-content">
+          <p class="eyebrow dark">Issue-resolution playbooks</p>
+          <h1>Troubleshoot an authentication flow step by step</h1>
+          <p class="tutorial-lede">
+            Use these playbooks when a login redirects incorrectly, stops at an identity provider, falls back to
+            NTLM, rejects a client certificate, returns an OAuth/OIDC error, or succeeds without creating the
+            expected application session.
+          </p>
+          <div class="doc-callout warning-callout">
+            <strong>Authentication evidence is sensitive</strong>
+            HAR files and full exports may contain session cookies, authorization codes, tokens, SAML assertions,
+            certificate data, identities, and internal hostnames. Keep the original evidence restricted and use a
+            sanitized export for broader collaboration.
+          </div>
+
+          <h2 id="method">Use the same investigation method every time</h2>
+          <ol class="investigation-steps">
+            <li><strong>Define the symptom.</strong> Record the starting URL, expected result, actual result, test account, and approximate failure time.</li>
+            <li><strong>Capture one clean attempt.</strong> Open DevTools on the application tab, clear earlier traffic, start capture, reproduce once, and stop capture.</li>
+            <li><strong>Reduce noise.</strong> Enable <strong>Hide static</strong>, select the relevant protocol filter, and reset filters before deciding that evidence is missing.</li>
+            <li><strong>Read browser order.</strong> Follow redirects from the first protected resource through the gateway or identity provider and back to the application.</li>
+            <li><strong>Inspect request evidence.</strong> Review Request, Response, Cookies, and the applicable protocol-details tab for the selected row.</li>
+            <li><strong>Correlate the transaction.</strong> Open Flow Analysis, select the detected attempt, verify every associated request, and read validation checks and next actions.</li>
+            <li><strong>Preserve correlation values.</strong> Record ECID, request ID, SAML ID/InResponseTo, OIDC state, Entra trace/correlation ID, or Okta request ID where available.</li>
+            <li><strong>Export the assessment.</strong> Use the sanitized Markdown report for routine sharing and the full diagnostic report only within a controlled support team.</li>
+          </ol>
+          <div class="case-summary">
+            <div><strong>Traffic Inspector answers</strong><span>What happened in this individual browser request?</span></div>
+            <div><strong>Flow Analysis answers</strong><span>How do the related requests form one authentication attempt?</span></div>
+          </div>
+
+          <section class="playbook-section" id="saml">
+            <div class="playbook-heading">
+              <span class="playbook-number">01</span>
+              <div><p>SAML / federation</p><h2>SAML login stops, loops, or returns an error</h2></div>
+            </div>
+            <p><strong>Typical symptoms:</strong> the browser remains at the identity provider, the service provider rejects the response, a login loops, or the application shows an audience, destination, signature, or expiry error.</p>
+            <h3>Capture and isolate</h3>
+            <ol>
+              <li>Clear the panel, start capture, and reproduce one login from the service provider.</li>
+              <li>Stop capture after the error or final application return.</li>
+              <li>Select <strong>Protocols &gt; SAML</strong> and temporarily keep <strong>Hide static</strong> enabled.</li>
+              <li>Find the outbound request containing <code>SAMLRequest</code> and the return request containing <code>SAMLResponse</code>.</li>
+            </ol>
+            <h3>Inspect the evidence</h3>
+            <div class="guide-table-wrap">
+              <table class="guide-table">
+                <thead><tr><th>Where</th><th>Verify</th><th>Problem clue</th></tr></thead>
+                <tbody>
+                  <tr><td>SAML Details - Common</td><td>Request ID, response InResponseTo, issuer, destination, version</td><td>InResponseTo does not match the initiating request, or destination is not the expected ACS</td></tr>
+                  <tr><td>Status</td><td>SAML status and nested status message</td><td>Anything other than success, especially responder or authentication failures</td></tr>
+                  <tr><td>Conditions</td><td>NotBefore, NotOnOrAfter, and audience</td><td>Expired assertion, clock-skew problem, or wrong service-provider audience</td></tr>
+                  <tr><td>Signature / certificate</td><td>Expected response or assertion signature and certificate dates</td><td>Expected signature absent, certificate expired, or certificate not yet valid</td></tr>
+                  <tr><td>Response request</td><td>RelayState and posted form destination</td><td>RelayState lost or response posted to a different environment</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <figure class="tutorial-figure">
+              <img src="../assets/saml-analysis.png" alt="SAML Details showing response status, conditions, assertion, signature, and deployment-specific values" width="1280" height="800" />
+              <figcaption><strong>SAML Details</strong><span>Green values are protocol-defined; purple values identify deployment details to compare with metadata and configuration.</span></figcaption>
+            </figure>
+            <h3>Resolve or escalate</h3>
+            <ul>
+              <li>Correct the service-provider ACS, entity ID, identity-provider issuer, audience, or metadata when browser evidence shows a mismatch.</li>
+              <li>Compare certificate validity and signing expectations; the extension identifies visible signatures but does not cryptographically validate trust.</li>
+              <li>If the request exists but no response returns, investigate identity-provider policy and authentication using the request ID and timestamp.</li>
+              <li>Provide both SAML message IDs, issuer, destination, status, timestamps, and the sanitized assessment to the federation administrator.</li>
+            </ul>
+          </section>
+
+          <section class="playbook-section" id="oidc">
+            <div class="playbook-heading">
+              <span class="playbook-number">02</span>
+              <div><p>OAuth 2.0 / OpenID Connect</p><h2>Authorization succeeds but the callback or application fails</h2></div>
+            </div>
+            <p><strong>Typical symptoms:</strong> invalid state, redirect URI mismatch, missing callback, repeated authorization, access denied, expired token, wrong tenant, or successful identity-provider authentication followed by an application error.</p>
+            <h3>Capture and isolate</h3>
+            <ol>
+              <li>Capture one login from the client application through the authorization server and back.</li>
+              <li>Select <strong>Protocols &gt; OAuth/OIDC/Bearer</strong>. Rows may match because they carry OIDC parameters or Bearer evidence even when only canonical endpoints receive the OAuth tag.</li>
+              <li>In Flow Analysis, select <strong>OIDC</strong> and choose the transaction matching the login time and state value.</li>
+              <li>Confirm that the authorization request and callback belong to the same transaction before interpreting validation results.</li>
+            </ol>
+            <h3>Inspect the evidence</h3>
+            <div class="guide-table-wrap">
+              <table class="guide-table">
+                <thead><tr><th>Evidence</th><th>Expected</th><th>Problem clue</th></tr></thead>
+                <tbody>
+                  <tr><td>Authorization request</td><td>Correct client ID, redirect URI, response type, scope, state, nonce, and PKCE challenge</td><td>Wrong environment, unregistered URI, missing state/nonce, or absent PKCE where required</td></tr>
+                  <tr><td>Callback</td><td>Returned code or explicit error and the original state</td><td>No callback, provider error, or state mismatch</td></tr>
+                  <tr><td>ID token</td><td>Expected issuer, audience/client ID, lifetime, nonce, and subject</td><td>Expired token, wrong issuer/audience, or nonce mismatch</td></tr>
+                  <tr><td>Provider evidence</td><td>Expected Oracle, Okta, or Microsoft Entra authority and tenant</td><td>Unexpected tenant, authorization server, AADSTS error, or Okta error</td></tr>
+                  <tr><td>Browser scope</td><td>Callback is visible even when token exchange is server-side</td><td>No browser-visible token is not automatically a failure</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <figure class="tutorial-figure">
+              <img src="../assets/oidc-analysis.png" alt="OIDC Flow Analysis showing correlated authorization, callback, validation checks, and recommended next actions" width="1280" height="800" />
+              <figcaption><strong>OIDC Flow Analysis</strong><span>Start with state correlation, then review callback, PKCE, nonce, issuer, audience, token lifetime, and provider-specific errors.</span></figcaption>
+            </figure>
+            <h3>Resolve or escalate</h3>
+            <ul>
+              <li>Correct registered redirect URIs and client configuration when the captured request differs from the provider registration.</li>
+              <li>Investigate application session creation when the callback succeeds but the browser returns to an unauthenticated application.</li>
+              <li>Do not report a missing browser token as a defect when the application performs the code exchange on its backend.</li>
+              <li>Preserve state aliases, timestamp, provider error, tenant, Entra trace/correlation IDs, or Okta request ID for provider and application logs.</li>
+            </ul>
+          </section>
+
+          <section class="playbook-section" id="oam">
+            <div class="playbook-heading">
+              <span class="playbook-number">03</span>
+              <div><p>Oracle Access Manager / WebGate</p><h2>Protected resource redirects but no authenticated session is established</h2></div>
+            </div>
+            <p><strong>Typical symptoms:</strong> repeated redirects, return to the login page, OAM error page, credential submission without application access, missing session cookie, or a slow OAM/WebGate exchange.</p>
+            <h3>Capture and isolate</h3>
+            <ol>
+              <li>Start at the protected application URL, clear the panel, and reproduce one login.</li>
+              <li>Select <strong>Protocols &gt; OAM/WebGate</strong> and keep <strong>Hide static</strong> enabled.</li>
+              <li>In Flow Analysis, select <strong>OAM</strong> and choose the attempt matching the start time.</li>
+              <li>Read the sequence from protected resource/WebGate to OAM credential collection, credential submission, WebGate reply, and application return.</li>
+            </ol>
+            <h3>Inspect the evidence</h3>
+            <div class="guide-table-wrap">
+              <table class="guide-table">
+                <thead><tr><th>Stage</th><th>What to inspect</th><th>Problem clue</th></tr></thead>
+                <tbody>
+                  <tr><td>Protected resource</td><td>Initial status and Location redirect to <code>obrareq.cgi</code></td><td>No OAM redirect or redirect to the wrong host/port</td></tr>
+                  <tr><td>Credential routing</td><td><code>obrareq.cgi</code>/<code>obreq.cgi</code>, authentication scheme, request ID</td><td>Looping collector route or unexpected WNA/X.509/form scheme</td></tr>
+                  <tr><td>Credential submit</td><td>Actual submit endpoint and HTTP result</td><td>4xx/5xx, error body, or return to the collector</td></tr>
+                  <tr><td>Session transition</td><td>OAM_ID, OAM server cookies, OAMAuthnCookie/ObSSOCookie, and redirects</td><td>Expected OAM or WebGate session cookie is not created or not returned</td></tr>
+                  <tr><td>Application return</td><td>Final URL, status, timing, and session behavior</td><td>No return, another challenge, unauthorized result, or redirect loop</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <figure class="tutorial-figure">
+              <img src="../assets/oam-diagnostics.png" alt="OAM Flow Analysis showing WebGate and OAM stages, validation checks, and recommended actions" width="1280" height="800" />
+              <figcaption><strong>OAM/WebGate assessment</strong><span>Browser-visible stages distinguish WebGate from OAM server traffic and preserve ECID/request ID evidence for server logs.</span></figcaption>
+            </figure>
+            <h3>Resolve or escalate</h3>
+            <ul>
+              <li>Use cookie ownership highlights to determine whether the missing transition belongs to WebGate or the OAM server.</li>
+              <li>Use the first failing request rather than the final error page as the starting point for log analysis.</li>
+              <li>Search WebGate, OHS, OAM, WebLogic, and application logs using the captured ECID, RID, request ID, timestamp, host, and endpoint.</li>
+              <li>Include the complete redirect sequence and note whether credential collection, session creation, and application return were observed.</li>
+            </ul>
+          </section>
+
+          <section class="playbook-section" id="wna">
+            <div class="playbook-heading">
+              <span class="playbook-number">04</span>
+              <div><p>Kerberos / Windows Native Authentication</p><h2>Negotiate challenges repeatedly or falls back to NTLM</h2></div>
+            </div>
+            <p><strong>Typical symptoms:</strong> repeated 401 responses, a browser credential prompt, WNA collector failure, Kerberos not selected, or NTLM shown in red.</p>
+            <h3>Capture and isolate</h3>
+            <ol>
+              <li>Capture the protected request from a domain-joined test system where WNA is expected.</li>
+              <li>Select <strong>Protocols &gt; WNA/Kerberos/NTLM</strong>.</li>
+              <li>Open Flow Analysis, select <strong>WNA</strong>, and verify the challenge and browser response are in the same attempt.</li>
+              <li>Select the relevant requests and open <strong>Kerberos / X.509</strong> for header-level evidence.</li>
+            </ol>
+            <h3>Interpret the exchange</h3>
+            <ul>
+              <li>An initial <code>401</code> with <code>WWW-Authenticate: Negotiate</code> is an expected challenge, not automatically a failure.</li>
+              <li>A following <code>Authorization: Negotiate</code> indicates that the browser submitted an SPNEGO token; its presence does not prove that the embedded mechanism is Kerberos.</li>
+              <li>An explicit NTLM token or NTLM fallback indicator means Kerberos was not used and should be investigated when Kerberos is required.</li>
+              <li>Repeated challenges with no browser token indicate browser policy, trusted-zone, URL, or client configuration should be checked before server authentication.</li>
+              <li>A submitted token followed by rejection requires SPN, service account, keytab, DNS, clock, KDC, and server-log validation outside the browser.</li>
+            </ul>
+            <figure class="tutorial-figure">
+              <img src="../assets/wna-x509-analysis.png" alt="Kerberos WNA NTLM and X.509 evidence with authentication challenge and browser response" width="1280" height="800" />
+              <figcaption><strong>Kerberos / WNA evidence</strong><span>Separate the expected 401 challenge from the browser token response, NTLM fallback, and final authorization outcome.</span></figcaption>
+            </figure>
+            <h3>Resolve or escalate</h3>
+            <ul>
+              <li>If no token is sent, validate browser integrated-authentication policy, trusted URL configuration, proxy behavior, and hostname use.</li>
+              <li>If NTLM is sent, verify DNS canonicalization and SPN registration before treating the OAM endpoint as the primary cause.</li>
+              <li>If Negotiate is rejected, provide the challenge sequence, host, WNA endpoint, timestamps, HTTP statuses, and token scheme; do not share token bytes broadly.</li>
+            </ul>
+          </section>
+
+          <section class="playbook-section" id="x509">
+            <div class="playbook-heading">
+              <span class="playbook-number">05</span>
+              <div><p>X.509 authentication</p><h2>A client certificate is requested but authentication fails</h2></div>
+            </div>
+            <p><strong>Typical symptoms:</strong> no certificate prompt, wrong certificate selected, certificate accepted by TLS but rejected by the application, expired certificate, or OAM X.509 collection failure.</p>
+            <h3>Capture and inspect</h3>
+            <ol>
+              <li>Capture one attempt beginning at the protected X.509 resource.</li>
+              <li>Select <strong>Protocols &gt; X.509</strong> and locate <code>/oam/CredCollectServlet/X509</code> or forwarded certificate evidence.</li>
+              <li>Open <strong>Kerberos / X.509</strong> and review the visible subject, issuer, serial number, validity period, and thumbprints.</li>
+              <li>Check Request and Response for forwarded certificate headers, redirects, status, and OAM/WebGate session cookies.</li>
+            </ol>
+            <div class="doc-callout">
+              <strong>Know the browser boundary</strong>
+              Chrome DevTools may not expose the TLS client-certificate exchange itself. The extension can analyze
+              browser-visible collector requests and certificate-forwarding headers, but server and reverse-proxy
+              logs remain authoritative for TLS negotiation and trust-chain validation.
+            </div>
+            <h3>Resolve or escalate</h3>
+            <ul>
+              <li>Correct expired or not-yet-valid certificates and confirm the expected issuing CA and subject-mapping rule.</li>
+              <li>Verify that the proxy or web tier forwards certificate information in the header expected by the application or OAM integration.</li>
+              <li>Provide subject, issuer, serial number, thumbprint, collector endpoint, timestamp, ECID/request ID, and final HTTP result without sharing private keys.</li>
+            </ul>
+          </section>
+
+          <section class="playbook-section" id="har">
+            <div class="playbook-heading">
+              <span class="playbook-number">06</span>
+              <div><p>Offline troubleshooting</p><h2>Analyze a HAR captured on another system</h2></div>
+            </div>
+            <h3>Prepare the evidence</h3>
+            <ol>
+              <li>On the affected system, open Chrome DevTools before reproducing the login.</li>
+              <li>In Network, preserve the log if navigation clears requests, reproduce one clean attempt, and export the HAR with content through the approved process.</li>
+              <li>Transfer the HAR securely. Treat it as sensitive until it has been reviewed and sanitized.</li>
+            </ol>
+            <h3>Import and analyze</h3>
+            <ol>
+              <li>Open <strong>Auth Flow Inspector</strong> on the analysis computer.</li>
+              <li>Select <strong>Import File</strong> and choose the HAR or panel JSON export. Use <strong>Load Network HAR</strong> only for entries already available in Chrome's Network model.</li>
+              <li>Wait for the imported request count, then use protocol filters and Flow Analysis as for live traffic.</li>
+              <li>If decoded SAML, bodies, cookies, or token evidence is absent, verify that the source HAR retained request/response headers and content.</li>
+              <li>Export a sanitized assessment after selecting the relevant transaction.</li>
+            </ol>
+            <div class="doc-callout warning-callout">
+              <strong>Imported evidence can be incomplete</strong>
+              HAR files cannot contain browser events that were never captured, server-to-server exchanges, Kerberos
+              ticket-cache details, KDC traffic, backend token exchange, or authoritative server validation. Record
+              these limits rather than interpreting missing evidence as a confirmed failure.
+            </div>
+          </section>
+
+          <h2 id="handoff">Build an engineering-ready handoff</h2>
+          <p>A useful escalation should let another engineer find the same event without replaying the entire investigation.</p>
+          <div class="guide-table-wrap">
+            <table class="guide-table">
+              <thead><tr><th>Include</th><th>Why it matters</th></tr></thead>
+              <tbody>
+                <tr><td>Expected and actual result</td><td>Defines the failure precisely and prevents investigation of normal protocol behavior</td></tr>
+                <tr><td>Start/end time and timezone</td><td>Narrows identity-provider, OAM, proxy, and application logs</td></tr>
+                <tr><td>Starting URL and participating hosts</td><td>Identifies the application, gateway, provider, tenant, and environment</td></tr>
+                <tr><td>First failing or incomplete request</td><td>Focuses analysis before secondary redirects and error pages</td></tr>
+                <tr><td>Correlation identifiers</td><td>Connects browser evidence to ECID, request, provider, and application logs</td></tr>
+                <tr><td>Protocol findings</td><td>Captures SAML status/IDs, OIDC state/errors, WNA scheme, certificate metadata, or cookie transition</td></tr>
+                <tr><td>Sanitized assessment</td><td>Provides the correlated timeline, validation checks, evidence, and recommended next actions</td></tr>
+                <tr><td>Capture limitations</td><td>Prevents an absent server-side exchange from being treated as browser-visible proof</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc-callout success-callout">
+            <strong>Resolution test</strong>
+            After making a change, capture a new clean attempt. Compare the first failing stage, correlation sequence,
+            validation checks, cookies or tokens, and final application return. Do not mix requests from the original
+            failure and the verification attempt in one assessment.
+          </div>
+          <div class="tutorial-actions">
+            <a class="button button-primary" href="../getting-started/">Review Getting Started</a>
+            <a class="button tutorial-secondary" href="../docs/">Open reference documentation</a>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-inner footer-inner">
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../getting-started/">Getting Started</a><a href="./">Tutorials</a><a href="../docs/">Documentation</a><a href="../privacy/">Privacy</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
+      </div>
+    </footer>
+    <script src="../app.js"></script>
+  </body>
+</html>

@@ -398,6 +398,37 @@ h3 { font-size: 20px; }
 .protocol-guide td:first-child { width: 145px; }
 .tutorial-gallery { margin-top: 36px; }
 .completion-checklist { margin-top: 34px; border-left-color: var(--green); }
+.warning-callout { background: #f5ead2; border-left-color: #b87812; }
+.success-callout { background: #dcebe1; border-left-color: #2a8a53; }
+.investigation-steps li { margin-bottom: 10px; }
+.case-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 34px 0 16px;
+  border-top: 1px solid #aebbb8;
+  border-bottom: 1px solid #aebbb8;
+}
+.case-summary div { padding: 20px 22px; }
+.case-summary div + div { border-left: 1px solid #aebbb8; }
+.case-summary strong, .case-summary span { display: block; }
+.case-summary strong { margin-bottom: 5px; color: var(--ink); font-size: 14px; }
+.case-summary span { color: var(--muted); font-size: 14px; }
+.playbook-section { scroll-margin-top: 90px; }
+.playbook-heading {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 76px;
+  padding-top: 24px;
+  border-top: 2px solid #9fadaa;
+}
+.doc-content .playbook-heading h2 { margin: 3px 0 0; padding: 0; border: 0; }
+.playbook-heading p { margin: 0; color: var(--cyan-dark); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.playbook-number { color: var(--cyan-dark); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; font-weight: 850; }
+.tutorial-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.tutorial-secondary { color: var(--ink); background: transparent; border-color: #80908c; }
+.tutorial-secondary:hover, .tutorial-secondary:focus-visible { border-color: var(--cyan-dark); }
 
 .not-found {
   display: grid;
@@ -442,6 +473,8 @@ h3 { font-size: 20px; }
   .doc-nav { position: static; display: flex; flex-wrap: wrap; gap: 8px 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line-light); }
   .doc-nav strong { width: 100%; margin: 0; }
   .tutorial-figure figcaption { grid-template-columns: 1fr; gap: 5px; }
+  .case-summary { grid-template-columns: 1fr; }
+  .case-summary div + div { border-top: 1px solid #aebbb8; border-left: 0; }
   .doc-nav a { padding: 0; }
 }
 
@@ -468,6 +501,8 @@ h3 { font-size: 20px; }
   .doc-main { padding-top: 46px; }
   .doc-content h1 { font-size: 38px; }
   .doc-content h2 { font-size: 27px; }
+  .playbook-heading { grid-template-columns: 36px minmax(0, 1fr); gap: 10px; }
+  .tutorial-actions .button { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
