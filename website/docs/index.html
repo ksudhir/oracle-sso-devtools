@@ -73,7 +73,7 @@
             <li>Enable <strong>Developer mode</strong>.</li>
             <li>Select <strong>Load unpacked</strong>.</li>
             <li>Choose the project <code>dist</code> directory.</li>
-            <li>Open DevTools and select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Navigate to a normal <code>http://</code> or <code>https://</code> page, open DevTools, and select <strong>Auth Flow Inspector</strong>.</li>
           </ol>
 
           <h2 id="offline">Install on an offline computer</h2>
@@ -95,7 +95,7 @@
             <li>Enable <strong>Developer mode</strong>.</li>
             <li>Select <strong>Load unpacked</strong>.</li>
             <li>Select the extracted project <code>dist</code> directory, not the ZIP file or repository root.</li>
-            <li>Open DevTools and select <strong>Auth Flow Inspector</strong>. Check the DevTools overflow menu if the panel is hidden.</li>
+            <li>Navigate to a normal <code>http://</code> or <code>https://</code> page, open DevTools, and select <strong>Auth Flow Inspector</strong>. Check the DevTools overflow menu if the panel is hidden.</li>
           </ol>
           <div class="doc-callout">
             <strong>Offline updates are manual</strong>
@@ -110,13 +110,17 @@
           </p>
 
           <div class="doc-callout">
-            <strong>DevTools placement</strong>
-            Chrome can place the panel under the overflow menu when the DevTools window is narrow. Select the
-            double-chevron menu if the panel is not immediately visible.
+            <strong>Panel visibility and restricted Chrome pages</strong>
+            A new tab initially displays <code>chrome://newtab</code>, where Chrome does not allow DevTools
+            extensions to register panels. The panel can also be unavailable on <code>chrome://extensions</code>,
+            Chrome Web Store pages, and other protected browser pages. Navigate to an ordinary website before
+            opening DevTools. If the panel is still not visible, close and reopen DevTools, then check its
+            double-chevron overflow menu.
           </div>
 
           <h2 id="capture">Capture live traffic</h2>
           <ol>
+            <li>Navigate to the normal application page that will begin the authentication attempt.</li>
             <li>Open DevTools before beginning the authentication attempt.</li>
             <li>Select <strong>Auth Flow Inspector</strong>.</li>
             <li>Confirm that capture is running.</li>
@@ -134,6 +138,13 @@
             Use <strong>Import File</strong> for a HAR file, a panel JSON export, a raw entry array, or a JSON object
             containing an <code>entries</code> array.
           </p>
+          <div class="doc-callout">
+            <strong>Opening the panel for offline analysis</strong>
+            Even when analyzing a HAR from another system, Chrome still requires the DevTools extension to be
+            hosted by an inspectable tab. Open any ordinary <code>http://</code> or <code>https://</code> page,
+            open DevTools, select <strong>Auth Flow Inspector</strong>, and then choose <strong>Import File</strong>.
+            The open webpage does not need to match any host in the HAR.
+          </div>
           <ul>
             <li>Keep request and response headers when exporting a HAR for authentication analysis.</li>
             <li>Preserve response content when SAML forms, error payloads or token responses are relevant.</li>

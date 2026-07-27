@@ -54,6 +54,7 @@ const searchInput = document.querySelector("#searchInput");
 const clearSearchButton = document.querySelector("#clearSearchButton");
 const scrubButton = document.querySelector("#scrubButton");
 const toolsMenu = document.querySelector("#toolsMenu");
+const captureSourceLabel = document.querySelector("#captureSourceLabel");
 const importStatus = document.querySelector("#importStatus");
 const paneDivider = document.querySelector("#paneDivider");
 const tabButtons = [...document.querySelectorAll(".tab")];
@@ -413,6 +414,7 @@ clearButton.addEventListener("click", () => {
   state.entries = [];
   state.selectedId = null;
   state.captureSource = "Live DevTools traffic";
+  setImportStatus("");
   render();
 });
 
@@ -1402,6 +1404,7 @@ function render({ preserveFlowScroll = true } = {}) {
   detailPane.setAttribute("aria-label", isFlowWorkspace ? "Authentication flow analysis" : "Request details");
   requestList.replaceChildren(...visibleEntries.map((entry) => renderRequestRow(entry, timingStats)));
   summary.textContent = renderToolbarSummary(filteredEntryCount);
+  renderCaptureSourceLabel();
   captureButton.textContent = state.isCapturing ? "Stop capture" : "Start capture";
   captureButton.classList.toggle("isCapturing", state.isCapturing);
   captureButton.classList.toggle("isPaused", !state.isCapturing);
@@ -1486,6 +1489,22 @@ function renderToolbarSummary(filteredEntryCount) {
     ? `${state.entries.length} requests`
     : `${filteredEntryCount} of ${state.entries.length} requests`;
   return [count, ...labels].join(" · ");
+}
+
+function renderCaptureSourceLabel() {
+  const label = formatCaptureSourceLabel(state.captureSource);
+  captureSourceLabel.textContent = label;
+  captureSourceLabel.title = state.captureSource || "";
+  captureSourceLabel.hidden = !label;
+}
+
+function formatCaptureSourceLabel(source) {
+  const value = String(source || "").trim();
+  if (value.startsWith("Imported file:")) {
+    return `Imported:${value.slice("Imported file:".length)}`;
+  }
+  if (value === "Chrome DevTools Network HAR") return "Loaded: Network HAR";
+  return "";
 }
 
 function formatProtocolFilterLabel(value) {
@@ -2215,7 +2234,7 @@ async function renderDetails(version = renderVersion) {
 function renderRequestTable(entry) {
   return renderNameValueDetail([
     renderNameValueSection("Request", [
-      ["Captured At", entry.capturedAt],
+      ["Captured At", formatDateTimePair(entry.capturedAt)],
       ["Time Taken", formatDuration(entry.durationMs)],
       ["Content Received", formatSize(entry.responseSizeBytes)],
       ["Method", entry.method],
@@ -2232,6 +2251,7 @@ function renderRequestTable(entry) {
 function renderResponseTable(entry) {
   return renderNameValueDetail([
     renderNameValueSection("Response", [
+      ["Captured At", formatDateTimePair(entry.capturedAt)],
       ["Status", { html: formatHttpStatus(entry.status) }],
       ["Status Text", entry.statusText || "-"],
       ["Time Taken", formatDuration(entry.durationMs)],
@@ -2257,9 +2277,39 @@ function renderHeadersSection(title, headers) {
 }
 
 function renderTimingSection(entry) {
-  const rows = Object.entries(entry.timings || {})
-    .map(([name, value]) => [name, formatDuration(value)]);
-  return renderNameValueSection("Timing Breakdown", rows.length ? rows : [["Timing", "Not available"]]);
+  const metrics = Object.entries(entry.timings || {})
+    .map(([name, value]) => [formatTimingLabel(name), formatDuration(value)]);
+  const renderedMetrics = metrics.length ? metrics : [["Timing", "Not available"]];
+  return [
+    `<section class="nameValueSection timingSection">`,
+    `<h3>Timing Breakdown</h3>`,
+    `<dl class="timingGrid">`,
+    renderedMetrics.map(([name, value]) => [
+      `<div class="timingMetric">`,
+      `<dt>${escapeHtml(name)}</dt>`,
+      `<dd>${escapeHtml(value)}</dd>`,
+      `</div>`
+    ].join("")).join(""),
+    `</dl>`,
+    `</section>`
+  ].join("");
+}
+
+function formatTimingLabel(name) {
+  const normalized = String(name || "")
+    .replace(/^_blocked_/u, "")
+    .replace(/^_/u, "")
+    .replaceAll("_", " ")
+    .trim();
+  if (!normalized) return "Timing";
+  return normalized
+    .split(/\s+/u)
+    .map((part) => {
+      const upper = part.toUpperCase();
+      if (upper === "DNS" || upper === "SSL") return upper;
+      return `${part.charAt(0).toUpperCase()}${part.slice(1)}`;
+    })
+    .join(" ");
 }
 
 function renderNameValueSection(title, rows) {
@@ -2346,11 +2396,11 @@ function renderColorLegend() {
   const items = [
     ["legendStandard", "Standard protocol value", "SAML/OIDC-defined bindings, formats, namespaces, and vocabulary"],
     ["legendDeployment", "Deployment or transaction value", "Environment URLs, issuers, audiences, identities, and correlation values"],
-    ["legendNeutral", "Neutral information", "Timestamps, counts, and descriptive values"],
+    ["legendNeutral", "Neutral information", "Event timestamps, counts, and descriptive values"],
     ["legendMuted", "Unavailable or inactive", "Missing, not captured, not signed, or not applicable"],
-    ["legendPass", "Pass or active", "Successful validation, active token, or observed expected evidence"],
-    ["legendWarn", "Review or warning", "Incomplete evidence or a condition that needs investigation"],
-    ["legendFail", "Failure or expired", "Failed validation, expired token, HTTP failure, or NTLM fallback"],
+    ["legendPass", "Pass or active", "Successful validation, active validity window, or observed expected evidence"],
+    ["legendWarn", "Review or warning", "Expiring soon, near-future clock skew, incomplete evidence, or a condition needing investigation"],
+    ["legendFail", "Failure or invalid", "Expired or not-yet-valid artifact, failed validation, HTTP failure, or NTLM fallback"],
     ["legendEcid", "ECID correlation", "Oracle execution-context identifier for server-log correlation"]
   ];
   return [
@@ -2467,17 +2517,6 @@ async function renderAuthInfo(entry) {
     return highlightArtifacts("No Kerberos/SPNEGO or forwarded X.509 client-certificate information was found for this request.");
   }
 
-  const authRows = httpAuth.map((item) => [
-    `${item.header} (${item.source})`,
-    [
-      `Scheme: ${item.scheme}`,
-      `Likely protocol: ${item.protocol}`,
-      `Token present: ${item.token ? "Yes" : "No"}`,
-      item.token ? `Token length: ${item.token.length}` : "",
-      item.token ? `Token preview: ${previewToken(item.token)}` : ""
-    ].filter(Boolean).join("\n")
-  ]);
-
   const x509Rows = x509.items.map((item) => [
     `${item.header} (${item.source})`,
     item.isCertificate ? previewToken(normalizeCertificateText(item.value)) : item.value
@@ -2495,10 +2534,58 @@ async function renderAuthInfo(entry) {
     `<div class="samlInfo">`,
     `<h3 class="samlInfoTitle">Kerberos / X.509</h3>`,
     `<div class="samlInfoGrid">`,
-    renderInfoCard("HTTP Authentication", authRows.length ? authRows : [["HTTP Auth", "None found"]], true),
+    renderHttpAuthenticationSection(httpAuth),
     renderInfoCard("Forwarded X.509 Headers", x509Rows.length ? x509Rows : [["X.509", "None found"]], true),
     certificateCards.join(""),
     `</div>`,
+    `</div>`
+  ].join("");
+}
+
+function renderHttpAuthenticationSection(items) {
+  if (!items.length) return renderInfoCard("HTTP Authentication", [["HTTP Auth", "None found"]], true);
+
+  return [
+    `<section class="samlInfoCard isWide httpAuthCard">`,
+    `<h4>HTTP Authentication</h4>`,
+    `<div class="httpAuthEvidenceList">`,
+    items.map(renderHttpAuthenticationEvidence).join(""),
+    `</div>`,
+    `</section>`
+  ].join("");
+}
+
+function renderHttpAuthenticationEvidence(item) {
+  const isRequest = item.source === "request";
+  const tokenPresent = Boolean(item.token);
+  const protocolClass = item.protocol === "NTLM" ? "badgeNtlm" : "badgeKerberos";
+  return [
+    `<article class="httpAuthEvidence">`,
+    `<header class="httpAuthEvidenceHeader">`,
+    `<span><strong>${isRequest ? "Browser to server" : "Server to browser"}</strong><small>${isRequest ? "Authorization request header" : "Authentication challenge response"}</small></span>`,
+    `<mark class="badge ${protocolClass}">${escapeHtml(item.protocol)}</mark>`,
+    `</header>`,
+    `<dl class="httpAuthFacts">`,
+    renderHttpAuthFact("Header", item.header),
+    renderHttpAuthFact("Scheme", item.scheme),
+    renderHttpAuthFact("Token Present", tokenPresent ? "Yes" : "No", tokenPresent ? "isPresent" : "isAbsent"),
+    renderHttpAuthFact("Token Length", tokenPresent ? `${item.token.length.toLocaleString()} characters` : "Not applicable"),
+    `</dl>`,
+    `<div class="httpAuthTokenPreview">`,
+    `<span>Token Preview</span>`,
+    tokenPresent
+      ? `<code>${escapeHtml(previewToken(item.token))}</code>`
+      : `<em>No authentication token was included in this header.</em>`,
+    `</div>`,
+    `</article>`
+  ].join("");
+}
+
+function renderHttpAuthFact(label, value, className = "") {
+  return [
+    `<div class="httpAuthFact${className ? ` ${className}` : ""}">`,
+    `<dt>${escapeHtml(label)}</dt>`,
+    `<dd>${escapeHtml(value)}</dd>`,
     `</div>`
   ].join("");
 }
@@ -2614,6 +2701,7 @@ function renderOAuthInfo(entry) {
   ]);
 
   const jwtCards = oauth.jwtTokens.map((token, index) => renderJwtInfoCard(token, index));
+  const opaqueTokenNotices = renderOpaqueTokenJsonNotices(oauth.items);
 
   return [
     `<div class="samlInfo">`,
@@ -2621,6 +2709,7 @@ function renderOAuthInfo(entry) {
     `<div class="samlInfoGrid">`,
     renderInfoCard("OAuth Parameters", parameterRows.length ? parameterRows : [["Parameters", "None found"]], true),
     jwtCards.join(""),
+    opaqueTokenNotices,
     `</div>`,
     `</div>`
   ].join("");
@@ -4038,15 +4127,18 @@ function renderOidcInfo(selectedEntry) {
       ["Subject", token.claims.sub],
       ["Audience", formatClaimValue(token.claims.aud)],
       ["Nonce", token.claims.nonce],
-      ["Auth Time", formatJwtTimestamp(token.claims.auth_time)],
-      ["Issued At", formatJwtTimestamp(token.claims.iat)],
-      ["Not Before", formatJwtTimestamp(token.claims.nbf)],
-      ["Expires On", formatJwtTimestamp(token.claims.exp)],
+      ["Auth Time", token.claims.auth_time],
+      ["Issued At", token.claims.iat],
+      ["Not Before", token.claims.nbf],
+      ["Expires On", token.claims.exp],
       ["ACR", token.claims.acr],
       ["AMR", formatClaimValue(token.claims.amr)],
       ["Authorized Party", token.claims.azp],
       ["Token", { html: `<span class="mutedValue">${escapeHtml(previewToken(token.value))}</span>` }]
     ] : [], false, "oidcCardToken"),
+    token
+      ? renderJwtJsonDetails(token, "ID Token JSON")
+      : analysis.rawIdToken ? renderTokenJsonUnavailable("ID token") : "",
     renderOidcChecks(analysis.checks),
     renderOidcTimeline(analysis.timeline, selectedEntry.id),
     renderOidcCard("Captured OIDC Endpoints", analysis.endpoints.map((item) => [item.stage, item.url]), true, "oidcCardEndpoints"),
@@ -4315,6 +4407,12 @@ function oidcTokenTimeCheck(claims) {
   if (Number.isFinite(Number(claims.nbf)) && Number(claims.nbf) > now) {
     return oidcCheck("fail", "Token lifetime", `The ID token is not valid before ${formatJwtTimestamp(claims.nbf)}.`);
   }
+  if (Number.isFinite(Number(claims.iat)) && Number(claims.iat) > now + 300) {
+    return oidcCheck("fail", "Token lifetime", `The ID token issued-at time is unexpectedly in the future: ${formatJwtTimestamp(claims.iat)}.`);
+  }
+  if (Number.isFinite(Number(claims.auth_time)) && Number(claims.auth_time) > now + 300) {
+    return oidcCheck("fail", "Token lifetime", `The ID token authentication time is unexpectedly in the future: ${formatJwtTimestamp(claims.auth_time)}.`);
+  }
   if (Number.isFinite(Number(claims.exp))) {
     return oidcCheck("pass", "Token lifetime", `The ID token is active until ${formatJwtTimestamp(claims.exp)}.`);
   }
@@ -4351,7 +4449,8 @@ function renderOidcCard(title, rows, wide = false, className = "") {
 function formatOidcValue(label, value) {
   if (value && typeof value === "object" && "html" in value) return value.html;
   const text = String(value || "").trim();
-  if (label === "Expires On") return formatExpiryValue(text);
+  const timeRole = getDateTimeFieldRole(label);
+  if (timeRole) return formatDateTimeStatusValue(label, text, timeRole);
   if (["State", "Returned State", "Nonce", "PKCE Challenge", "Authorization Code"].includes(label)) {
     return `<span class="oidcCorrelationValue">${escapeHtml(text)}</span>`;
   }
@@ -5118,14 +5217,42 @@ function renderJwtInfoCard(token, index) {
       ["Subject", token.claims.sub],
       ["Audience", formatClaimValue(token.claims.aud)],
       ["Scope", token.claims.scope || token.claims.scp],
-      ["Issued At", formatJwtTimestamp(token.claims.iat)],
-      ["Not Before", formatJwtTimestamp(token.claims.nbf)],
-      ["Expires On", formatJwtTimestamp(token.claims.exp)],
+      ["Issued At", token.claims.iat],
+      ["Not Before", token.claims.nbf],
+      ["Expires On", token.claims.exp],
       ["JWT ID", token.claims.jti],
       ["Token Preview", previewToken(token.value)]
     ], true),
-    renderInfoCard(`JWT ${index + 1} Claims`, objectToRows(token.claims), true)
+    renderInfoCard(`JWT ${index + 1} Claims`, objectToRows(token.claims), true),
+    renderJwtJsonDetails(token, `${token.name || `JWT ${index + 1}`} JSON`)
   ].join("");
+}
+
+function renderJwtJsonDetails(token, title = "Decoded Token JSON") {
+  if (!token || token.error || !token.header || !token.claims) return "";
+  return [
+    `<details class="jwtJsonDetails">`,
+    `<summary><span><strong>${escapeHtml(title)}</strong><small>Decoded JWT header and payload</small></span><span class="jwtJsonAction">View JSON</span></summary>`,
+    `<pre class="jwtJsonCode">${highlightJson({ header: token.header, payload: token.claims })}</pre>`,
+    `</details>`
+  ].join("");
+}
+
+function renderOpaqueTokenJsonNotices(items) {
+  const names = [...new Set((items || [])
+    .filter((item) => isTokenParameterName(item.name) && item.value && !isJwt(item.value))
+    .map((item) => item.name))];
+  return names.map((name) => renderTokenJsonUnavailable(name)).join("");
+}
+
+function renderTokenJsonUnavailable(name) {
+  return renderInfoCard(`${name} JSON`, [
+    ["JSON View", "Unavailable because this token is opaque, encrypted, redacted, or is not a JWT."]
+  ], true);
+}
+
+function isTokenParameterName(name) {
+  return ["access_token", "id_token", "refresh_token", "bearer token"].includes(String(name || "").toLowerCase());
 }
 
 function decodeJwtInfo(item) {
@@ -5163,7 +5290,38 @@ function formatJwtTimestamp(value) {
   if (!value && value !== 0) return "";
   const date = new Date(Number(value) * 1000);
   if (Number.isNaN(date.getTime())) return String(value);
-  return date.toISOString().replace("T", " ").replace(".000Z", " UTC");
+  return formatDateTimePair(date);
+}
+
+function formatDateTimePair(value) {
+  if (!value && value !== 0) return "";
+  const date = parseDateTimeValue(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const local = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZoneName: "short"
+  }).format(date);
+  const utc = date.toISOString()
+    .replace("T", " ")
+    .replace(/\.000Z$/u, " UTC")
+    .replace(/Z$/u, " UTC");
+  return `Local: ${local} | UTC: ${utc}`;
+}
+
+function parseDateTimeValue(value) {
+  if (value instanceof Date) return value;
+  const text = String(value ?? "").trim();
+  if (/^-?\d+(?:\.\d+)?$/u.test(text)) {
+    const numeric = Number(text);
+    return new Date(Math.abs(numeric) < 1e12 ? numeric * 1000 : numeric);
+  }
+  return new Date(value);
 }
 
 function previewToken(value) {
@@ -5345,10 +5503,31 @@ function formatInfoValue(label, value) {
   if (label === "Status" && /success$/iu.test(text)) return `<span class="goodValue">${escapeHtml(text)}</span>`;
   if (/signed/iu.test(text) && !/^not signed$/iu.test(text)) return `<span class="goodValue">${escapeHtml(text)}</span>`;
   if (/^not signed$/iu.test(text)) return `<span class="mutedValue">${escapeHtml(text)}</span>`;
-  if (label === "Expires On") return formatExpiryValue(text);
+  const timeRole = getDateTimeFieldRole(label);
+  if (timeRole) return formatDateTimeStatusValue(label, text, timeRole);
   if (isDefaultSamlInfoValue(label, text)) return `<span class="samlDefaultValue">${escapeHtml(text)}</span>`;
   if (isDeploymentSamlInfoValue(label, text)) return `<span class="samlDeploymentValue">${escapeHtml(text)}</span>`;
   return highlightArtifacts(text);
+}
+
+function getDateTimeFieldRole(label) {
+  const normalized = String(label || "").toLowerCase().replace(/[\s_-]+/gu, "");
+  if (["exp", "expireson", "expiresat", "expiration", "expiry", "notonorafter", "sessionnotonorafter", "validuntil", "validto"].includes(normalized)) {
+    return "expiration";
+  }
+  if (["nbf", "notbefore", "issuedon", "validfrom", "validstart"].includes(normalized)) {
+    return "activation";
+  }
+  if (["iat", "issuedat", "issueinstant", "authninstant", "authtime", "authenticationtime"].includes(normalized)) {
+    return "event";
+  }
+  return "";
+}
+
+function formatDateTimeStatusValue(label, text, role) {
+  if (role === "expiration") return formatExpiryValue(text);
+  if (role === "activation") return formatActivationValue(label, text);
+  return formatEventTimeValue(text);
 }
 
 function isDefaultSamlInfoValue(label, text) {
@@ -5414,18 +5593,49 @@ function isUrlLikeValue(text) {
   return /^(https?:\/\/|urn:|[A-Za-z][A-Za-z0-9+.-]*:)/u.test(String(text || "").trim());
 }
 
-function formatExpiryValue(text) {
-  const expiry = new Date(text);
+function formatExpiryValue(text, nowMs = Date.now()) {
+  const expiry = parseDateTimeValue(text);
   if (Number.isNaN(expiry.getTime())) return highlightArtifacts(text);
 
-  const days = (expiry.getTime() - Date.now()) / 86400000;
-  if (days < 0) return `<span class="badValue">${escapeHtml(text)} (expired)</span>`;
+  const formatted = formatDateTimePair(expiry);
+  const days = (expiry.getTime() - nowMs) / 86400000;
+  if (days <= 0) return `<span class="badValue">${escapeHtml(formatted)} (expired)</span>`;
   if (days < 1) {
     const hours = Math.max(1, Math.ceil(days * 24));
-    return `<span class="warningValue">${escapeHtml(text)} (${hours} hours left)</span>`;
+    return `<span class="warningValue">${escapeHtml(formatted)} (${hours} hours left)</span>`;
   }
-  if (days <= 30) return `<span class="warningValue">${escapeHtml(text)} (${Math.ceil(days)} days left)</span>`;
-  return `<span class="goodValue">${escapeHtml(text)} (active)</span>`;
+  if (days <= 30) return `<span class="warningValue">${escapeHtml(formatted)} (${Math.ceil(days)} days left)</span>`;
+  return `<span class="goodValue">${escapeHtml(formatted)} (active)</span>`;
+}
+
+function formatActivationValue(label, text, nowMs = Date.now()) {
+  const activation = parseDateTimeValue(text);
+  if (Number.isNaN(activation.getTime())) return highlightArtifacts(text);
+
+  const formatted = formatDateTimePair(activation);
+  const millisecondsUntilActive = activation.getTime() - nowMs;
+  if (millisecondsUntilActive > 0) {
+    const minutes = Math.max(1, Math.ceil(millisecondsUntilActive / 60000));
+    const detail = minutes <= 5 ? `; ${minutes} minute${minutes === 1 ? "" : "s"} ahead` : "";
+    const className = minutes <= 5 ? "warningValue" : "badValue";
+    return `<span class="${className}">${escapeHtml(formatted)} (not yet valid${detail})</span>`;
+  }
+
+  const status = String(label || "").toLowerCase().replace(/[\s_-]+/gu, "") === "issuedon"
+    ? "effective"
+    : "active";
+  return `<span class="goodValue">${escapeHtml(formatted)} (${status})</span>`;
+}
+
+function formatEventTimeValue(text, nowMs = Date.now()) {
+  const eventTime = parseDateTimeValue(text);
+  if (Number.isNaN(eventTime.getTime())) return highlightArtifacts(text);
+
+  const formatted = formatDateTimePair(eventTime);
+  if (eventTime.getTime() > nowMs + 300000) {
+    return `<span class="warningValue">${escapeHtml(formatted)} (future timestamp)</span>`;
+  }
+  return `<span class="dateTimeValue">${escapeHtml(formatted)}</span>`;
 }
 
 function getSamlAttributeRows(assertion) {
@@ -5623,7 +5833,7 @@ function formatX509Time(node) {
   const second = Number(value.slice(cursor + 8, cursor + 10) || "0");
   const date = new Date(Date.UTC(year, month, day, hour, minute, second));
   if (Number.isNaN(date.getTime())) return value;
-  return date.toISOString().replace("T", " ").replace(".000Z", " UTC");
+  return date.toISOString();
 }
 
 async function digestHex(algorithm, bytes) {
