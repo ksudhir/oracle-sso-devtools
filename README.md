@@ -89,9 +89,9 @@ Color supplements the visible labels; it is never the only indication of meaning
 | Purple deployment value | Environment-specific URLs, issuers, destinations, audiences, identities, IDs, and correlation values |
 | Neutral foreground | Timestamps, counts, and descriptive information |
 | Gray | Missing, unavailable, inactive, not captured, not signed, or not applicable |
-| Green status | Passed validation, active token, successful status, or expected evidence observed |
-| Amber status | Incomplete evidence, warning, or review recommended |
-| Red status | Failed validation, expired token, HTTP failure, or NTLM fallback |
+| Green status | Passed validation, active token/assertion/certificate validity, successful status, or expected evidence observed |
+| Amber status | Expiring soon, near-future clock skew, incomplete evidence, warning, or review recommended |
+| Red status | Failed validation, expired or not-yet-valid token/assertion/certificate, HTTP failure, or NTLM fallback |
 | Magenta ECID | Oracle execution-context identifier intended for server-log correlation |
 
 Context distinguishes the two green uses: a green protocol value is informational, while a green `PASS`, `Success`, `Signed`, or `Active` label is a positive assessment. Protocol badge colors identify artifact families such as SAML, OAM, WebGate, OAuth/OIDC, WNA/Kerberos, NTLM, X.509, and FED; they do not indicate health. Cookie-name colors identify ownership: WebGate, OAM Server, DCC, or ambiguous OAM-related data. Hover tooltips provide the owner where available.

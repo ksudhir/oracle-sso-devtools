@@ -417,6 +417,23 @@ button:disabled {
   white-space: nowrap;
 }
 
+.captureSourceLabel {
+  max-width: 300px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--line));
+  border-radius: 4px;
+  padding: 3px 7px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.captureSourceLabel[hidden] {
+  display: none;
+}
+
 .shell {
   display: grid;
   grid-template-columns: minmax(260px, var(--request-pane-width, 42%)) 8px minmax(360px, 1fr);
@@ -836,6 +853,7 @@ button:disabled {
 .nameValueDetail {
   display: grid;
   gap: 12px;
+  container-type: inline-size;
   white-space: normal;
   word-break: normal;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -879,7 +897,7 @@ button:disabled {
 }
 
 .nameValueTable th {
-  width: min(32%, 260px);
+  width: 180px;
   color: var(--muted);
   font-weight: 800;
   text-align: left;
@@ -890,6 +908,34 @@ button:disabled {
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.timingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin: 0;
+}
+
+.timingMetric {
+  min-width: 0;
+  padding: 9px 10px;
+  box-shadow: inset -1px -1px var(--line);
+}
+
+.timingMetric dt {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.timingMetric dd {
+  margin: 0;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
@@ -1009,6 +1055,203 @@ button:disabled {
   color: var(--muted);
 }
 
+.dateTimeValue {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.httpAuthEvidenceList {
+  display: grid;
+}
+
+.httpAuthEvidence {
+  min-width: 0;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.httpAuthEvidence:last-child {
+  border-bottom: 0;
+}
+
+.httpAuthEvidenceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.httpAuthEvidenceHeader span,
+.httpAuthEvidenceHeader strong,
+.httpAuthEvidenceHeader small {
+  display: block;
+}
+
+.httpAuthEvidenceHeader strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.httpAuthEvidenceHeader small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.httpAuthEvidenceHeader .badge {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+
+.httpAuthFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.httpAuthFact {
+  min-width: 0;
+  padding: 7px 8px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.httpAuthFact dt {
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.httpAuthFact dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+}
+
+.httpAuthFact.isPresent dd {
+  color: var(--xml-value);
+  font-weight: 800;
+}
+
+.httpAuthFact.isAbsent dd {
+  color: var(--muted);
+}
+
+.httpAuthTokenPreview {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  margin-top: 8px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--kerberos-bg) 55%, transparent);
+}
+
+.httpAuthTokenPreview > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.httpAuthTokenPreview code {
+  color: var(--kerberos);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.httpAuthTokenPreview em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.jwtJsonDetails {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--panel) 86%, var(--bg));
+}
+
+.jwtJsonDetails > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 7px 10px;
+  cursor: pointer;
+  color: var(--oauth);
+  background: var(--oauth-bg);
+  list-style: none;
+}
+
+.jwtJsonDetails > summary::-webkit-details-marker {
+  display: none;
+}
+
+.jwtJsonDetails > summary:hover,
+.jwtJsonDetails > summary:focus-visible {
+  background: color-mix(in srgb, var(--oauth-bg) 82%, var(--oauth));
+  outline: 0;
+}
+
+.jwtJsonDetails > summary span,
+.jwtJsonDetails > summary strong,
+.jwtJsonDetails > summary small {
+  display: block;
+}
+
+.jwtJsonDetails > summary strong {
+  font-size: 12px;
+}
+
+.jwtJsonDetails > summary small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.jwtJsonAction {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.jwtJsonDetails[open] .jwtJsonAction {
+  font-size: 0;
+}
+
+.jwtJsonDetails[open] .jwtJsonAction::after {
+  content: "Hide JSON";
+  font-size: 10px;
+}
+
+.jwtJsonCode {
+  max-height: 420px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg) 88%, var(--panel));
+  white-space: pre;
+  word-break: normal;
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  tab-size: 2;
+}
+
 .aboutLinksCard h4 {
   color: var(--accent);
   background: var(--accent-soft);
@@ -1075,6 +1318,16 @@ button:disabled {
 
   .aboutLink:nth-child(odd) {
     border-right: 0;
+  }
+}
+
+@container (max-width: 520px) {
+  .nameValueTable th {
+    width: 120px;
+  }
+
+  .httpAuthTokenPreview {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

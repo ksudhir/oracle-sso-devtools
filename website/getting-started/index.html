@@ -72,12 +72,20 @@
 
           <h2 id="open">1. Open the panel</h2>
           <ol>
-            <li>Open the application page whose authentication flow you want to inspect.</li>
+            <li>Navigate to the application page whose authentication flow you want to inspect. The tab must display a normal <code>http://</code> or <code>https://</code> page before you open DevTools.</li>
             <li>Open Chrome DevTools with <strong>View &gt; Developer &gt; Developer Tools</strong>, the page's <strong>Inspect</strong> command, or the operating-system keyboard shortcut.</li>
             <li>Select <strong>Auth Flow Inspector</strong> in the DevTools tab strip.</li>
             <li>If it is not visible, open the DevTools double-chevron overflow menu and select it there.</li>
             <li>Keep DevTools attached to the application tab throughout the login attempt. Undocking DevTools can provide more space without changing capture behavior.</li>
           </ol>
+          <div class="doc-callout warning-callout">
+            <strong>Why the panel does not appear on a newly opened tab</strong>
+            A new Chrome tab initially displays the protected <code>chrome://newtab</code> page. Chrome does not
+            allow DevTools extensions to register panels on New Tab, <code>chrome://extensions</code>, Chrome Web
+            Store pages, or other restricted browser pages. Navigate to an ordinary website first, then open
+            DevTools. If DevTools was already open when the extension was installed or reloaded, close and reopen
+            DevTools after navigating.
+          </div>
           <p>
             The extension inspects only the tab to which DevTools is attached. Authentication steps that open a
             separate browser tab are outside that panel's capture unless DevTools is also opened for the new tab.
@@ -186,12 +194,14 @@
 
           <h2 id="troubleshoot">If the panel shows no useful data</h2>
           <ul>
+            <li>If <strong>Auth Flow Inspector</strong> is completely absent, confirm that the inspected tab is showing a normal <code>http://</code> or <code>https://</code> page rather than New Tab or another <code>chrome://</code> page, then close and reopen DevTools.</li>
             <li>Confirm that DevTools is attached to the tab performing the login.</li>
             <li>Open the panel before starting the authentication flow, then reload the protected page.</li>
             <li>Confirm that the button says <strong>Stop capture</strong>, which means capture is currently running.</li>
             <li>Select <strong>Reset filters</strong> and temporarily clear <strong>Hide static</strong>.</li>
             <li>Check whether the authentication flow opened a different tab or window.</li>
-            <li>For offline evidence, use <strong>Import File</strong> for HAR/JSON or <strong>Load Network HAR</strong> for entries visible to the Chrome Network panel.</li>
+            <li>For offline evidence, open any ordinary website to host the DevTools panel, then use <strong>Import File</strong> for HAR/JSON. The hosting page does not need to be related to the imported capture.</li>
+            <li>Use <strong>Load Network HAR</strong> only for entries currently exposed by Chrome's Network panel.</li>
           </ul>
           <div class="doc-callout completion-checklist">
             <strong>A useful investigation should answer</strong>

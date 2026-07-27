@@ -98,6 +98,7 @@ const panelPath = path.join(__dirname, "..", "panel.js");
 vm.runInContext(fs.readFileSync(panelPath, "utf8"), context, { filename: panelPath });
 
 const panelMarkup = fs.readFileSync(path.join(__dirname, "..", "panel.html"), "utf8");
+const panelStyles = fs.readFileSync(path.join(__dirname, "..", "panel.css"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"));
 const devtoolsSource = fs.readFileSync(path.join(__dirname, "..", "devtools.js"), "utf8");
 assert.equal(manifest.name, "Enterprise Authentication Flow Inspector");
@@ -113,6 +114,7 @@ assert.match(panelMarkup, /Export sanitized data/u);
 assert.match(panelMarkup, /Export Assessment/u);
 assert.match(panelMarkup, /Markdown Report — Sanitized/u);
 assert.match(panelMarkup, /Markdown Report — Full Diagnostic/u);
+assert.match(panelMarkup, /id="captureSourceLabel" class="captureSourceLabel"/u);
 assert.match(panelMarkup, /data-protocol-filter="oauth"><span>OAuth\/OIDC\/Bearer</u);
 assert.match(panelMarkup, /Multiple selections use OR matching/u);
 assert.doesNotMatch(panelMarkup, /id="samlOnlyInput"|id="oamOnlyInput"/u);
@@ -122,6 +124,15 @@ assert.doesNotMatch(panelMarkup, /data-tab="wnaInfo"|>WNA Info</u);
 for (const tabLabel of ["Kerberos / X.509", "SAML Details", "OAuth Token", "OIDC Details"]) {
   assert.match(panelMarkup, new RegExp(`>${tabLabel}<`, "u"));
 }
+assert.match(panelStyles, /\.nameValueTable th\s*\{[^}]*width:\s*180px/su);
+assert.match(panelStyles, /\.nameValueDetail\s*\{[^}]*container-type:\s*inline-size/su);
+assert.match(panelStyles, /@container \(max-width:\s*520px\)\s*\{[^}]*\.nameValueTable th\s*\{[^}]*width:\s*120px/su);
+assert.match(panelStyles, /\.timingGrid\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(120px,\s*1fr\)\)/su);
+assert.match(panelStyles, /\.jwtJsonDetails\s*\{[^}]*grid-column:\s*1\s*\/\s*-1/su);
+assert.match(panelStyles, /\.jwtJsonCode\s*\{[^}]*max-height:\s*420px[^}]*overflow:\s*auto/su);
+assert.match(panelStyles, /\.httpAuthFacts\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(125px,\s*1fr\)\)/su);
+assert.match(panelStyles, /\.httpAuthTokenPreview\s*\{[^}]*grid-template-columns:\s*110px minmax\(0,\s*1fr\)/su);
+assert.match(panelStyles, /\.captureSourceLabel\s*\{[^}]*text-overflow:\s*ellipsis/su);
 
 context.testToolbarMenuOne = { open: true };
 context.testToolbarMenuTwo = { open: true };
@@ -276,6 +287,122 @@ const ecidInfoRow = evaluate("renderInfoRow('ECID', testEcidValue)");
 assert.match(ecidInfoRow, /artifactToken tokenEcid/u);
 assert.match(ecidInfoRow, /class="ecidValue"/u);
 
+context.testTimingEntry = {
+  ...baseEntry,
+  timings: {
+    blocked: 2,
+    ssl: 16,
+    connect: 56,
+    send: 0,
+    wait: 53,
+    receive: 1,
+    _blocked_queueing: 1,
+    _blocked_proxy: 0
+  }
+};
+const renderedTiming = evaluate("renderTimingSection(testTimingEntry)");
+assert.match(renderedTiming, /class="timingGrid"/u);
+assert.match(renderedTiming, /class="timingMetric"/u);
+assert.match(renderedTiming, /<dt>SSL<\/dt><dd>16 ms<\/dd>/u);
+assert.match(renderedTiming, /<dt>Queueing<\/dt><dd>1 ms<\/dd>/u);
+assert.match(renderedTiming, /<dt>Proxy<\/dt><dd>0 ms<\/dd>/u);
+assert.doesNotMatch(renderedTiming, /nameValueTable/u);
+
+const formattedCapturedAt = evaluate("formatDateTimePair('2026-04-15T10:00:00.123Z')");
+assert.match(formattedCapturedAt, /^Local: .+ \| UTC: 2026-04-15 10:00:00\.123 UTC$/u);
+const formattedJwtEpoch = evaluate("formatJwtTimestamp(1776247200)");
+assert.match(formattedJwtEpoch, /^Local: .+ \| UTC: 2026-04-15 10:00:00 UTC$/u);
+context.testJwtClaims = {
+  sub: "user@example.com",
+  iat: 1776247200,
+  nbf: 1776247200,
+  exp: 1776250800,
+  auth_time: 1776247140
+};
+const renderedJwtClaimRows = evaluate("renderInfoCard('JWT Claims', objectToRows(testJwtClaims), true)");
+for (const [claim, utcTime] of [["iat", "10:00:00"], ["nbf", "10:00:00"], ["exp", "11:00:00"], ["auth_time", "09:59:00"]]) {
+  assert.match(renderedJwtClaimRows, new RegExp(`<th>${claim}</th><td><span class="(?:dateTimeValue|badValue|warningValue|goodValue)">Local: .+? \\| UTC: 2026-04-15 ${utcTime} UTC`, "u"));
+}
+assert.match(renderedJwtClaimRows, /<th>nbf<\/th><td><span class="goodValue">.+ \(active\)<\/span>/u);
+assert.match(renderedJwtClaimRows, /<th>exp<\/th><td><span class="badValue">.+ \(expired\)<\/span>/u);
+assert.match(evaluate("renderRequestTable(testTimingEntry)"), /Captured At<\/th><td>Local: .+ \| UTC: 2026-04-15 10:00:00 UTC/u);
+assert.match(evaluate("renderResponseTable(testTimingEntry)"), /Captured At<\/th><td>Local: .+ \| UTC: 2026-04-15 10:00:00 UTC/u);
+assert.match(evaluate("formatInfoValue('IssueInstant', '2026-04-15T10:00:00.000Z')"), /dateTimeValue.+Local: .+ \| UTC: 2026-04-15 10:00:00 UTC/u);
+assert.equal(evaluate("getDateTimeFieldRole('exp')"), "expiration");
+assert.equal(evaluate("getDateTimeFieldRole('NotOnOrAfter')"), "expiration");
+assert.equal(evaluate("getDateTimeFieldRole('nbf')"), "activation");
+assert.equal(evaluate("getDateTimeFieldRole('NotBefore')"), "activation");
+assert.equal(evaluate("getDateTimeFieldRole('iat')"), "event");
+assert.match(evaluate("formatExpiryValue('2025-12-31T23:59:59Z', Date.UTC(2026, 0, 1))"), /class="badValue".+\(expired\)/u);
+assert.match(evaluate("formatExpiryValue('2026-06-01T00:00:00Z', Date.UTC(2026, 0, 1))"), /class="goodValue".+\(active\)/u);
+assert.match(evaluate("formatExpiryValue('2026-01-01T06:00:00Z', Date.UTC(2026, 0, 1))"), /class="warningValue".+\(6 hours left\)/u);
+assert.match(evaluate("formatActivationValue('nbf', '2025-12-31T23:00:00Z', Date.UTC(2026, 0, 1))"), /class="goodValue".+\(active\)/u);
+assert.match(evaluate("formatActivationValue('Issued On', '2025-12-31T23:00:00Z', Date.UTC(2026, 0, 1))"), /class="goodValue".+\(effective\)/u);
+assert.match(evaluate("formatActivationValue('nbf', '2026-01-02T00:00:00Z', Date.UTC(2026, 0, 1))"), /class="badValue".+\(not yet valid\)/u);
+assert.match(evaluate("formatActivationValue('nbf', '2026-01-01T00:02:00Z', Date.UTC(2026, 0, 1))"), /class="warningValue".+\(not yet valid; 2 minutes ahead\)/u);
+assert.match(evaluate("formatEventTimeValue('2099-01-01T00:00:00Z', Date.UTC(2026, 0, 1))"), /class="warningValue".+\(future timestamp\)/u);
+assert.match(evaluate("formatInfoValue('NotOnOrAfter', '2000-01-01T00:00:00Z')"), /class="badValue".+\(expired\)/u);
+assert.match(evaluate("formatInfoValue('NotBefore', '2099-01-01T00:00:00Z')"), /class="badValue".+\(not yet valid\)/u);
+assert.match(evaluate("formatOidcValue('Expires On', 946684800)"), /class="badValue".+\(expired\)/u);
+context.testFutureIatClaims = { exp: 4102444800, iat: 4102444800 };
+assert.equal(evaluate("oidcTokenTimeCheck(testFutureIatClaims).level"), "fail");
+assert.match(evaluate("oidcTokenTimeCheck(testFutureIatClaims).message"), /issued-at time is unexpectedly in the future/u);
+assert.equal(evaluate("formatCaptureSourceLabel('Imported file: customer-x509-login.har')"), "Imported: customer-x509-login.har");
+assert.equal(evaluate("formatCaptureSourceLabel('Chrome DevTools Network HAR')"), "Loaded: Network HAR");
+assert.equal(evaluate("formatCaptureSourceLabel('Live DevTools traffic')"), "");
+
+context.testDecodedJwt = {
+  name: "id_token",
+  source: "response JSON body",
+  value: "encoded.jwt.value",
+  header: { alg: "RS256", typ: "JWT", kid: "key-1" },
+  claims: { iss: "https://issuer.example", sub: "user-1", iat: 1776247200, exp: 1776250800 }
+};
+const renderedJwtJson = evaluate("renderJwtJsonDetails(testDecodedJwt, 'ID Token JSON')");
+assert.match(renderedJwtJson, /<details class="jwtJsonDetails">/u);
+assert.match(renderedJwtJson, /ID Token JSON/u);
+assert.match(renderedJwtJson, /Decoded JWT header and payload/u);
+assert.match(renderedJwtJson, /class="jsonKey".+&quot;header&quot;/u);
+assert.match(renderedJwtJson, /class="jsonKey".+&quot;payload&quot;/u);
+assert.doesNotMatch(renderedJwtJson, /encoded\.jwt\.value/u);
+context.testOpaqueTokens = [
+  { name: "access_token", value: "opaque-value", source: "response JSON body" },
+  { name: "state", value: "state-value", source: "query string" }
+];
+const renderedOpaqueJsonNotice = evaluate("renderOpaqueTokenJsonNotices(testOpaqueTokens)");
+assert.match(renderedOpaqueJsonNotice, /access_token JSON/u);
+assert.match(renderedOpaqueJsonNotice, /opaque, encrypted, redacted, or is not a JWT/u);
+assert.doesNotMatch(renderedOpaqueJsonNotice, /state JSON/u);
+
+context.testHttpAuthItems = [
+  {
+    source: "response",
+    header: "WWW-Authenticate",
+    scheme: "Negotiate",
+    protocol: "SPNEGO / Negotiate",
+    token: ""
+  },
+  {
+    source: "request",
+    header: "Authorization",
+    scheme: "NTLM",
+    protocol: "NTLM",
+    token: "TlRMTVNTUAAB"
+  }
+];
+const renderedHttpAuth = evaluate("renderHttpAuthenticationSection(testHttpAuthItems)");
+assert.match(renderedHttpAuth, /class="samlInfoCard isWide httpAuthCard"/u);
+assert.equal((renderedHttpAuth.match(/class="httpAuthEvidence"/gu) || []).length, 2);
+assert.match(renderedHttpAuth, /Server to browser/u);
+assert.match(renderedHttpAuth, /Authentication challenge response/u);
+assert.match(renderedHttpAuth, /Browser to server/u);
+assert.match(renderedHttpAuth, /Authorization request header/u);
+assert.match(renderedHttpAuth, /badge badgeKerberos">SPNEGO \/ Negotiate/u);
+assert.match(renderedHttpAuth, /badge badgeNtlm">NTLM/u);
+assert.match(renderedHttpAuth, /12 characters/u);
+assert.match(renderedHttpAuth, /No authentication token was included in this header/u);
+assert.doesNotMatch(renderedHttpAuth, /Likely protocol:/u);
+
 context.testOamEntries = [
   { ...baseEntry, id: "o1", status: 302, url: "https://app.example/protected" },
   { ...baseEntry, id: "o2", url: "https://app.example/obrar.cgi?request_id=req-42" },
@@ -423,6 +550,25 @@ assert.equal(evaluate("classifyOamStage(testSharedWna, 0, 0, 1)"), "WNA Credenti
 assert.equal(evaluate("isX509Endpoint(testSharedX509) && isX509Entry(testSharedX509)"), true);
 assert.equal(evaluate("isOamEntry(testSharedX509)"), true);
 assert.equal(evaluate("classifyOamStage(testSharedX509, 0, 0, 1)"), "X.509 Credential Collector");
+
+const x509DemoHar = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "demo-data", "x509-authentication-demo.har"), "utf8"));
+assert.equal(x509DemoHar.log.version, "1.2");
+assert.equal(x509DemoHar.log.entries.length, 6);
+assert.match(x509DemoHar.log.comment, /SYNTHETIC DEMONSTRATION DATA ONLY/u);
+const x509DemoHarEntry = x509DemoHar.log.entries.find((entry) => entry.request.url.includes("/oam/CredCollectServlet/X509"));
+assert.ok(x509DemoHarEntry);
+context.testX509DemoEntry = {
+  ...baseEntry,
+  id: "x509-demo-entry",
+  url: x509DemoHarEntry.request.url,
+  status: x509DemoHarEntry.response.status,
+  requestHeaders: x509DemoHarEntry.request.headers,
+  responseHeaders: x509DemoHarEntry.response.headers
+};
+assert.equal(evaluate("isX509Entry(testX509DemoEntry)"), true);
+assert.equal(evaluate("extractX509Info(testX509DemoEntry).certificates.length"), 1);
+assert.match(evaluate("extractX509Info(testX509DemoEntry).certificates[0].certificateValue"), /BEGIN CERTIFICATE/u);
+assert.doesNotMatch(JSON.stringify(x509DemoHar), /PRIVATE KEY|BEGIN RSA/u);
 context.testSamlEndpointEntry = { ...baseEntry, id: "saml-endpoint", url: "https://login.example/oamfed/idp/samlv20" };
 assert.equal(evaluate("isSamlEntry(testSamlEndpointEntry)"), true);
 assert.equal(evaluate("isFedEntry(testSamlEndpointEntry)"), true);
