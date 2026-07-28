@@ -95,7 +95,11 @@
       "type": 8,
       "phase": 2,
       "source": { "id": 106, "type": 15 },
-      "params": { "auth_scheme": "negotiate", "mechanism_oid": "1.2.840.113554.1.2.2", "source_dependency": { "id": 101, "type": 10 } }
+      "params": {
+        "auth_scheme": "negotiate",
+        "request_headers": ["Authorization: Negotiate YAsGCSqGSIb3EgECAg=="],
+        "source_dependency": { "id": 101, "type": 10 }
+      }
     },
     {
       "time": "100082",

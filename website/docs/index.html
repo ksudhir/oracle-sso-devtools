@@ -188,9 +188,12 @@
           </p>
           <p>
             Authentication tracing follows explicit Chromium source dependencies where available and nearby
-            authentication and HTTP evidence otherwise. The trace distinguishes confirmed Kerberos indicators,
-            NTLM fallback, inconclusive SPNEGO/Negotiate evidence, and an incomplete capture. Always verify the
-            summarized stages against the expanded raw events and authoritative server-side logs.
+            authentication and HTTP evidence otherwise. When Chromium exposes a client token in nested headers or
+            authentication fields, the inspector decodes it locally and checks for NTLMSSP, Kerberos mechanism OID,
+            and AP-REQ evidence without displaying the token. The trace distinguishes confirmed Kerberos, confirmed
+            NTLM fallback, inconclusive SPNEGO/Negotiate, challenge-only, and redacted or missing-token evidence, then
+            recommends the next client, SPN/DNS, identity, or server-side check. Always verify summarized stages
+            against expanded raw events and authoritative logs.
           </p>
           <p>
             TLS tracing reports version, cipher, key-exchange group, ALPN, certificate status, and reuse only when

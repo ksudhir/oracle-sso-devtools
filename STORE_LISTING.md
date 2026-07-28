@@ -26,7 +26,7 @@ Enterprise Authentication Flow Inspector adds a focused authentication troublesh
 - Search request and response content and filter SAML, OAM/WebGate, or static-resource traffic.
 - Import browser HAR files, panel JSON exports, or Chromium NetLog dumps for offline analysis.
 - Use a dedicated NetLog Analysis workspace to correlate sources and inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC errors with raw event parameters.
-- Trace authentication challenge exchanges through the browser response, retries, and final HTTP outcome with Kerberos, NTLM fallback, SPNEGO, and incomplete-capture interpretation.
+- Trace authentication challenge exchanges through the browser response, retries, and final HTTP outcome. When NetLog exposes client-token bytes, classify Kerberos versus NTLM fallback locally using NTLMSSP, Kerberos OID, and AP-REQ evidence without displaying the token; distinguish inconclusive, redacted, and challenge-only captures.
 - Trace TLS connections through endpoint setup, handshake, certificate validation, TLS/ALPN negotiation, connection reuse, QUIC fallback, and the final browser-visible outcome.
 - Open a contextual investigation from every NetLog finding, including DNS, proxy, socket, HTTP, HTTP/2, and QUIC failures, with linked source evidence and category-specific next actions.
 - Export captured sessions as JSON for repeatable troubleshooting.

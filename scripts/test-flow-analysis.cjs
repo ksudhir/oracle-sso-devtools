@@ -139,6 +139,7 @@ assert.match(panelStyles, /\.shell\.isNetLogWorkspace/u);
 assert.match(panelStyles, /\.netLogBody\s*\{[^}]*grid-template-columns:/su);
 assert.match(panelStyles, /\.netLogSources,[\s\S]*\.netLogAnalysis\s*\{[^}]*overflow:\s*auto/su);
 assert.match(panelStyles, /\.netLogGuideBody\s*\{[^}]*grid-template-columns:\s*repeat\(2,/su);
+assert.match(panelStyles, /\.netLogTraceStages\s*\{[^}]*grid-template-columns:\s*repeat\(5,/su);
 
 context.testToolbarMenuOne = { open: true };
 context.testToolbarMenuTwo = { open: true };
@@ -204,7 +205,7 @@ context.testNetLogDump = {
     { time: "1012", type: 4, phase: 2, source: { id: 4, type: 13 }, params: { net_error: -201, cert_status: 2, tls_version: "TLS 1.2", alpn_negotiated_protocol: "h2", cipher_suite: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", was_reused: false } },
     { time: "1016", type: 5, phase: 2, source: { id: 5, type: 14 }, params: { proxy_server: "DIRECT" } },
     { time: "1020", type: 6, phase: 1, source: { id: 6, type: 15 }, params: { host: "login.example.test" } },
-    { time: "1024", type: 7, phase: 2, source: { id: 2, type: 11 }, params: { auth_scheme: "negotiate", mechanism_oid: "1.2.840.113554.1.2.2", source_dependency: { id: 1, type: 10 } } },
+    { time: "1024", type: 7, phase: 2, source: { id: 2, type: 11 }, params: { auth_scheme: "negotiate", auth_token: "YAsGCSqGSIb3EgECAg==", source_dependency: { id: 1, type: 10 } } },
     { time: "1028", type: 8, phase: 0, source: { id: 1, type: 10 }, params: { status_code: 302, headers: "HTTP/1.1 302 Found" } }
   ]
 };
@@ -264,13 +265,64 @@ assert.equal(evaluate("testContextualDnsInvestigation.relatedSourceIds.has('201'
 evaluate("testAuthExchange = buildNetLogAuthenticationExchange(testParsedNetLog, 1)");
 assert.equal(evaluate("testAuthExchange.events.length >= 4"), true);
 assert.equal(evaluate("testAuthExchange.relatedSourceIds.has('1')"), true);
-assert.equal(evaluate("testAuthExchange.tokenProtocol.label"), "Kerberos");
+assert.equal(evaluate("testAuthExchange.tokenProtocol.label"), "Confirmed Kerberos");
+assert.match(evaluate("testAuthExchange.tokenProtocol.detail"), /Token length: 20 characters/u);
+assert.match(evaluate("testAuthExchange.tokenProtocol.detail"), /auth_token/u);
 assert.equal(evaluate("testAuthExchange.finalEvent.status"), 302);
 context.testRenderedAuthTrace = evaluate("renderNetLogAuthenticationTrace(testAuthExchange)");
 assert.match(context.testRenderedAuthTrace, /Authentication Exchange Trace/iu);
 assert.match(context.testRenderedAuthTrace, /Browser response/u);
-assert.match(context.testRenderedAuthTrace, /Kerberos/u);
+assert.match(context.testRenderedAuthTrace, /Confirmed Kerberos/u);
+assert.match(context.testRenderedAuthTrace, /Recommended next check/u);
+assert.match(context.testRenderedAuthTrace, /Kerberos selected/u);
+assert.match(context.testRenderedAuthTrace, /never rendered/u);
+assert.doesNotMatch(context.testRenderedAuthTrace, /YAsGCSqGSIb3EgECAg==/u);
 assert.match(context.testRenderedAuthTrace, /HTTP 302/u);
+
+context.testNetLogNtlmEvent = {
+  params: {
+    request_headers: [
+      "Host: login.example.test",
+      "Authorization: Negotiate TlRMTVNTUABkZW1v"
+    ]
+  },
+  searchText: "http_auth_generate_token negotiate"
+};
+context.testNetLogUnknownSpnegoEvent = {
+  params: { credentials: { scheme: "Negotiate", auth_token: "AQIDBA==" } },
+  searchText: "http_auth_generate_token negotiate"
+};
+context.testNetLogRedactedEvent = {
+  params: { authorization: "Negotiate [credentials stripped]" },
+  searchText: "http_auth_generate_token negotiate"
+};
+context.testNetLogMissingTokenEvent = {
+  params: { request_headers: ["Authorization: Negotiate"] },
+  searchText: "http_auth_generate_token negotiate"
+};
+const netLogNtlmClassification = evaluate("classifyNetLogAuthenticationProtocol(testNetLogNtlmEvent)");
+assert.equal(netLogNtlmClassification.label, "Confirmed NTLM fallback");
+assert.equal(netLogNtlmClassification.tone, "failure");
+assert.match(netLogNtlmClassification.detail, /NTLMSSP signature/u);
+assert.match(netLogNtlmClassification.detail, /Token length: 16 characters/u);
+assert.doesNotMatch(netLogNtlmClassification.detail, /TlRMTVNTUABkZW1v/u);
+const redactedNetLogParams = evaluate("redactNetLogAuthenticationTokensForDisplay(testNetLogNtlmEvent.params, 'auth')");
+assert.match(redactedNetLogParams.request_headers[1], /token hidden · 16 characters/u);
+assert.doesNotMatch(redactedNetLogParams.request_headers[1], /TlRMTVNTUABkZW1v/u);
+assert.equal(evaluate("redactNetLogAuthenticationTokensForDisplay({ token: 'visible' }, 'http').token"), "visible");
+assert.equal(evaluate("classifyNetLogEvent('HTTP_TRANSACTION_SEND_REQUEST_HEADERS {\"AUTHORIZATION\":\"NEGOTIATE TLRMTVNTUABKZW1V\"}')"), "auth");
+const netLogUnknownClassification = evaluate("classifyNetLogAuthenticationProtocol(testNetLogUnknownSpnegoEvent)");
+assert.equal(netLogUnknownClassification.label, "Undetermined SPNEGO");
+assert.equal(netLogUnknownClassification.tone, "review");
+const netLogRedactedClassification = evaluate("classifyNetLogAuthenticationProtocol(testNetLogRedactedEvent)");
+assert.equal(netLogRedactedClassification.label, "Token redacted / not captured");
+assert.equal(netLogRedactedClassification.tone, "incomplete");
+assert.match(netLogRedactedClassification.detail, /omitted the sensitive token bytes/u);
+const netLogMissingTokenClassification = evaluate("classifyNetLogAuthenticationProtocol(testNetLogMissingTokenEvent)");
+assert.equal(netLogMissingTokenClassification.label, "Token redacted / not captured");
+const netLogChallengeOnlyClassification = evaluate("classifyNetLogAuthenticationProtocol(null)");
+assert.equal(netLogChallengeOnlyClassification.label, "Challenge only");
+assert.equal(netLogChallengeOnlyClassification.tone, "incomplete");
 context.testRenderedFindings = evaluate("renderNetLogFindings(testParsedNetLog.events, null)");
 assert.match(context.testRenderedFindings, /Investigate DNS/u);
 assert.match(context.testRenderedFindings, /Trace TLS connection/u);

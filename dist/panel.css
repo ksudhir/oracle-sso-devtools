@@ -1343,7 +1343,7 @@ body.isNetLogMode #toolsMenu {
 
 .netLogTraceStages {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
 }
 
 .netLogTlsTrace .netLogTraceStages {
@@ -1586,12 +1586,20 @@ body.isNetLogMode #toolsMenu {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 
-  .netLogTraceStage:nth-child(2) {
+  .netLogTraceStage:nth-child(odd) {
+    border-right: 1px solid var(--line);
+  }
+
+  .netLogTraceStage:nth-child(even) {
     border-right: 0;
   }
 
-  .netLogTraceStage:nth-child(-n + 2) {
+  .netLogTraceStage:nth-child(-n + 4) {
     border-bottom: 1px solid var(--line);
+  }
+
+  .netLogTraceStage:last-child {
+    border-right: 0;
   }
 
   .netLogTlsTrace .netLogTraceStage:nth-child(odd) {

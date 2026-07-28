@@ -485,20 +485,22 @@ let liveCaptureRenderTimer = null;
 let lastFlowUserScrollAt = 0;
 let flowScrollRestorationPending = false;
 
-chrome.devtools.network.onRequestFinished.addListener((request) => {
-  request.getContent(async (body, encoding) => {
-    if (!state.isCapturing) return;
+if (chrome?.devtools?.network?.onRequestFinished) {
+  chrome.devtools.network.onRequestFinished.addListener((request) => {
+    request.getContent(async (body, encoding) => {
+      if (!state.isCapturing) return;
 
-    const entry = await createEntry(request, body, encoding);
-    state.entries = sortEntriesChronologically([...state.entries, entry]);
+      const entry = await createEntry(request, body, encoding);
+      state.entries = sortEntriesChronologically([...state.entries, entry]);
 
-    if (!state.selectedId) {
-      state.selectedId = entry.id;
-    }
+      if (!state.selectedId) {
+        state.selectedId = entry.id;
+      }
 
-    scheduleLiveCaptureRender();
+      scheduleLiveCaptureRender();
+    });
   });
-});
+}
 
 function scheduleLiveCaptureRender() {
   if (liveCaptureRenderTimer) clearTimeout(liveCaptureRenderTimer);
@@ -1385,7 +1387,7 @@ function findNetLogErrorCode(params) {
 }
 
 function classifyNetLogEvent(searchable) {
-  if (/(?:HTTP_AUTH|AUTH_CONTROLLER|AUTH_REQUIRED|AUTH_CHALLENGE|WWW_AUTHENTICATE|PROXY_AUTH|NEGOTIATE(?:["\s:]|$)|KERBEROS|NTLMSSP|SPNEGO|GSSAPI)/u.test(searchable)) return "auth";
+  if (/(?:HTTP_AUTH|AUTH_CONTROLLER|AUTH_REQUIRED|AUTH_CHALLENGE|WWW_AUTHENTICATE|PROXY_AUTH|(?:PROXY-)?AUTHORIZATION[^\n]{0,80}(?:NEGOTIATE|KERBEROS|NTLM)|NEGOTIATE(?:["\s:]|$)|KERBEROS|NTLMSSP|SPNEGO|GSSAPI)/u.test(searchable)) return "auth";
   if (/(?:HOST_RESOLVER|DNS)/u.test(searchable)) return "dns";
   if (/(?:PROXY|PAC_)/u.test(searchable)) return "proxy";
   if (/(?:SSL|TLS|CERT|TRANSPORT_SECURITY)/u.test(searchable)) return "tls";
@@ -2716,18 +2718,134 @@ function extractNetLogHttpStatus(value) {
 }
 
 function classifyNetLogAuthenticationProtocol(event) {
-  if (!event) return { label: "Not observed", tone: "incomplete", detail: "No browser authorization event was identified in the captured exchange." };
+  if (!event) {
+    return {
+      label: "Challenge only",
+      tone: "incomplete",
+      detail: "The server challenge was captured, but no browser authorization event or client token was identified."
+    };
+  }
+
+  const extracted = extractNetLogAuthenticationToken(event.params);
+  if (extracted.redacted) {
+    return {
+      label: "Token redacted / not captured",
+      tone: "incomplete",
+      detail: `Chromium recorded a ${extracted.scheme || "Negotiate"} browser response, but omitted the sensitive token bytes${extracted.source ? ` (${extracted.source})` : ""}.`
+    };
+  }
+  if (extracted.token) {
+    const classification = classifyHttpAuthToken(extracted.scheme || "Negotiate", extracted.token, "request");
+    const tokenDetail = `${classification.evidence} Token length: ${extracted.token.length} characters${extracted.source ? `; source: ${extracted.source}` : ""}.`;
+    if (classification.protocol === "NTLM") {
+      return { label: "Confirmed NTLM fallback", tone: "failure", detail: tokenDetail };
+    }
+    if (classification.protocol === "Kerberos") {
+      return { label: "Confirmed Kerberos", tone: "success", detail: tokenDetail };
+    }
+    return { label: classification.detection, tone: "review", detail: tokenDetail };
+  }
+
   const text = event.searchText.toUpperCase();
   if (/NTLMSSP|(?:^|[^A-Z])NTLM(?:[^A-Z]|$)/u.test(text)) {
-    return { label: "NTLM fallback", tone: "failure", detail: "Client authentication evidence contains NTLM or the NTLMSSP signature." };
+    return { label: "Confirmed NTLM fallback", tone: "failure", detail: "Client authentication evidence contains NTLM or the NTLMSSP signature. Raw token bytes were not exposed." };
   }
   if (/KERBEROS|AP-REQ|1\.2\.840\.113554\.1\.2\.2/u.test(text)) {
-    return { label: "Kerberos", tone: "success", detail: "Client authentication evidence contains Kerberos mechanism or AP-REQ indicators." };
+    return { label: "Confirmed Kerberos", tone: "success", detail: "Client authentication evidence contains Kerberos mechanism or AP-REQ indicators. Raw token bytes were not exposed." };
   }
   if (/NEGOTIATE|SPNEGO|GSSAPI/u.test(text)) {
-    return { label: "SPNEGO / Negotiate", tone: "review", detail: "A browser authorization event was found, but the inner Kerberos or NTLM mechanism is not conclusive." };
+    return { label: "Undetermined SPNEGO", tone: "review", detail: "A browser authorization event was found, but no inspectable token or conclusive inner Kerberos/NTLM marker was exposed." };
   }
   return { label: "Authorization observed", tone: "review", detail: "A browser authentication response was found without a recognized Kerberos or NTLM marker." };
+}
+
+function extractNetLogAuthenticationToken(params) {
+  const strings = [];
+  collectNetLogAuthStrings(params, [], strings);
+  let scheme = findNetLogAuthenticationScheme(params);
+  let redactedSource = "";
+
+  for (const item of strings) {
+    const headerMatch = item.value.match(/\b(?:proxy-)?authorization\b\s*[:=]\s*(Negotiate|Kerberos|NTLM)(?:\s+([^\s"',;\]}]+))?/iu);
+    if (!headerMatch) continue;
+    scheme = normalizeHttpAuthScheme(headerMatch[1]) || scheme;
+    const candidate = normalizeNetLogAuthTokenCandidate(headerMatch[2] || "");
+    if (candidate.token) return { scheme, token: candidate.token, redacted: false, source: item.path || "Authorization header" };
+    if (!headerMatch[2] || candidate.redacted || netLogValueIsRedacted(item.value)) {
+      redactedSource ||= item.path || "Authorization header";
+    }
+  }
+
+  for (const item of strings) {
+    if (!isNetLogAuthTokenPath(item.path, Boolean(scheme))) continue;
+    const candidate = normalizeNetLogAuthTokenCandidate(item.value);
+    if (candidate.token) return { scheme: scheme || "Negotiate", token: candidate.token, redacted: false, source: item.path };
+    if (!String(item.value || "").trim() || candidate.redacted) redactedSource ||= item.path;
+  }
+
+  return {
+    scheme: scheme || "Negotiate",
+    token: "",
+    redacted: Boolean(redactedSource) || strings.some((item) => (
+      isNetLogAuthTokenPath(item.path, Boolean(scheme)) && netLogValueIsRedacted(item.value)
+    )),
+    source: redactedSource
+  };
+}
+
+function collectNetLogAuthStrings(value, path, results, depth = 0) {
+  if (depth > 8 || value === null || value === undefined || results.length >= 250) return;
+  if (typeof value === "string") {
+    results.push({ path: path.join("."), value });
+    return;
+  }
+  if (typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => collectNetLogAuthStrings(item, [...path, String(index)], results, depth + 1));
+    return;
+  }
+  for (const [key, item] of Object.entries(value)) {
+    collectNetLogAuthStrings(item, [...path, key], results, depth + 1);
+  }
+}
+
+function findNetLogAuthenticationScheme(value) {
+  const strings = [];
+  collectNetLogAuthStrings(value, [], strings);
+  for (const item of strings) {
+    if (!/(?:auth|scheme|mechanism|header|credential|token)/iu.test(item.path)) continue;
+    const match = item.value.match(/\b(Negotiate|Kerberos|NTLM)\b/iu);
+    if (match) return normalizeHttpAuthScheme(match[1]);
+  }
+  return "";
+}
+
+function normalizeHttpAuthScheme(value) {
+  return {
+    negotiate: "Negotiate",
+    kerberos: "Kerberos",
+    ntlm: "NTLM"
+  }[String(value || "").toLowerCase()] || "";
+}
+
+function isNetLogAuthTokenPath(path, hasScheme = false) {
+  const rawPath = String(path || "").toLowerCase();
+  const normalized = String(path || "").toLowerCase().replace(/[^a-z0-9]/gu, "");
+  return /(?:authorization|auth(?:entication)?token|negotiate(?:token)?|spnego(?:token)?|kerberos(?:token)?|ntlm(?:token)?|credentials?)/u.test(normalized)
+    || (hasScheme && /(?:^|[.[\]_-])(?:token|token_value|base64_token|blob|value)$/u.test(rawPath));
+}
+
+function normalizeNetLogAuthTokenCandidate(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return { token: "", redacted: false };
+  if (netLogValueIsRedacted(raw)) return { token: "", redacted: true };
+  const withoutScheme = raw.replace(/^(?:Negotiate|Kerberos|NTLM)\s+/iu, "").trim();
+  const token = withoutScheme.match(/^[A-Za-z0-9+/_=-]{4,}$/u)?.[0] || "";
+  return { token, redacted: false };
+}
+
+function netLogValueIsRedacted(value) {
+  return /(?:redact|stripped|removed|omitted|not\s+captured|not\s+logged|sensitive|\*{3,}|<[^>]*(?:token|credential)[^>]*>)/iu.test(String(value || ""));
 }
 
 function getNetLogTlsTraceCandidates(netLog = state.netLog) {
@@ -3167,6 +3285,7 @@ function renderNetLogCaptureGuide(expanded = false) {
     `<li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth Flow Inspector</strong>.</li>`,
     `<li>Choose <strong>Import File</strong> and select the saved JSON file.</li>`,
     `<li>Start with <strong>Issues</strong>, then inspect Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>`,
+    `<li>For an authentication finding, choose <strong>Trace exchange</strong>. The browser response is classified as Confirmed Kerberos, Confirmed NTLM fallback, Undetermined SPNEGO, Challenge only, or Token redacted/not captured when the available NetLog evidence permits it.</li>`,
     `<li>Select a source on the left and expand its events. Correlate the first failure with the reproduction time, hostname, Net error, source dependency, and server-side logs.</li>`,
     `</ol>`,
     `</section>`,
@@ -3326,6 +3445,7 @@ function renderNetLogAuthenticationTrace(exchange) {
       detail: "No additional challenge was found in the correlated capture window."
     };
   const outcome = describeNetLogAuthenticationOutcome(exchange.finalEvent);
+  const recommendation = describeNetLogAuthenticationRecommendation(response, outcome);
 
   return [
     `<section class="netLogAuthTrace">`,
@@ -3343,10 +3463,54 @@ function renderNetLogAuthenticationTrace(exchange) {
     renderNetLogTraceStage("2", "Browser response", response.label, response.tone, response.detail),
     renderNetLogTraceStage("3", "Retry / continuation", retry.label, retry.tone, retry.detail),
     renderNetLogTraceStage("4", "Final outcome", outcome.label, outcome.tone, outcome.detail),
+    renderNetLogTraceStage("5", "Recommended next check", recommendation.label, recommendation.tone, recommendation.detail),
     `</div>`,
-    `<p class="netLogTraceNote">The trace follows explicit Chromium source dependencies where present and nearby authentication/HTTP evidence otherwise. Confirm the result against the expanded raw events and server-side logs.</p>`,
+    `<p class="netLogTraceNote">Token bytes are inspected locally for classification and are never rendered in this trace. The trace follows explicit Chromium source dependencies where present and nearby authentication/HTTP evidence otherwise. Confirm the result against expanded raw events and authoritative client, identity, and server logs.</p>`,
     `</section>`
   ].join("");
+}
+
+function describeNetLogAuthenticationRecommendation(response, outcome) {
+  if (/NTLM/u.test(response.label)) {
+    return {
+      label: "Restore Kerberos selection",
+      tone: "failure",
+      detail: "Validate forward and reverse DNS, HTTP SPN uniqueness and ownership, browser integrated-authentication allowlists, delegation policy, and the client ticket cache."
+    };
+  }
+  if (response.label === "Confirmed Kerberos" && outcome.tone === "failure") {
+    return {
+      label: "Investigate Kerberos rejection",
+      tone: "failure",
+      detail: "Correlate the endpoint and timestamp with service, WebGate/OAM, and domain-controller logs; then verify SPN ownership, service credentials or keytab, DNS, and clock skew."
+    };
+  }
+  if (response.label === "Confirmed Kerberos") {
+    return {
+      label: "Kerberos selected",
+      tone: "success",
+      detail: "No NTLM fallback is visible. Use the final HTTP outcome and application/session evidence to determine whether additional troubleshooting is required."
+    };
+  }
+  if (response.label === "Token redacted / not captured") {
+    return {
+      label: "Capture inspectable evidence",
+      tone: "review",
+      detail: "Use a short, approved restricted NetLog capture with cookies and credentials only when necessary, or compare the same request in DevTools and client Kerberos diagnostics."
+    };
+  }
+  if (response.label === "Challenge only") {
+    return {
+      label: "Confirm the browser response",
+      tone: "review",
+      detail: "Check browser authentication policy, trusted URL or allowlist configuration, proxy behavior, hostname form, and whether the capture continued through the client response."
+    };
+  }
+  return {
+    label: "Resolve the inner mechanism",
+    tone: "review",
+    detail: "Inspect expanded authentication events or make an approved restricted capture. A Negotiate label alone does not prove that Kerberos was selected."
+  };
 }
 
 function renderNetLogTlsTrace(exchange) {
@@ -3520,10 +3684,35 @@ function renderNetLogEvent(event) {
     `<div><dt>Raw time</dt><dd>${escapeHtml(event.rawTime)}</dd></div>`,
     `${event.netErrorCode === null ? "" : `<div><dt>Net error</dt><dd>${escapeHtml(event.netErrorName)} (${event.netErrorCode})</dd></div>`}`,
     `</dl>`,
-    `<pre class="netLogParams"><code>${highlightJson(event.params)}</code></pre>`,
+    `<pre class="netLogParams"><code>${highlightJson(redactNetLogAuthenticationTokensForDisplay(event.params, event.category))}</code></pre>`,
     `</div>`,
     `</details>`
   ].join("");
+}
+
+function redactNetLogAuthenticationTokensForDisplay(params, category) {
+  if (category !== "auth") return params;
+  const scheme = findNetLogAuthenticationScheme(params);
+
+  const redact = (value, path = []) => {
+    if (typeof value === "string") {
+      const headerRedacted = value.replace(
+        /(\b(?:proxy-)?authorization\b\s*[:=]\s*(?:Negotiate|Kerberos|NTLM))\s+([A-Za-z0-9+/_=-]{4,})/giu,
+        (match, prefix, token) => `${prefix} [token hidden · ${token.length} characters]`
+      );
+      if (headerRedacted !== value) return headerRedacted;
+      if (isNetLogAuthTokenPath(path.join("."), Boolean(scheme))) {
+        const candidate = normalizeNetLogAuthTokenCandidate(value);
+        if (candidate.token) return `[token hidden · ${candidate.token.length} characters]`;
+      }
+      return value;
+    }
+    if (!value || typeof value !== "object") return value;
+    if (Array.isArray(value)) return value.map((item, index) => redact(item, [...path, String(index)]));
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redact(item, [...path, key])]));
+  };
+
+  return redact(params);
 }
 
 function formatNetLogRelativeTime(value) {

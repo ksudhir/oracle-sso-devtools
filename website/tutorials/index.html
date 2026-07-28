@@ -215,7 +215,8 @@
             <ul>
               <li>An initial <code>401</code> with <code>WWW-Authenticate: Negotiate</code> is an expected challenge, not automatically a failure.</li>
               <li>A following <code>Authorization: Negotiate</code> indicates that the browser submitted an SPNEGO token. The inspector decodes browser-visible token bytes locally and looks for the <code>NTLMSSP</code> signature, Kerberos mechanism OID <code>1.2.840.113554.1.2.2</code>, and AP-REQ evidence.</li>
-              <li><strong>Confirmed Kerberos</strong> identifies Kerberos OID or AP-REQ evidence. <strong>Confirmed NTLM</strong> identifies NTLMSSP even when wrapped by Negotiate. <strong>Undetermined SPNEGO</strong> means the visible token does not contain enough recognized evidence.</li>
+              <li><strong>Confirmed Kerberos</strong> identifies Kerberos OID or AP-REQ evidence. <strong>Confirmed NTLM fallback</strong> identifies NTLMSSP even when wrapped by Negotiate. <strong>Undetermined SPNEGO</strong> means the visible token does not contain enough recognized evidence. <strong>Challenge only</strong> and <strong>Token redacted / not captured</strong> distinguish an absent browser response from evidence Chromium intentionally omitted.</li>
+              <li>For an imported NetLog, open <strong>NetLog Analysis &gt; Auth</strong> and choose <strong>Trace exchange</strong>. The trace inspects nested token fields locally, hides the token value, reports its length and detection evidence, and recommends the next Kerberos, NTLM, browser-policy, or restricted-capture check.</li>
               <li>Repeated challenges with no browser token indicate browser policy, trusted-zone, URL, or client configuration should be checked before server authentication.</li>
               <li>A submitted token followed by rejection requires SPN, service account, keytab, DNS, clock, KDC, and server-log validation outside the browser.</li>
             </ul>
