@@ -36,10 +36,10 @@
         "topic": "Kerberos/WNA, NTLM, and forwarded X.509"
       },
       {
-        "path": "screenshots/05-oam-webgate-diagnostics.png",
+        "path": "screenshots/05-netlog-kerberos-analysis.jpg",
         "width": 1280,
         "height": 800,
-        "topic": "OAM/WebGate status, timing, cookies, and redirects"
+        "topic": "NetLog Kerberos versus NTLM client-token classification, retry trace, outcome, and next check"
       }
     ],
     "promoTiles": [
@@ -63,7 +63,7 @@
       "durationSeconds": 54,
       "codec": "H.264",
       "metadataSource": "../STORE_LISTING.md",
-      "status": "Regenerated with Enterprise Authentication Flow Inspector branding and updated Okta and Microsoft Entra ID coverage"
+      "status": "Source and output updated for NetLog Kerberos/NTLM token classification and five-stage authentication exchange tracing"
     }
   },
   "generation": {
@@ -80,6 +80,7 @@
     "The extension analyzes only traffic visible to Chrome DevTools.",
     "JWT and certificate data is decoded and summarized but not cryptographically validated.",
     "Kerberos tickets and PAC data are not decrypted or validated.",
+    "Client authentication token values remain hidden; classification uses only browser-visible local evidence.",
     "Server-to-server, KDC, and backend-only exchanges may not be visible."
   ]
 }

@@ -119,7 +119,7 @@ Recommended committed screenshots:
 - `store-assets/screenshots/02-saml-federation-analysis.png`
 - `store-assets/screenshots/03-oidc-flow-analysis.png`
 - `store-assets/screenshots/04-wna-ntlm-x509-auth.png`
-- `store-assets/screenshots/05-oam-webgate-diagnostics.png`
+- `store-assets/screenshots/05-netlog-kerberos-analysis.jpg`
 
 Make sure screenshots contain no real customer names, hostnames, tokens, cookies, email addresses, certificate data, or other confidential information.
 
@@ -127,7 +127,7 @@ Make sure screenshots contain no real customer names, hostnames, tokens, cookies
 
 Use this single-purpose statement:
 
-> This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise SSO and federation traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, and HAR data.
+> This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, and authorization traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, HAR data, and focused Chromium NetLog evidence.
 
 Permission justification:
 
@@ -164,9 +164,10 @@ Explain to the reviewer how to find and test the extension:
 > 1. Install the extension.
 > 2. Open any browser tab and launch Chrome DevTools.
 > 3. Select the Auth Flow Inspector panel. It may appear under the DevTools overflow menu if the window is narrow.
-> 4. Browse an authentication flow or use Import HAR/JSON to load a HAR file.
-> 5. Use Traffic Inspector for Request, Response, Cookies, Kerberos / X.509, SAML XML, SAML Details, OAuth Token, and OIDC Details. Switch to the primary Flow Analysis workspace for correlated attempts, expandable OAM/WNA details, evidence, and recommended actions.
-> 6. The extension processes inspected traffic locally and does not require an account or external service.
+> 4. Browse an authentication flow, use Import File to load a sanitized HAR or panel JSON export, or import `demo-data/chromium-netlog-auth-demo.json`.
+> 5. Use Traffic Inspector for Request, Response, Cookies, Kerberos / X.509, SAML XML, SAML Details, OAuth Token, and OIDC Details. Switch to Flow Analysis for correlated attempts and recommended actions.
+> 6. For the NetLog demo, open the authentication finding and select Trace exchange. Review the challenge, client-token classification, retries, final HTTP outcome, and recommended next check. Token values are not displayed.
+> 7. The extension processes inspected and imported traffic locally and does not require an account or external service.
 
 Provide only sanitized test data. Never upload a HAR containing real credentials, session cookies, bearer tokens, SAML assertions, personal data, or internal hostnames.
 
@@ -237,6 +238,7 @@ Uploading an update does not immediately replace the currently published version
 - [ ] Reviewer instructions added
 - [ ] Automatic or deferred publishing choice confirmed
 - [ ] Web Store installation tested after publication
+- [ ] HAR/JSON import and NetLog Trace exchange tested after publication
 
 ## Official References
 

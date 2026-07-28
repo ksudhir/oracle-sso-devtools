@@ -6,11 +6,11 @@ Enterprise Authentication Flow Inspector
 
 ## Package Summary
 
-Troubleshoot and correlate authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Entra ID.
+Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
 
 ## Short Promotional Description
 
-Troubleshoot enterprise authentication, SSO, and federation directly in Chrome DevTools. Correlate OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos/WNA, NTLM, and X.509 evidence.
+Troubleshoot enterprise authentication, SSO, federation, and Chromium NetLog evidence directly in Chrome DevTools. Correlate OAM, SAML, OAuth/OIDC, Okta, Entra ID, Kerberos/WNA, NTLM, and X.509.
 
 ## Full Store Description
 
@@ -112,13 +112,13 @@ No. All JavaScript, HTML, CSS, icons, and processing logic are packaged inside t
 2. **Decoded SAML intelligence** — Read formatted federation details, deployment-specific values, bindings, assertions, attributes, and certificate metadata.
 3. **Correlated OIDC flow analysis** — Connect Okta, Microsoft Entra ID, and standards-based authorization, callback, token, UserInfo, discovery, and JWKS traffic with state, nonce, PKCE, audience, issuer, and lifetime checks.
 4. **Windows authentication and X.509** — Inspect Negotiate/SPNEGO, Kerberos/WNA, NTLM fallback, credential-collection endpoints, and forwarded client-certificate headers.
-5. **Contextual Chromium NetLog diagnostics** — Open an action from every finding and trace DNS, proxy, socket, HTTP, HTTP/2, QUIC, TLS, certificate, and authentication problems through linked Chromium sources and final outcomes.
+5. **NetLog Kerberos and NTLM analysis** — Trace the Negotiate challenge through client-token classification, retries, final HTTP outcome, and recommended next check while token values remain hidden.
 
 ## YouTube Metadata
 
 ### Video Title
 
-Troubleshoot OAM, SAML, Okta, Entra & OIDC in Chrome DevTools
+Troubleshoot SSO, Kerberos & Chromium NetLog in Chrome DevTools
 
 ### Video Description
 
@@ -136,6 +136,7 @@ Highlights:
 - Highlight OAM/WebGate cookies and FED endpoints.
 - Import HAR files for offline troubleshooting.
 - Inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC events from Chromium NetLog dumps.
+- Classify browser-visible Negotiate client tokens as Kerberos, NTLM fallback, undetermined SPNEGO, challenge only, or redacted without displaying token values.
 - Keep captured authentication data local to the browser extension.
 
 Open-source project:

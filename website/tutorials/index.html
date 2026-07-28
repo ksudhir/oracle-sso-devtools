@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Step-by-step troubleshooting tutorials for SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and offline HAR analysis with Enterprise Authentication Flow Inspector."
+      content="Step-by-step troubleshooting tutorials for SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, offline HAR, and Chromium NetLog analysis."
     />
     <meta name="theme-color" content="#0b1218" />
     <link rel="canonical" href="https://ksudhir.github.io/oracle-sso-devtools/tutorials/" />
@@ -303,7 +303,7 @@
               <li>Start with <strong>Issues</strong> to identify explicit Chromium Net errors and challenge/retry events.</li>
               <li>Narrow to Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC based on the first failed stage.</li>
               <li>Select a source in the left navigator to isolate its events and expand each event to inspect raw parameters.</li>
-              <li>For an authentication challenge finding, select <strong>Trace exchange</strong>. Follow the four stages and use Previous or Next to compare repeated challenges.</li>
+              <li>For an authentication challenge finding, select <strong>Trace exchange</strong>. Follow the five stages: challenge, client token, retries, final outcome, and recommended next check. Use Previous or Next to compare repeated challenges.</li>
               <li>For TLS or certificate evidence, select <strong>Trace TLS connection</strong>. Compare endpoint/connect evidence, handshake, certificate validation, protocol negotiation, connection reuse, and the final outcome.</li>
               <li>For DNS, proxy, socket, HTTP, HTTP/2, QUIC, or other findings, select <strong>Investigate</strong>. Review the triggering event, linked Chromium sources, related evidence, final visible outcome, and recommended investigation path.</li>
               <li>Follow the recommended next action, then correlate the timestamp, hostname, source, and Net error with proxy, DNS, certificate, gateway, or browser policy evidence.</li>
@@ -356,10 +356,10 @@
               </figcaption>
             </figure>
             <figure class="tutorial-figure netlog-figure">
-              <img src="../assets/netlog-http-authentication-trace-dark.jpg" alt="Dark Authentication Exchange Trace showing a server challenge, Kerberos browser response, retry, and successful redirect" width="1280" height="720">
+              <img src="../assets/netlog-http-authentication-trace-dark.jpg" alt="Dark Authentication Exchange Trace showing a server challenge, confirmed Kerberos client token, retry, successful redirect, and recommended next check" width="1280" height="720">
               <figcaption>
-                <strong>Authentication exchange trace</strong>
-                <span>Follow the server challenge through the browser's Kerberos or NTLM response, continuation requests, and final HTTP outcome.</span>
+                <strong>Kerberos and NTLM exchange classification</strong>
+                <span>Follow the challenge through local client-token classification, retries, final HTTP outcome, and the recommended next check. Token values remain hidden.</span>
               </figcaption>
             </figure>
             <figure class="tutorial-figure netlog-figure">

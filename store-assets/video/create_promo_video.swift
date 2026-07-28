@@ -25,8 +25,8 @@ let scenes = [
     Scene(start: 14, end: 22, eyebrow: "SAML FEDERATION", title: "Decode SAML. Understand the deployment.", subtitle: "Inspect bindings, issuer, destination, NameID policy, assertions, attributes, and certificates.", image: "store-assets/screenshots/02-saml-federation-analysis.png", accent: NSColor(calibratedRed: 0.72, green: 0.55, blue: 1.0, alpha: 1)),
     Scene(start: 22, end: 30, eyebrow: "OKTA · MICROSOFT ENTRA · OIDC", title: "Correlate the complete identity flow", subtitle: "Connect provider evidence, authorization, callback, token, UserInfo, discovery, and JWKS traffic with validation signals.", image: "store-assets/screenshots/03-oidc-flow-analysis.png", accent: NSColor(calibratedRed: 0.38, green: 0.88, blue: 0.76, alpha: 1)),
     Scene(start: 30, end: 38, eyebrow: "WINDOWS & CERTIFICATE AUTH", title: "Spot Kerberos, NTLM fallback, and X.509", subtitle: "Inspect Negotiate/SPNEGO challenges, WNA endpoints, NTLM tokens, and forwarded client certificates.", image: "store-assets/screenshots/04-wna-ntlm-x509-auth.png", accent: NSColor(calibratedRed: 1.0, green: 0.67, blue: 0.28, alpha: 1)),
-    Scene(start: 38, end: 47, eyebrow: "OAM / WEBGATE DIAGNOSTICS", title: "Find the failure behind the redirect", subtitle: "Read authentication cookies, HTTP meaning, response size, and timing, then import or export HAR evidence.", image: "store-assets/screenshots/05-oam-webgate-diagnostics.png", accent: NSColor(calibratedRed: 1.0, green: 0.46, blue: 0.57, alpha: 1)),
-    Scene(start: 47, end: 54, eyebrow: "OPEN SOURCE · LOCAL ANALYSIS", title: "Troubleshoot authentication with confidence", subtitle: "OAM · SAML · OIDC · Okta · Entra · Kerberos/WNA · X.509", image: nil, accent: NSColor(calibratedRed: 0.31, green: 0.78, blue: 0.96, alpha: 1))
+    Scene(start: 38, end: 47, eyebrow: "NETLOG KERBEROS ANALYSIS", title: "Prove Kerberos or expose NTLM fallback", subtitle: "Trace the Negotiate challenge, classify the hidden client token, follow retries and final HTTP outcome, and act on the recommended next check.", image: "store-assets/screenshots/05-netlog-kerberos-analysis.jpg", accent: NSColor(calibratedRed: 1.0, green: 0.46, blue: 0.57, alpha: 1)),
+    Scene(start: 47, end: 54, eyebrow: "OPEN SOURCE · LOCAL ANALYSIS", title: "Troubleshoot authentication with confidence", subtitle: "OAM · SAML · OIDC · Okta · Entra · Kerberos/WNA · X.509 · NetLog", image: nil, accent: NSColor(calibratedRed: 0.31, green: 0.78, blue: 0.96, alpha: 1))
 ]
 
 let images: [String: NSImage] = Dictionary(uniqueKeysWithValues: scenes.compactMap { scene in
@@ -209,4 +209,20 @@ let semaphore = DispatchSemaphore(value: 0)
 writer.finishWriting { semaphore.signal() }
 semaphore.wait()
 guard writer.status == .completed else { fatalError(writer.error?.localizedDescription ?? "Video export failed") }
+
+let poster = output.appendingPathExtension("png")
+let posterGenerator = AVAssetImageGenerator(asset: AVURLAsset(url: output))
+posterGenerator.appliesPreferredTrackTransform = true
+var posterTime = CMTime.zero
+let posterFrame = try posterGenerator.copyCGImage(
+    at: CMTime(seconds: 40.5, preferredTimescale: 600),
+    actualTime: &posterTime
+)
+let posterRepresentation = NSBitmapImageRep(cgImage: posterFrame)
+guard let posterData = posterRepresentation.representation(using: .png, properties: [:]) else {
+    fatalError("Could not encode promotional video poster")
+}
+try posterData.write(to: poster, options: .atomic)
+
 print(output.path)
+print(poster.path)

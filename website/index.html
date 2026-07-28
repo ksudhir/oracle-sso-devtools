@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Troubleshoot and correlate browser-visible enterprise authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Microsoft Entra ID."
+      content="Troubleshoot browser-visible SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence."
     />
     <meta name="theme-color" content="#0b1218" />
     <meta property="og:title" content="Enterprise Authentication Flow Inspector" />
     <meta
       property="og:description"
-      content="A focused Chrome DevTools workspace for browser-visible authentication troubleshooting."
+      content="A focused Chrome DevTools workspace for authentication-flow and Chromium NetLog troubleshooting."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ksudhir.github.io/oracle-sso-devtools/" />
@@ -102,7 +102,7 @@
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oidc-analysis.png" data-alt="Correlated OIDC flow analysis" data-caption="OIDC Flow Analysis" data-description="Correlate authorization, callback, token and provider evidence with state, nonce, PKCE, audience, issuer and lifetime checks.">OIDC</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/wna-x509-analysis.png" data-alt="Kerberos WNA NTLM and X.509 authentication assessment" data-caption="Kerberos / X.509" data-description="Inspect browser-visible Negotiate challenges and classify client tokens using NTLMSSP, Kerberos OID, or AP-REQ evidence alongside repeated 401s, WNA endpoints, and forwarded certificates.">WNA / X.509</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oam-diagnostics.png" data-alt="OAM and WebGate flow diagnostics" data-caption="OAM / WebGate" data-description="Follow request identifiers, WebGate and OAM transitions, authentication cookies, credential collection, ECIDs and the application return.">OAM</button>
-              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/netlog-investigation.jpg" data-alt="Contextual Chromium NetLog DNS investigation" data-caption="NetLog Investigation" data-description="Open a contextual action from every finding and follow the triggering event, linked Chromium sources, related evidence, final outcome, and category-specific troubleshooting path.">NetLog</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/netlog-http-authentication-trace-dark.jpg" data-alt="Chromium NetLog authentication trace with confirmed Kerberos client-token classification" data-caption="NetLog Kerberos Analysis" data-description="Distinguish confirmed Kerberos, NTLM fallback, undetermined SPNEGO, challenge-only, and redacted captures, then follow retries, the final HTTP outcome, and the recommended next check.">NetLog</button>
             </div>
             <div id="gallery-panel" class="gallery-panel" role="tabpanel" tabindex="0">
               <figure>
@@ -164,7 +164,7 @@
             <article>
               <span class="protocol-mark mark-blue">NET</span>
               <h3>Chromium NetLog</h3>
-              <p>Open a contextual investigation from every finding: authentication and TLS traces plus focused DNS, proxy, socket, HTTP, HTTP/2, QUIC and raw-event evidence.</p>
+              <p>Classify Kerberos versus NTLM fallback from client-token evidence, trace challenge retries and outcomes, or investigate TLS, DNS, proxy, socket, HTTP/2, QUIC and raw events.</p>
             </article>
           </div>
         </div>

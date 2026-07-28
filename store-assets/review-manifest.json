@@ -28,11 +28,11 @@
     "href": "screenshots/04-wna-ntlm-x509-auth.png"
   },
   {
-    "id": "oam-webgate-diagnostics",
+    "id": "netlog-kerberos-analysis",
     "index": 5,
-    "title": "OAM and WebGate Diagnostics",
-    "src": "screenshots/05-oam-webgate-diagnostics.png",
-    "href": "screenshots/05-oam-webgate-diagnostics.png"
+    "title": "NetLog Kerberos and NTLM Analysis",
+    "src": "screenshots/05-netlog-kerberos-analysis.jpg",
+    "href": "screenshots/05-netlog-kerberos-analysis.jpg"
   },
   {
     "id": "small-promo",

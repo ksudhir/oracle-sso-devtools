@@ -3,7 +3,7 @@
   "version": "3.0.0",
   "private": true,
   "license": "MIT",
-  "description": "Chrome DevTools extension for inspecting browser-visible authentication, SSO, and federation flows.",
+  "description": "Chrome DevTools extension for troubleshooting browser-visible authentication flows and Chromium NetLog evidence.",
   "scripts": {
     "build": "node scripts/build-dist.cjs",
     "check:dist": "node scripts/build-dist.cjs --check",

@@ -121,9 +121,9 @@ function panelPage() {
 function promoPage(small) {
   const width = small ? 440 : 1400;
   const height = small ? 280 : 560;
-  const chips = (small ? ["SAML", "OIDC", "Okta", "Entra", "WNA", "X.509"] : ["OAM / WebGate", "SAML / FED", "OAuth / OIDC", "Okta", "Microsoft Entra", "Kerberos / WNA", "NTLM", "X.509"])
+  const chips = (small ? ["SAML", "OIDC", "WNA", "NTLM", "X.509", "NetLog"] : ["OAM / WebGate", "SAML / FED", "OAuth / OIDC", "Okta", "Microsoft Entra", "Kerberos / WNA", "NTLM", "X.509", "NetLog"])
     .map((item) => '<span class="chip">' + item + "</span>").join("");
-  const proof = small ? "" : '<div class="proof"><img src="/oidc-proof.png"></div>';
+  const proof = small ? "" : '<div class="proof"><img src="/netlog-proof.jpg"></div>';
   return '<!doctype html><html><head><meta charset="utf-8"><style>' +
     "*{box-sizing:border-box}html,body{margin:0;width:" + width + "px;height:" + height + "px;overflow:hidden}" +
     "body{font-family:Inter,system-ui,-apple-system,sans-serif;background:#0b1117;color:#f5f8fa}" +
@@ -140,7 +140,7 @@ function promoPage(small) {
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
     '</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">Chrome DevTools Extension</div></div>' +
     "<h1>" + (small ? "Enterprise Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
-    (small ? "OAM · SAML · OAuth/OIDC · Okta · Entra" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Microsoft Entra, Kerberos/WNA, X.509, and HAR evidence.") +
+    (small ? "Troubleshoot browser-visible identity flows" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Entra, Kerberos/WNA, X.509, HAR, and Chromium NetLog evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
 }
 
@@ -159,7 +159,7 @@ async function main() {
     if (pathname === "/panel.css") return send("text/css", fs.readFileSync(path.join(root, "panel.css")));
     if (pathname === "/panel.js") return send("text/javascript", fs.readFileSync(path.join(root, "panel.js")));
     if (pathname === "/icon128.png") return send("image/png", fs.readFileSync(path.join(root, "icons/icon128.png")));
-    if (pathname === "/oidc-proof.png") return send("image/png", fs.readFileSync(path.join(screenshotDir, "03-oidc-flow-analysis.png")));
+    if (pathname === "/netlog-proof.jpg") return send("image/jpeg", fs.readFileSync(path.join(screenshotDir, "05-netlog-kerberos-analysis.jpg")));
     if (pathname === "/promo-small") return send("text/html", promoPage(true));
     if (pathname === "/promo-marquee") return send("text/html", promoPage(false));
     return send("text/html", panelPage());
@@ -211,7 +211,7 @@ async function main() {
   await page.locator(".flowChoice").filter({ hasText: "Failed" }).click();
   await page.locator(".wnaFlowDetails > summary").click();
   const wnaInfoText = await page.locator("#detailOutput").innerText();
-  if (!wnaInfoText.includes("NTLM was submitted after Negotiate was offered") || !wnaInfoText.includes("Browser-visible evidence only")) {
+  if (!wnaInfoText.includes("client Negotiate token was identified as NTLM") || !wnaInfoText.includes("Browser-visible evidence only")) {
     throw new Error("Flow Analysis did not render WNA fallback and scope guidance.");
   }
   await page.getByRole("button", { name: "Open in Traffic Inspector", exact: true }).click();
@@ -316,8 +316,7 @@ async function main() {
     [3, "Request", "01-complete-sso-traffic.png"],
     [2, "SAML Details", "02-saml-federation-analysis.png"],
     [1, "Flow Analysis", "03-oidc-flow-analysis.png", "oidc"],
-    [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"],
-    [8, "Flow Analysis", "05-oam-webgate-diagnostics.png", "oam", ".oamFlowDetails > summary"]
+    [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"]
   ];
   for (const [row, tab, filename, protocol, detailsSelector] of shots) {
     await page.goto("http://127.0.0.1:" + port + "/panel");
@@ -359,6 +358,11 @@ async function main() {
     await page.screenshot({ path: output });
     await flatten(output);
   }
+  await sharp(path.join(screenshotDir, "netlog-http-authentication-trace-dark.jpg"))
+    .extend({ top: 40, bottom: 40, left: 0, right: 0, background: "#171a1c" })
+    .flatten({ background: "#171a1c" })
+    .jpeg({ quality: 92, chromaSubsampling: "4:4:4" })
+    .toFile(path.join(screenshotDir, "05-netlog-kerberos-analysis.jpg"));
   await page.setViewportSize({ width: 440, height: 280 });
   await page.goto("http://127.0.0.1:" + port + "/promo-small");
   const smallOutput = path.join(promoDir, "small-promo-tile-440x280.png");
