@@ -385,6 +385,7 @@ h3 { font-size: 20px; }
 .tutorial-route span { padding: 7px 10px; color: #0b5962; background: #d6e7e4; border: 1px solid #b5cfca; border-radius: 4px; font-size: 12px; font-weight: 800; }
 .tutorial-figure { margin: 30px 0; overflow: hidden; background: #1c2429; border: 1px solid #9eaeaa; }
 .tutorial-figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
+.tutorial-figure.netlog-figure img { aspect-ratio: 16 / 9; object-fit: contain; }
 .tutorial-figure figcaption { display: grid; grid-template-columns: 180px 1fr; gap: 20px; padding: 15px 17px; color: #b9c6ca; background: #182229; }
 .tutorial-figure figcaption strong { color: var(--cyan); }
 .guide-table-wrap { max-width: 100%; margin: 26px 0; overflow-x: auto; border: 1px solid #b9c6c2; }

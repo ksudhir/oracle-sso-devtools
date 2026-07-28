@@ -46,6 +46,7 @@
           <a href="#wna">Kerberos / WNA</a>
           <a href="#x509">X.509 certificate</a>
           <a href="#har">Offline HAR</a>
+          <a href="#netlog">Chromium NetLog</a>
           <a href="#handoff">Engineering handoff</a>
         </nav>
 
@@ -213,8 +214,8 @@
             <h3>Interpret the exchange</h3>
             <ul>
               <li>An initial <code>401</code> with <code>WWW-Authenticate: Negotiate</code> is an expected challenge, not automatically a failure.</li>
-              <li>A following <code>Authorization: Negotiate</code> indicates that the browser submitted an SPNEGO token; its presence does not prove that the embedded mechanism is Kerberos.</li>
-              <li>An explicit NTLM token or NTLM fallback indicator means Kerberos was not used and should be investigated when Kerberos is required.</li>
+              <li>A following <code>Authorization: Negotiate</code> indicates that the browser submitted an SPNEGO token. The inspector decodes browser-visible token bytes locally and looks for the <code>NTLMSSP</code> signature, Kerberos mechanism OID <code>1.2.840.113554.1.2.2</code>, and AP-REQ evidence.</li>
+              <li><strong>Confirmed Kerberos</strong> identifies Kerberos OID or AP-REQ evidence. <strong>Confirmed NTLM</strong> identifies NTLMSSP even when wrapped by Negotiate. <strong>Undetermined SPNEGO</strong> means the visible token does not contain enough recognized evidence.</li>
               <li>Repeated challenges with no browser token indicate browser policy, trusted-zone, URL, or client configuration should be checked before server authentication.</li>
               <li>A submitted token followed by rejection requires SPN, service account, keytab, DNS, clock, KDC, and server-log validation outside the browser.</li>
             </ul>
@@ -283,6 +284,97 @@
               ticket-cache details, KDC traffic, backend token exchange, or authoritative server validation. Record
               these limits rather than interpreting missing evidence as a confirmed failure.
             </div>
+          </section>
+
+          <section class="playbook-section" id="netlog">
+            <div class="playbook-heading">
+              <span class="playbook-number">07</span>
+              <div><p>Lower-level browser networking</p><h2>Find failures that occur before an HTTP response</h2></div>
+            </div>
+            <h3>Capture the NetLog</h3>
+            <ol>
+              <li>Open <code>chrome://net-export</code>, start logging to disk, and reproduce one clean authentication or connection failure.</li>
+              <li>Return to Net Export and stop logging. Protect the JSON file as sensitive diagnostic evidence.</li>
+              <li>Open DevTools on any ordinary HTTP(S) page, select <strong>Auth Flow Inspector</strong>, and import the file.</li>
+            </ol>
+            <h3>Use NetLog Analysis</h3>
+            <ol>
+              <li>Start with <strong>Issues</strong> to identify explicit Chromium Net errors and challenge/retry events.</li>
+              <li>Narrow to Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC based on the first failed stage.</li>
+              <li>Select a source in the left navigator to isolate its events and expand each event to inspect raw parameters.</li>
+              <li>For an authentication challenge finding, select <strong>Trace exchange</strong>. Follow the four stages and use Previous or Next to compare repeated challenges.</li>
+              <li>For TLS or certificate evidence, select <strong>Trace TLS connection</strong>. Compare endpoint/connect evidence, handshake, certificate validation, protocol negotiation, connection reuse, and the final outcome.</li>
+              <li>For DNS, proxy, socket, HTTP, HTTP/2, QUIC, or other findings, select <strong>Investigate</strong>. Review the triggering event, linked Chromium sources, related evidence, final visible outcome, and recommended investigation path.</li>
+              <li>Follow the recommended next action, then correlate the timestamp, hostname, source, and Net error with proxy, DNS, certificate, gateway, or browser policy evidence.</li>
+            </ol>
+            <h3>Choose the contextual action</h3>
+            <div class="guide-table-wrap">
+              <table class="guide-table">
+                <thead><tr><th>Finding</th><th>Action</th><th>Evidence to follow</th></tr></thead>
+                <tbody>
+                  <tr><td>Authentication</td><td><strong>Trace exchange</strong></td><td>Server or proxy challenge, browser Authorization response, Kerberos or NTLM evidence, retries, and final HTTP result</td></tr>
+                  <tr><td>TLS or certificate</td><td><strong>Trace TLS connection</strong></td><td>Endpoint, connect job, handshake, certificate validation, TLS version, ALPN, cipher, connection reuse, fallback, and outcome</td></tr>
+                  <tr><td>DNS</td><td><strong>Investigate DNS</strong></td><td>Requested hostname, resolver job, address or alias result, secure-DNS policy, VPN, and split-horizon behavior</td></tr>
+                  <tr><td>Proxy</td><td><strong>Investigate Proxy</strong></td><td>PAC evaluation, selected proxy, bypass decision, proxy authentication, connect job, and fallback route</td></tr>
+                  <tr><td>Socket</td><td><strong>Investigate Socket</strong></td><td>Address selection, connection attempt, timeout, refusal, reset, cancellation, and dependent request</td></tr>
+                  <tr><td>HTTP</td><td><strong>Investigate HTTP</strong></td><td>URL request, redirects, response headers, stream lifecycle, HTTP status, and final browser-visible result</td></tr>
+                  <tr><td>HTTP/2</td><td><strong>Investigate HTTP/2</strong></td><td>Session and stream errors, negotiated protocol, parent socket, reset reason, and associated URL request</td></tr>
+                  <tr><td>QUIC</td><td><strong>Investigate QUIC</strong></td><td>QUIC session error, handshake state, network change, retry, and fallback to TCP/TLS</td></tr>
+                  <tr><td>Other</td><td><strong>Investigate Other</strong></td><td>Triggering raw parameters, linked Chromium sources, adjacent failures, and originating URL request</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Trace one problematic request</h3>
+            <ol>
+              <li>Search for the affected hostname, URL fragment, or Chromium error to remove unrelated browser activity.</li>
+              <li>Start with the earliest meaningful failure near the reproduction time, not simply the largest error count.</li>
+              <li>Open its contextual action and verify the triggering event, source correlation, related evidence, and final visible outcome.</li>
+              <li>Expand the highlighted timeline event and follow its source dependencies in timestamp order.</li>
+              <li>Use <strong>Previous</strong> and <strong>Next</strong> to compare retries of the same category.</li>
+              <li>Confirm whether later <code>ERR_ABORTED</code>, cancelled, or retry events are consequences of an earlier DNS, proxy, TLS, or authentication failure.</li>
+            </ol>
+            <div class="doc-callout">
+              <strong>Interpretation boundary</strong>
+              A challenge is not automatically a login failure, and the focused workspace is not Chromium's complete
+              NetLog Viewer. Finding counts represent matching events, not necessarily the same number of user-visible
+              failures. Chromium can retry DNS, race connections, cancel speculative work, and record secondary errors.
+              Unknown browser-version-specific fields remain visible as raw evidence.
+            </div>
+            <figure class="tutorial-figure netlog-figure">
+              <img src="../assets/netlog-contextual-actions-actual.jpg" alt="NetLog Diagnostic findings showing contextual actions for DNS, HTTP, proxy, TLS, socket, HTTP/2, QUIC, and authentication issues" width="1280" height="720">
+              <figcaption>
+                <strong>Contextual actions for every finding</strong>
+                <span>Start from Issues and open the action that matches the failing layer instead of manually reconstructing unrelated events.</span>
+              </figcaption>
+            </figure>
+            <figure class="tutorial-figure netlog-figure">
+              <img src="../assets/netlog-dns-investigation-actual.jpg" alt="Focused DNS investigation showing the triggering event, linked sources, related evidence, final outcome, and recommended path" width="1280" height="720">
+              <figcaption>
+                <strong>Focused DNS investigation</strong>
+                <span>Trace ERR_NAME_NOT_RESOLVED through the resolver source and originating URL request, then follow the category-specific next action.</span>
+              </figcaption>
+            </figure>
+            <figure class="tutorial-figure netlog-figure">
+              <img src="../assets/netlog-http-authentication-trace-actual.png" alt="Authentication Exchange Trace showing a server challenge, Kerberos browser response, retry, and successful redirect" width="1280" height="720">
+              <figcaption>
+                <strong>Authentication exchange trace</strong>
+                <span>Follow the server challenge through the browser's Kerberos or NTLM response, continuation requests, and final HTTP outcome.</span>
+              </figcaption>
+            </figure>
+            <figure class="tutorial-figure netlog-figure">
+              <img src="../assets/netlog-tls-certificate-failure-actual.png" alt="TLS Connection Trace showing an expired certificate validation failure" width="1280" height="720">
+              <figcaption>
+                <strong>Certificate validation failure</strong>
+                <span>Separate the endpoint, TLS handshake, certificate error, negotiated protocol, connection state, and failed final outcome.</span>
+              </figcaption>
+            </figure>
+            <figure class="tutorial-figure netlog-figure">
+              <img src="../assets/netlog-tls-negotiation-reuse-actual.png" alt="TLS Connection Trace showing TLS 1.3 negotiation and a reused HTTP/2 connection" width="1280" height="720">
+              <figcaption>
+                <strong>TLS negotiation and reuse</strong>
+                <span>Confirm TLS version, ALPN, cipher and key-exchange evidence, certificate verification, connection reuse, and the final HTTP response.</span>
+              </figcaption>
+            </figure>
           </section>
 
           <h2 id="handoff">Build an engineering-ready handoff</h2>

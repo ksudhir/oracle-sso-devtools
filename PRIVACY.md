@@ -4,7 +4,7 @@ This extension is designed for local troubleshooting of enterprise authenticatio
 
 ## Data Processing
 
-The extension processes network request and response information from the active inspected tab while Chrome DevTools is open. This may include URLs, headers, cookies, request bodies, response bodies, SAML messages, OAuth/OIDC tokens, Kerberos/SPNEGO or NTLM authentication headers, forwarded X.509 certificate information, ECID/RID correlation identifiers, timing information, response sizes, and imported HAR or JSON files.
+The extension processes network request and response information from the active inspected tab while Chrome DevTools is open. This may include URLs, headers, cookies, request bodies, response bodies, SAML messages, OAuth/OIDC tokens, Kerberos/SPNEGO or NTLM authentication headers, forwarded X.509 certificate information, ECID/RID correlation identifiers, timing information, response sizes, and imported HAR, JSON, or Chromium NetLog files.
 
 The extension processes this data locally inside the browser.
 
@@ -12,11 +12,11 @@ The extension processes this data locally inside the browser.
 
 The extension does not collect, transmit, sell, share, or store user data on any external server.
 
-The extension does not send captured traffic, cookies, tokens, SAML messages, OAuth/OIDC tokens, Kerberos/WNA or NTLM headers, X.509 information, HAR files, or other authentication data to the developer or to any third party.
+The extension does not send captured traffic, cookies, tokens, SAML messages, OAuth/OIDC tokens, Kerberos/WNA or NTLM headers, X.509 information, HAR files, NetLog files, or other authentication data to the developer or to any third party.
 
 ## User-Controlled Import and Export
 
-Users may manually import HAR or JSON files for local analysis.
+Users may manually import HAR, JSON, or Chromium NetLog files for local analysis.
 
 Users may manually export captured panel data as JSON or export the selected correlated authentication assessment as Markdown. Exported files are created only when the user explicitly chooses an export action.
 
@@ -24,7 +24,7 @@ Sanitized traffic exports can retain recognized OAuth/OIDC parameter names and p
 
 ## Sensitive Data Notice
 
-Troubleshooting data may contain sensitive information, including cookies, access tokens, SAML assertions, authentication headers, hostnames, usernames, or internal URLs. Users should review and sanitize exported data before sharing it.
+Troubleshooting data may contain sensitive information, including cookies, access tokens, SAML assertions, authentication headers, hostnames, usernames, internal URLs, DNS results, proxy configuration, and certificate or connection metadata. Users should review and sanitize exported data before sharing it.
 
 ## Remote Code
 

@@ -109,6 +109,8 @@ assert.match(devtoolsSource, /"Auth Flow Inspector"/u);
 assert.match(panelMarkup, /<title>Enterprise Authentication Flow Inspector<\/title>/u);
 assert.match(panelMarkup, /data-workspace-mode="traffic">Traffic Inspector</u);
 assert.match(panelMarkup, /data-workspace-mode="flow">Flow Analysis</u);
+assert.match(panelMarkup, /data-workspace-mode="netlog">NetLog Analysis</u);
+assert.match(panelMarkup, /Chromium NetLog dump/u);
 assert.doesNotMatch(panelMarkup, /data-tab="flowAnalysis"/u);
 assert.match(panelMarkup, /Export sanitized data/u);
 assert.match(panelMarkup, /Export Assessment/u);
@@ -133,6 +135,10 @@ assert.match(panelStyles, /\.jwtJsonCode\s*\{[^}]*max-height:\s*420px[^}]*overfl
 assert.match(panelStyles, /\.httpAuthFacts\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(125px,\s*1fr\)\)/su);
 assert.match(panelStyles, /\.httpAuthTokenPreview\s*\{[^}]*grid-template-columns:\s*110px minmax\(0,\s*1fr\)/su);
 assert.match(panelStyles, /\.captureSourceLabel\s*\{[^}]*text-overflow:\s*ellipsis/su);
+assert.match(panelStyles, /\.shell\.isNetLogWorkspace/u);
+assert.match(panelStyles, /\.netLogBody\s*\{[^}]*grid-template-columns:/su);
+assert.match(panelStyles, /\.netLogSources,[\s\S]*\.netLogAnalysis\s*\{[^}]*overflow:\s*auto/su);
+assert.match(panelStyles, /\.netLogGuideBody\s*\{[^}]*grid-template-columns:\s*repeat\(2,/su);
 
 context.testToolbarMenuOne = { open: true };
 context.testToolbarMenuTwo = { open: true };
@@ -167,6 +173,149 @@ const baseEntry = {
   responseSizeBytes: 1000,
   saml: []
 };
+
+context.testNetLogDump = {
+  constants: {
+    logEventTypes: {
+      URL_REQUEST_START_JOB: 1,
+      HTTP_AUTH_CONTROLLER_HANDLE_AUTH_CHALLENGE: 2,
+      HOST_RESOLVER_MANAGER_JOB: 3,
+      SSL_CONNECT: 4,
+      PROXY_RESOLUTION_SERVICE: 5,
+      QUIC_SESSION: 6,
+      HTTP_AUTH_GENERATE_TOKEN: 7,
+      URL_REQUEST_RESPONSE_STARTED: 8
+    },
+    logSourceType: {
+      URL_REQUEST: 10,
+      HTTP_AUTH_CONTROLLER: 11,
+      HOST_RESOLVER_JOB: 12,
+      SOCKET: 13,
+      PROXY_RESOLUTION_SERVICE: 14,
+      QUIC_SESSION: 15
+    },
+    logEventPhase: { PHASE_BEGIN: 1, PHASE_END: 2, PHASE_NONE: 0 },
+    netError: { ERR_NAME_NOT_RESOLVED: -105, ERR_CERT_DATE_INVALID: -201 }
+  },
+  events: [
+    { time: "1000", type: 1, phase: 1, source: { id: 1, type: 10 }, params: { url: "https://login.example.test/" } },
+    { time: "1004", type: 2, phase: 0, source: { id: 2, type: 11 }, params: { auth_scheme: "negotiate", challenge: "Negotiate", source_dependency: { id: 1, type: 10 } } },
+    { time: "1008", type: 3, phase: 2, source: { id: 3, type: 12 }, params: { host: "login.example.test", net_error: -105 } },
+    { time: "1012", type: 4, phase: 2, source: { id: 4, type: 13 }, params: { net_error: -201, cert_status: 2, tls_version: "TLS 1.2", alpn_negotiated_protocol: "h2", cipher_suite: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", was_reused: false } },
+    { time: "1016", type: 5, phase: 2, source: { id: 5, type: 14 }, params: { proxy_server: "DIRECT" } },
+    { time: "1020", type: 6, phase: 1, source: { id: 6, type: 15 }, params: { host: "login.example.test" } },
+    { time: "1024", type: 7, phase: 2, source: { id: 2, type: 11 }, params: { auth_scheme: "negotiate", mechanism_oid: "1.2.840.113554.1.2.2", source_dependency: { id: 1, type: 10 } } },
+    { time: "1028", type: 8, phase: 0, source: { id: 1, type: 10 }, params: { status_code: 302, headers: "HTTP/1.1 302 Found" } }
+  ]
+};
+assert.equal(evaluate("isNetLogDump(testNetLogDump)"), true);
+assert.equal(evaluate("isNetLogDump({ log: { entries: [] } })"), false);
+evaluate("testParsedNetLog = parseNetLogDump(testNetLogDump, 'sample-netlog.json')");
+assert.equal(evaluate("testParsedNetLog.events.length"), 8);
+assert.equal(evaluate("testParsedNetLog.sources.length"), 6);
+assert.equal(evaluate("testParsedNetLog.events[0].type"), "URL_REQUEST_START_JOB");
+assert.equal(evaluate("testParsedNetLog.events[0].relativeMs"), 0);
+assert.equal(evaluate("testParsedNetLog.events[1].category"), "auth");
+assert.equal(evaluate("testParsedNetLog.events[1].severity"), "warn");
+assert.equal(evaluate("testParsedNetLog.events[2].category"), "dns");
+assert.equal(evaluate("testParsedNetLog.events[2].netErrorName"), "ERR_NAME_NOT_RESOLVED");
+assert.equal(evaluate("testParsedNetLog.events[3].category"), "tls");
+assert.equal(evaluate("testParsedNetLog.events[3].severity"), "error");
+assert.equal(evaluate("testParsedNetLog.events[3].netErrorName"), "ERR_CERT_DATE_INVALID");
+assert.equal(evaluate("testParsedNetLog.events[4].category"), "proxy");
+assert.equal(evaluate("testParsedNetLog.events[5].category"), "quic");
+assert.equal(evaluate("testParsedNetLog.stats.errors"), 2);
+assert.equal(evaluate("testParsedNetLog.stats.auth"), 2);
+evaluate("testTlsExchange = buildNetLogTlsExchange(testParsedNetLog, 3)");
+assert.equal(evaluate("testTlsExchange.protocol.version"), "TLS 1.2");
+assert.equal(evaluate("testTlsExchange.protocol.alpn"), "h2");
+assert.equal(evaluate("testTlsExchange.reuse.label"), "New connection");
+assert.equal(evaluate("testTlsExchange.outcome.label"), "ERR_CERT_DATE_INVALID");
+context.testRenderedTlsTrace = evaluate("renderNetLogTlsTrace(testTlsExchange)");
+assert.match(context.testRenderedTlsTrace, /TLS Connection Trace/iu);
+assert.match(context.testRenderedTlsTrace, /Certificate validation/u);
+assert.match(context.testRenderedTlsTrace, /TLS 1\.2/u);
+assert.match(context.testRenderedTlsTrace, /New connection/u);
+assert.match(context.testRenderedTlsTrace, /ERR_CERT_DATE_INVALID/u);
+context.testTlsReuseDump = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "demo-data", "chromium-netlog-tls-reuse-demo.json"), "utf8"));
+evaluate("testTlsReuseNetLog = parseNetLogDump(testTlsReuseDump, 'chromium-netlog-tls-reuse-demo.json')");
+assert.equal(evaluate("getNetLogTlsTraceCandidates(testTlsReuseNetLog).length"), 1);
+evaluate("testTlsReuseExchange = buildNetLogTlsExchange(testTlsReuseNetLog, getNetLogTlsTraceCandidates(testTlsReuseNetLog)[0].index)");
+assert.equal(evaluate("testTlsReuseExchange.protocol.version"), "TLS 1.3");
+assert.equal(evaluate("testTlsReuseExchange.protocol.alpn"), "h2");
+assert.equal(evaluate("testTlsReuseExchange.protocol.cipher"), "TLS_AES_128_GCM_SHA256");
+assert.equal(evaluate("testTlsReuseExchange.reuse.label"), "Reused connection");
+assert.equal(evaluate("testTlsReuseExchange.outcome.label"), "Connected · HTTP 200");
+context.testRenderedTlsReuseTrace = evaluate("renderNetLogTlsTrace(testTlsReuseExchange)");
+assert.match(context.testRenderedTlsReuseTrace, /TLS 1\.3/u);
+assert.match(context.testRenderedTlsReuseTrace, /ALPN h2/u);
+assert.match(context.testRenderedTlsReuseTrace, /Reused connection/u);
+assert.match(context.testRenderedTlsReuseTrace, /Connected · HTTP 200/u);
+context.testContextualNetLogDump = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "demo-data", "chromium-netlog-contextual-investigation-demo.json"), "utf8"));
+evaluate("testContextualNetLog = parseNetLogDump(testContextualNetLogDump, 'chromium-netlog-contextual-investigation-demo.json')");
+context.testContextualFindings = evaluate("renderNetLogFindings(testContextualNetLog.events, null)");
+for (const action of ["Investigate DNS", "Investigate Proxy", "Investigate HTTP", "Investigate Socket", "Investigate HTTP/2", "Investigate QUIC", "Trace TLS connection", "Trace exchange"]) {
+  assert.ok(context.testContextualFindings.includes(action), `Expected contextual action: ${action}`);
+}
+evaluate("testContextualDnsRoot = testContextualNetLog.events.find((event) => event.category === 'dns' && event.severity === 'error')");
+evaluate("testContextualDnsInvestigation = buildNetLogInvestigation(testContextualNetLog, testContextualDnsRoot.index)");
+assert.equal(evaluate("testContextualDnsInvestigation.root.netErrorName"), "ERR_NAME_NOT_RESOLVED");
+assert.equal(evaluate("testContextualDnsInvestigation.relatedSourceIds.has('201')"), true);
+evaluate("testAuthExchange = buildNetLogAuthenticationExchange(testParsedNetLog, 1)");
+assert.equal(evaluate("testAuthExchange.events.length >= 4"), true);
+assert.equal(evaluate("testAuthExchange.relatedSourceIds.has('1')"), true);
+assert.equal(evaluate("testAuthExchange.tokenProtocol.label"), "Kerberos");
+assert.equal(evaluate("testAuthExchange.finalEvent.status"), 302);
+context.testRenderedAuthTrace = evaluate("renderNetLogAuthenticationTrace(testAuthExchange)");
+assert.match(context.testRenderedAuthTrace, /Authentication Exchange Trace/iu);
+assert.match(context.testRenderedAuthTrace, /Browser response/u);
+assert.match(context.testRenderedAuthTrace, /Kerberos/u);
+assert.match(context.testRenderedAuthTrace, /HTTP 302/u);
+context.testRenderedFindings = evaluate("renderNetLogFindings(testParsedNetLog.events, null)");
+assert.match(context.testRenderedFindings, /Investigate DNS/u);
+assert.match(context.testRenderedFindings, /Trace TLS connection/u);
+evaluate("testDnsInvestigation = buildNetLogInvestigation(testParsedNetLog, 2)");
+assert.equal(evaluate("testDnsInvestigation.root.netErrorName"), "ERR_NAME_NOT_RESOLVED");
+context.testRenderedDnsInvestigation = evaluate("renderNetLogInvestigation(testDnsInvestigation)");
+assert.match(context.testRenderedDnsInvestigation, /DNS Investigation/iu);
+assert.match(context.testRenderedDnsInvestigation, /Recommended investigation path/u);
+assert.match(context.testRenderedDnsInvestigation, /ERR_NAME_NOT_RESOLVED/u);
+evaluate("state.netLog = testParsedNetLog; state.workspaceMode = 'netlog'; state.netLogCategory = 'issues'; state.netLogSearch = ''; state.selectedNetLogSourceId = null");
+assert.equal(evaluate("getFilteredNetLogEvents().length"), 3);
+evaluate("state.netLogCategory = 'all'; state.netLogSearch = 'login.example.test'");
+assert.equal(evaluate("getFilteredNetLogEvents().length"), 3);
+evaluate("state.netLogSearch = ''; state.selectedNetLogSourceId = testParsedNetLog.events[3].sourceKey");
+assert.equal(evaluate("getFilteredNetLogEvents().length"), 1);
+context.testRenderedNetLog = evaluate("renderNetLogWorkspace()");
+assert.match(context.testRenderedNetLog, /Chromium NetLog Analysis/iu);
+assert.match(context.testRenderedNetLog, /ERR_CERT_DATE_INVALID/u);
+assert.match(context.testRenderedNetLog, /Diagnostic findings/u);
+assert.match(context.testRenderedNetLog, /Event timeline/u);
+assert.match(context.testRenderedNetLog, /SSL_CONNECT/u);
+assert.match(context.testRenderedNetLog, /How to capture a troubleshooting NetLog/u);
+assert.match(context.testRenderedNetLog, /Strip private information/u);
+assert.match(context.testRenderedNetLog, /This workspace does not import NDJSON/u);
+assert.match(context.testRenderedNetLog, /Handle as sensitive evidence/u);
+evaluate("state.netLogCategory = 'trace'; state.netLogAuthTraceIndex = 1; state.netLogSearch = ''; state.selectedNetLogSourceId = null");
+assert.equal(evaluate("getFilteredNetLogEvents().some((event) => event.type === 'HTTP_AUTH_GENERATE_TOKEN')"), true);
+context.testRenderedTraceWorkspace = evaluate("renderNetLogWorkspace()");
+assert.match(context.testRenderedTraceWorkspace, /Auth Trace/u);
+assert.match(context.testRenderedTraceWorkspace, /Exit trace/u);
+assert.doesNotMatch(context.testRenderedTraceWorkspace, /Diagnostic findings/u);
+evaluate("state.netLogCategory = 'tls-trace'; state.netLogTlsTraceIndex = 3; state.netLogAuthTraceIndex = null; state.netLogSearch = ''; state.selectedNetLogSourceId = null");
+assert.equal(evaluate("getFilteredNetLogEvents().some((event) => event.type === 'SSL_CONNECT')"), true);
+context.testRenderedTlsTraceWorkspace = evaluate("renderNetLogWorkspace()");
+assert.match(context.testRenderedTlsTraceWorkspace, /TLS Trace/u);
+assert.match(context.testRenderedTlsTraceWorkspace, /Exit trace/u);
+assert.match(context.testRenderedTlsTraceWorkspace, /ERR_CERT_DATE_INVALID/u);
+assert.doesNotMatch(context.testRenderedTlsTraceWorkspace, /Diagnostic findings/u);
+evaluate("state.netLogCategory = 'investigation'; state.netLogInvestigationIndex = 2; state.netLogTlsTraceIndex = null; state.netLogSearch = ''; state.selectedNetLogSourceId = null");
+assert.equal(evaluate("getFilteredNetLogEvents().some((event) => event.type === 'HOST_RESOLVER_MANAGER_JOB')"), true);
+context.testRenderedInvestigationWorkspace = evaluate("renderNetLogWorkspace()");
+assert.match(context.testRenderedInvestigationWorkspace, /DNS Investigation/u);
+assert.match(context.testRenderedInvestigationWorkspace, /Exit investigation/u);
+assert.doesNotMatch(context.testRenderedInvestigationWorkspace, /Diagnostic findings/u);
+evaluate("state.netLog = null; state.workspaceMode = 'traffic'; state.netLogCategory = 'relevant'; state.netLogSearch = ''; state.selectedNetLogSourceId = null; state.netLogAuthTraceIndex = null; state.netLogTlsTraceIndex = null; state.netLogInvestigationIndex = null");
 
 context.testFlowNavigatorScroll = { scrollTop: 73 };
 context.testFlowAssessmentScroll = { scrollTop: 418 };
@@ -287,6 +436,15 @@ const ecidInfoRow = evaluate("renderInfoRow('ECID', testEcidValue)");
 assert.match(ecidInfoRow, /artifactToken tokenEcid/u);
 assert.match(ecidInfoRow, /class="ecidValue"/u);
 
+const authenticationChallengeRow = evaluate("renderNameValueRow('WWW-Authenticate', 'Basic realm=\"OAM_11g\"')");
+assert.match(authenticationChallengeRow, /class="authChallengeHeader"/u);
+assert.match(authenticationChallengeRow, /class="authChallengeValue"/u);
+assert.match(authenticationChallengeRow, /WWW-Authenticate/u);
+assert.match(authenticationChallengeRow, /Basic realm=&quot;OAM_11g&quot;/u);
+const proxyAuthenticationChallengeRow = evaluate("renderNameValueRow('Proxy-Authenticate', 'Negotiate')");
+assert.match(proxyAuthenticationChallengeRow, /class="authChallengeHeader"/u);
+assert.match(proxyAuthenticationChallengeRow, /class="authChallengeValue"/u);
+
 context.testTimingEntry = {
   ...baseEntry,
   timings: {
@@ -380,6 +538,8 @@ context.testHttpAuthItems = [
     header: "WWW-Authenticate",
     scheme: "Negotiate",
     protocol: "SPNEGO / Negotiate",
+    detection: "Challenge only",
+    evidence: "The server advertised an authentication scheme; no client token was present.",
     token: ""
   },
   {
@@ -387,6 +547,8 @@ context.testHttpAuthItems = [
     header: "Authorization",
     scheme: "NTLM",
     protocol: "NTLM",
+    detection: "Confirmed NTLM",
+    evidence: "The client used the explicit NTLM authentication scheme.",
     token: "TlRMTVNTUAAB"
   }
 ];
@@ -397,8 +559,29 @@ assert.match(renderedHttpAuth, /Server to browser/u);
 assert.match(renderedHttpAuth, /Authentication challenge response/u);
 assert.match(renderedHttpAuth, /Browser to server/u);
 assert.match(renderedHttpAuth, /Authorization request header/u);
-assert.match(renderedHttpAuth, /badge badgeKerberos">SPNEGO \/ Negotiate/u);
-assert.match(renderedHttpAuth, /badge badgeNtlm">NTLM/u);
+assert.match(renderedHttpAuth, /badge badgeWna">SPNEGO \/ Negotiate/u);
+assert.match(renderedHttpAuth, /badge badgeNtlm">Confirmed NTLM/u);
+assert.match(renderedHttpAuth, /Detection Evidence/u);
+
+const negotiateNtlmClassification = evaluate("classifyHttpAuthToken('Negotiate', 'TlRMTVNTUABkZW1v', 'request')");
+assert.equal(negotiateNtlmClassification.protocol, "NTLM");
+assert.equal(negotiateNtlmClassification.detection, "Confirmed NTLM");
+assert.match(negotiateNtlmClassification.evidence, /NTLMSSP signature/u);
+const negotiateKerberosClassification = evaluate("classifyHttpAuthToken('Negotiate', 'YAsGCSqGSIb3EgECAg==', 'request')");
+assert.equal(negotiateKerberosClassification.protocol, "Kerberos");
+assert.equal(negotiateKerberosClassification.detection, "Confirmed Kerberos");
+assert.match(negotiateKerberosClassification.evidence, /1\.2\.840\.113554\.1\.2\.2/u);
+const apReqClassification = evaluate("classifyHttpAuthToken('Negotiate', 'bgMBAgM=', 'request')");
+assert.equal(apReqClassification.protocol, "Kerberos");
+assert.match(apReqClassification.evidence, /AP-REQ/u);
+const unknownSpnegoClassification = evaluate("classifyHttpAuthToken('Negotiate', 'AQIDBA==', 'request')");
+assert.equal(unknownSpnegoClassification.protocol, "SPNEGO / Negotiate");
+assert.equal(unknownSpnegoClassification.detection, "Undetermined SPNEGO");
+const challengeClassification = evaluate("classifyHttpAuthToken('Negotiate', '', 'response')");
+assert.equal(challengeClassification.detection, "Challenge only");
+const explicitNtlmClassification = evaluate("classifyHttpAuthToken('NTLM', 'TlRMTVNTUABkZW1v', 'request')");
+assert.equal(explicitNtlmClassification.protocol, "NTLM");
+assert.match(explicitNtlmClassification.evidence, /explicit NTLM/u);
 assert.match(renderedHttpAuth, /12 characters/u);
 assert.match(renderedHttpAuth, /No authentication token was included in this header/u);
 assert.doesNotMatch(renderedHttpAuth, /Likely protocol:/u);
@@ -708,7 +891,7 @@ assert.deepEqual(JSON.parse(context.testSanitizedOidcBody), {
   nested: { nonce: "[NONCE-1]" }
 });
 
-const wnaAttempt = (suffix, second, submittedScheme = "Negotiate") => [
+const wnaAttempt = (suffix, second, submittedScheme = "Negotiate", submittedToken = "YAsGCSqGSIb3EgECAg==") => [
   {
     ...baseEntry,
     id: `wna-challenge-${suffix}`,
@@ -724,7 +907,7 @@ const wnaAttempt = (suffix, second, submittedScheme = "Negotiate") => [
     capturedAt: `2026-04-15T10:10:${String(Number(second) + 1).padStart(2, "0")}.000Z`,
     status: 302,
     url: "https://login.example/oam/CredCollectServlet/WNA",
-    requestHeaders: [{ name: "Authorization", value: `${submittedScheme} TlRMTVNTUAABAAAAB4IIog==` }],
+    requestHeaders: [{ name: "Authorization", value: `${submittedScheme} ${submittedToken}` }],
     responseHeaders: [{ name: "Location", value: `https://app.example/protected-${suffix}` }]
   },
   {
@@ -745,7 +928,9 @@ context.testWnaFlow = wnaFlows[0];
 const wnaAnalysis = evaluate("analyzeWnaFlow(testWnaFlow.entries, testWnaFlow.entries[0])");
 context.testWnaAnalysis = wnaAnalysis;
 assert.equal(wnaAnalysis.overallStatus, "pass");
-assert.equal(wnaAnalysis.submittedProtocol, "SPNEGO / Negotiate");
+assert.equal(wnaAnalysis.submittedProtocol, "Kerberos");
+assert.equal(wnaAnalysis.submittedDetection, "Confirmed Kerberos");
+assert.match(wnaAnalysis.submittedEvidence, /Kerberos OID/u);
 assert.equal(evaluate("getFlowOutcome(testWnaFlow).label"), "Complete");
 evaluate("state.entries = testWnaEntries; state.selectedId = 'wna-challenge-a'; state.flowProtocol = 'wna'; state.selectedFlowKey = testWnaFlow.key");
 const renderedWna = evaluate("renderFlowAnalysis(testWnaEntries[0])");
@@ -755,27 +940,32 @@ assert.match(renderedWna, /Show details/u);
 assert.match(renderedWna, /Token Length/u);
 assert.match(renderedWna, /Token Preview/u);
 assert.match(renderedWna, /Captured Authentication Artifacts/u);
+assert.match(renderedWna, /Token Classification/u);
+assert.match(renderedWna, /Classification Evidence/u);
 assert.match(renderedWna, /Final Endpoint/u);
 assert.match(renderedWna, /Selected Request Evidence/u);
 const wnaAssessmentReport = evaluate("buildAssessmentMarkdown(testWnaFlow, testWnaAnalysis, { sanitized: false, generatedAt: '2026-07-18T20:00:00.000Z' })");
 assert.match(wnaAssessmentReport, /Client workstation/u);
-assert.match(wnaAssessmentReport, /Submitted token \| Present \(24 characters; value excluded\)/u);
-assert.doesNotMatch(wnaAssessmentReport, /TlRMTVNTUAABAAAAB4IIog==/u);
+assert.match(wnaAssessmentReport, /Submitted token \| Present \(20 characters; value excluded\)/u);
+assert.match(wnaAssessmentReport, /Token classification \| Confirmed Kerberos/u);
+assert.doesNotMatch(wnaAssessmentReport, /YAsGCSqGSIb3EgECAg==/u);
 
-context.testNtlmEntries = wnaAttempt("ntlm", "20", "NTLM");
+context.testNtlmEntries = wnaAttempt("ntlm", "20", "Negotiate", "TlRMTVNTUAABAAAAB4IIog==");
 const ntlmFlow = evaluate("buildAuthenticationFlows(testNtlmEntries).find((flow) => flow.protocol === 'wna')");
 context.testNtlmFlow = ntlmFlow;
 const ntlmAnalysis = evaluate("analyzeWnaFlow(testNtlmFlow.entries, testNtlmFlow.entries[0])");
 assert.equal(ntlmAnalysis.overallStatus, "fail");
 assert.equal(ntlmAnalysis.submittedProtocol, "NTLM");
-assert.match(ntlmAnalysis.summary, /submitted NTLM/iu);
+assert.equal(ntlmAnalysis.submittedDetection, "Confirmed NTLM");
+assert.match(ntlmAnalysis.summary, /identified as NTLM/iu);
+assert.match(ntlmAnalysis.submittedEvidence, /NTLMSSP signature/u);
 assert.equal(evaluate("getFlowOutcome(testNtlmFlow).label"), "Failed");
 evaluate("state.entries = testNtlmEntries; state.selectedId = 'wna-challenge-ntlm'; state.flowProtocol = 'wna'; state.selectedFlowKey = testNtlmFlow.key");
 const renderedNtlm = evaluate("renderFlowAnalysis(testNtlmEntries[0])");
 assert.match(renderedNtlm, /Recommended Next Actions/u);
 assert.match(renderedNtlm, /Restore Kerberos instead of NTLM fallback/u);
 assert.match(renderedNtlm, /Run klist/u);
-assert.match(renderedNtlm, /Evidence:.*submitted NTLM/isu);
+assert.match(renderedNtlm, /Evidence:.*identified as NTLM/isu);
 
 context.testTwoWnaAttempts = [...wnaAttempt("a", "10"), ...wnaAttempt("b", "20")];
 const twoWnaFlows = evaluate("buildAuthenticationFlows(testTwoWnaAttempts).filter((flow) => flow.protocol === 'wna')");
@@ -1020,7 +1210,7 @@ const renderedOidcMismatch = evaluate("renderFlowAnalysis(testOidcMismatchFlow.e
 assert.match(renderedOidcMismatch, /Reject the mismatched OIDC callback/u);
 assert.match(renderedOidcMismatch, /Do not trust or process this callback/u);
 
-console.log("Inspector tests passed: Okta and Entra provider profiles, false-positive guardrails, toolbar filters, traffic and Markdown assessment exports, OAM/SAML/WNA/OIDC regressions, and selected-request rendering.");
+console.log("Inspector tests passed: NetLog parsing/workspace, Okta and Entra provider profiles, false-positive guardrails, toolbar filters, traffic and Markdown assessment exports, OAM/SAML/WNA/OIDC regressions, and selected-request rendering.");
 
 if (process.argv[2]) {
   const imported = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));

@@ -43,6 +43,7 @@
           <a href="#flow">Analyze the flow</a>
           <a href="#protocols">Protocol clues</a>
           <a href="#export">Export a report</a>
+          <a href="#netlog">Analyze NetLog</a>
           <a href="#troubleshoot">No data?</a>
           <a href="../tutorials/">Issue tutorials</a>
         </nav>
@@ -167,7 +168,7 @@
                 <tr><td><strong>OAM / WebGate</strong></td><td>Protected-resource redirect, <code>obrareq.cgi</code>/<code>obrar.cgi</code>, credential collection, request IDs, ECIDs, OAM and WebGate cookies, and application return.</td><td>Redirect loop, missing session cookie, OAM error response, failed credential submission, or no application return.</td></tr>
                 <tr><td><strong>SAML</strong></td><td><code>SAMLRequest</code>, <code>SAMLResponse</code>, RelayState, issuer, destination, InResponseTo, status, conditions, audience, signatures, and certificate dates.</td><td>Missing response, ID mismatch, non-success status, expired conditions, wrong destination/audience, or absent expected signature.</td></tr>
                 <tr><td><strong>OAuth / OIDC</strong></td><td>Authorization request, redirect URI, callback, state, nonce, PKCE, token evidence, issuer, audience, scopes, and token lifetime.</td><td>Missing callback, state/nonce mismatch, missing PKCE, provider error, wrong issuer/audience, or expired token.</td></tr>
-                <tr><td><strong>Kerberos / WNA</strong></td><td>Initial <code>401</code>, <code>WWW-Authenticate: Negotiate</code>, browser Authorization response, WNA collector endpoint, and final authorization/session evidence.</td><td>Repeated 401, no browser token, NTLM fallback, token scheme mismatch, or no authenticated application return.</td></tr>
+                <tr><td><strong>Kerberos / WNA</strong></td><td>Initial <code>401</code>, <code>WWW-Authenticate: Negotiate</code>, browser Authorization response, local NTLMSSP/Kerberos OID/AP-REQ classification, WNA collector endpoint, and final authorization/session evidence.</td><td>Repeated 401, no browser token, confirmed NTLM fallback, undetermined SPNEGO, token scheme mismatch, or no authenticated application return.</td></tr>
                 <tr><td><strong>X.509</strong></td><td>X.509 collector endpoint, forwarded client-certificate headers, subject, issuer, serial number, validity dates, and final session evidence.</td><td>Certificate not forwarded, expired/not-yet-valid certificate, unexpected issuer/subject, or rejected credential collection.</td></tr>
                 <tr><td><strong>Okta / Entra</strong></td><td>Provider authority and endpoints, issuer metadata, provider error codes, request IDs, Entra trace/correlation IDs, and redirect context.</td><td>Provider error, tenant or authorization-server mismatch, policy denial, or callback failure. Preserve provider IDs for administrator logs.</td></tr>
               </tbody>
@@ -192,6 +193,37 @@
             recommended next actions, relevant log locations, and known browser-capture limitations.
           </p>
 
+          <h2 id="netlog">8. Investigate a lower-level Chromium network failure</h2>
+          <ol>
+            <li>Open <code>chrome://net-export</code>, start logging to disk, reproduce one clean failure, and stop logging.</li>
+            <li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Choose <strong>Import File</strong> and select the saved NetLog JSON file.</li>
+            <li>The extension switches to <strong>NetLog Analysis</strong>. Review the summary counts and <strong>Diagnostic findings</strong>.</li>
+            <li>Use <strong>Issues</strong> first, then narrow to Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>
+            <li>Select a source in the left navigator and expand timeline events to inspect the raw Chromium parameters and Net error name.</li>
+            <li>When an authentication challenge or retry is reported, choose <strong>Trace exchange</strong> to isolate the challenge, browser response, retries, and final HTTP outcome.</li>
+            <li>When TLS or certificate evidence is reported, choose <strong>Trace TLS connection</strong> to inspect the connection, handshake, certificate, negotiated protocol, reuse, and outcome stages.</li>
+            <li>For DNS, proxy, socket, HTTP, HTTP/2, QUIC, or other findings, choose <strong>Investigate</strong> to open a focused source-linked timeline with an explicit troubleshooting path.</li>
+          </ol>
+          <h3>What the contextual investigation shows</h3>
+          <ul>
+            <li><strong>Triggering event:</strong> the representative Chromium event and explicit Net error that opened the investigation.</li>
+            <li><strong>Source correlation:</strong> linked URL request, resolver, proxy, socket, TLS, HTTP, or transport sources within the correlation window.</li>
+            <li><strong>Related evidence:</strong> the event categories that participated in the same browser-visible connection path.</li>
+            <li><strong>Final visible outcome:</strong> the last correlated HTTP status or explicit Chromium network failure.</li>
+            <li><strong>Recommended investigation path:</strong> category-specific checks for DNS, proxy, socket, HTTP, HTTP/2, QUIC, authentication, or TLS.</li>
+          </ul>
+          <p>
+            Search for the affected hostname and begin with the earliest meaningful failure near the reproduction
+            time. Use Previous and Next to compare retries. A large finding count does not necessarily mean the user
+            experienced that many failures because Chromium may retry, race connection paths, or cancel speculative work.
+          </p>
+          <p>
+            NetLog is especially useful when a HAR shows only a generic failure or no HTTP response because DNS,
+            proxy selection, certificate verification, socket setup, or transport negotiation failed first.
+            The extension provides a focused diagnostic view rather than reproducing Chromium's complete NetLog Viewer.
+          </p>
+
           <h2 id="troubleshoot">If the panel shows no useful data</h2>
           <ul>
             <li>If <strong>Auth Flow Inspector</strong> is completely absent, confirm that the inspected tab is showing a normal <code>http://</code> or <code>https://</code> page rather than New Tab or another <code>chrome://</code> page, then close and reopen DevTools.</li>
@@ -200,7 +232,7 @@
             <li>Confirm that the button says <strong>Stop capture</strong>, which means capture is currently running.</li>
             <li>Select <strong>Reset filters</strong> and temporarily clear <strong>Hide static</strong>.</li>
             <li>Check whether the authentication flow opened a different tab or window.</li>
-            <li>For offline evidence, open any ordinary website to host the DevTools panel, then use <strong>Import File</strong> for HAR/JSON. The hosting page does not need to be related to the imported capture.</li>
+            <li>For offline evidence, open any ordinary website to host the DevTools panel, then use <strong>Import File</strong> for HAR, JSON, or Chromium NetLog. The hosting page does not need to be related to the imported capture.</li>
             <li>Use <strong>Load Network HAR</strong> only for entries currently exposed by Chrome's Network panel.</li>
           </ul>
           <div class="doc-callout completion-checklist">

@@ -38,7 +38,7 @@
           <a href="#install">Install</a>
           <a href="#offline">Install offline</a>
           <a href="#capture">Capture traffic</a>
-          <a href="#import">Import HAR/JSON</a>
+          <a href="#import">Import HAR/JSON/NetLog</a>
           <a href="#inspect">Inspect requests</a>
           <a href="#flows">Flow Analysis</a>
           <a href="#export">Export evidence</a>
@@ -46,7 +46,7 @@
         </nav>
 
         <article class="doc-content">
-          <p class="eyebrow dark">Version 1.0.0</p>
+          <p class="eyebrow dark">Version 2.0.0</p>
           <h1>Documentation</h1>
           <p>
             Enterprise Authentication Flow Inspector is a Manifest V3 Chrome DevTools extension for
@@ -132,11 +132,12 @@
             only when you want to begin a separate investigation.
           </p>
 
-          <h2 id="import">Import HAR or JSON</h2>
+          <h2 id="import">Import HAR, JSON, or Chromium NetLog</h2>
           <p>
             Use <strong>Load Network HAR</strong> to read traffic currently available in Chrome's Network panel.
             Use <strong>Import File</strong> for a HAR file, a panel JSON export, a raw entry array, or a JSON object
-            containing an <code>entries</code> array.
+            containing an <code>entries</code> array. The same command recognizes Chromium NetLog JSON dumps and
+            opens them in the dedicated <strong>NetLog Analysis</strong> workspace.
           </p>
           <div class="doc-callout">
             <strong>Opening the panel for offline analysis</strong>
@@ -148,8 +149,62 @@
           <ul>
             <li>Keep request and response headers when exporting a HAR for authentication analysis.</li>
             <li>Preserve response content when SAML forms, error payloads or token responses are relevant.</li>
-            <li>Treat HAR and full-diagnostic exports as sensitive authentication evidence.</li>
+            <li>Treat HAR, NetLog, and full-diagnostic exports as sensitive authentication evidence.</li>
           </ul>
+
+          <h3>Capture and inspect a Chromium NetLog</h3>
+          <ol>
+            <li>Open <code>chrome://net-export</code> in Chrome and choose <strong>Start Logging to Disk</strong>.</li>
+            <li>Reproduce one authentication or connection problem, return to the Net Export page, and stop logging.</li>
+            <li>Open any ordinary HTTP(S) page, open DevTools, and select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Choose <strong>Import File</strong> and select the saved NetLog JSON file.</li>
+            <li>Open <strong>NetLog Analysis</strong>. Start with <strong>Issues</strong>, then inspect Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>
+            <li>Select a source to isolate its timeline and expand an event to inspect all raw parameters.</li>
+            <li>For an authentication challenge or retry finding, choose <strong>Trace exchange</strong>. Review the server challenge, browser response, retry/continuation, and final outcome, then use Previous or Next to move between challenges.</li>
+            <li>For a TLS finding, choose <strong>Trace TLS connection</strong>. Review endpoint setup, handshake evidence, certificate validation, TLS/ALPN negotiation, connection reuse, transport fallback, and the final outcome.</li>
+            <li>For every other finding, choose its <strong>Investigate</strong> action to isolate the triggering event, linked sources, related evidence categories, final visible outcome, and category-specific next step.</li>
+          </ol>
+          <h3>Contextual finding actions</h3>
+          <div class="guide-table-wrap">
+            <table class="guide-table">
+              <thead><tr><th>Finding</th><th>Contextual action</th><th>Primary troubleshooting question</th></tr></thead>
+              <tbody>
+                <tr><td>Auth</td><td>Trace exchange</td><td>Did the browser answer the challenge with Kerberos, NTLM, another scheme, or no conclusive token, and what was the final response?</td></tr>
+                <tr><td>TLS</td><td>Trace TLS connection</td><td>Did endpoint setup, handshake, certificate validation, protocol negotiation, or connection reuse fail?</td></tr>
+                <tr><td>DNS</td><td>Investigate DNS</td><td>Which hostname failed, what resolver path was used, and did VPN or split DNS affect the result?</td></tr>
+                <tr><td>Proxy</td><td>Investigate Proxy</td><td>Which PAC, bypass, proxy, authentication, or fallback decision controlled the route?</td></tr>
+                <tr><td>Socket</td><td>Investigate Socket</td><td>Was the selected address reached, refused, reset, timed out, or cancelled?</td></tr>
+                <tr><td>HTTP</td><td>Investigate HTTP</td><td>Which URL request, redirect, headers, stream event, or response status ended the operation?</td></tr>
+                <tr><td>HTTP/2</td><td>Investigate HTTP/2</td><td>Did the session or stream fail, and which socket and URL request were affected?</td></tr>
+                <tr><td>QUIC</td><td>Investigate QUIC</td><td>Did QUIC fail or retry, and did Chromium successfully fall back to TCP/TLS?</td></tr>
+                <tr><td>Other</td><td>Investigate Other</td><td>Which linked source and raw parameters connect the event to the originating request?</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The generic investigation view deliberately does not invent a protocol stage model. It narrows the timeline
+            to explicit source dependencies and nearby issue evidence, highlights the root event, and presents a
+            category-specific next action. Use Previous and Next to compare repeated findings in the same category.
+          </p>
+          <p>
+            Authentication tracing follows explicit Chromium source dependencies where available and nearby
+            authentication and HTTP evidence otherwise. The trace distinguishes confirmed Kerberos indicators,
+            NTLM fallback, inconclusive SPNEGO/Negotiate evidence, and an incomplete capture. Always verify the
+            summarized stages against the expanded raw events and authoritative server-side logs.
+          </p>
+          <p>
+            TLS tracing reports version, cipher, key-exchange group, ALPN, certificate status, and reuse only when
+            Chromium exposes the corresponding NetLog fields. A missing field is reported as <strong>Not captured</strong>
+            and is not treated as proof that validation or negotiation succeeded.
+          </p>
+          <div class="doc-callout">
+            <strong>Focused analysis, not the full Chromium viewer</strong>
+            The extension prioritizes authentication and connection troubleshooting. Chromium does not guarantee
+            backwards-compatible NetLog schemas, so unknown event types are retained as raw evidence and some
+            browser-version-specific fields may not receive a specialized interpretation. Diagnostic counts represent
+            matching NetLog events rather than a guaranteed count of user-visible failures; retries, speculative
+            connections, and secondary cancellations can produce multiple related events.
+          </div>
 
           <h2 id="inspect">Inspect individual requests</h2>
           <p>
@@ -160,7 +215,7 @@
           <ul>
             <li><strong>Request and Response:</strong> structured headers, query parameters, forms, bodies and timing.</li>
             <li><strong>Cookies:</strong> request and response cookies with OAM and WebGate-specific highlighting.</li>
-            <li><strong>Kerberos / X.509:</strong> browser-visible challenges, authorization schemes and forwarded certificates.</li>
+            <li><strong>Kerberos / X.509:</strong> browser-visible challenges, client-token classification using NTLMSSP, Kerberos OID, or AP-REQ evidence, authorization schemes, and forwarded certificates.</li>
             <li><strong>SAML XML and SAML Details:</strong> decoded messages and organized federation attributes.</li>
             <li><strong>OAuth Token and OIDC Details:</strong> parameters, JWT claims, lifetime and provider evidence.</li>
           </ul>
@@ -194,7 +249,7 @@
           <p>The inspector does not claim visibility into exchanges that never reach Chrome DevTools.</p>
           <ul>
             <li>Server-to-server token exchanges and federation calls may be absent.</li>
-            <li>Kerberos ticket caches, KDC traffic and PAC data are not decrypted or validated.</li>
+            <li>Token classification does not decrypt credentials or validate trust. Kerberos ticket caches, KDC traffic, session keys, and PAC data remain outside browser visibility.</li>
             <li>Backend OAM, WebGate, application and identity-provider logs remain separate evidence sources.</li>
             <li>JWT, SAML and certificate material is decoded and summarized; cryptographic trust is not validated.</li>
           </ul>

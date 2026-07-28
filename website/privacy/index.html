@@ -55,20 +55,20 @@
           <p>
             While Chrome DevTools is open for the active inspected tab, the extension processes request and
             response information exposed by the Chrome DevTools APIs. This can include URLs, headers, cookies,
-            bodies, SAML messages, OAuth/OIDC tokens, authentication challenges, timing and imported HAR data.
+            bodies, SAML messages, OAuth/OIDC tokens, authentication challenges, timing, and imported HAR or Chromium NetLog data.
           </p>
           <p>Processing is performed locally inside the extension for display, filtering, decoding and flow analysis.</p>
 
           <h2 id="collection">Data collection and transmission</h2>
           <p>
             The extension does not transmit captured traffic, credentials, cookies, tokens, SAML messages,
-            certificate data, imported files or assessment results to the developer or third parties.
+            certificate data, imported HAR or NetLog files, or assessment results to the developer or third parties.
           </p>
           <p>The extension does not include analytics, advertising, tracking, telemetry or remote code.</p>
 
           <h2 id="exports">User-controlled import and export</h2>
           <p>
-            Users may explicitly import HAR or JSON files and export traffic or Markdown assessment reports.
+            Users may explicitly import HAR, JSON, or Chromium NetLog files and export traffic or Markdown assessment reports.
             These actions are initiated by the user. Exported files are written through the browser's download
             behavior and are not uploaded by the extension.
           </p>

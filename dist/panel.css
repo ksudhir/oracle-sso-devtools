@@ -29,6 +29,8 @@
   --fed-bg: #efe6ff;
   --kerberos: #0f766e;
   --kerberos-bg: #d9f6f1;
+  --auth-challenge: #075985;
+  --auth-challenge-bg: #e0f2fe;
   --ntlm: #a03932;
   --ntlm-bg: #ffe5e2;
   --x509: #854d0e;
@@ -81,6 +83,8 @@
     --fed-bg: #352550;
     --kerberos: #99f6e4;
     --kerberos-bg: #153b37;
+    --auth-challenge: #7dd3fc;
+    --auth-challenge-bg: #17384a;
     --ntlm: #ff9a91;
     --ntlm-bg: #4c2524;
     --x509: #fde68a;
@@ -441,17 +445,22 @@ button:disabled {
   overflow: hidden;
 }
 
-.shell.isFlowWorkspace {
+.shell.isFlowWorkspace,
+.shell.isNetLogWorkspace {
   grid-template-columns: minmax(0, 1fr);
 }
 
 .shell.isFlowWorkspace .requestPane,
 .shell.isFlowWorkspace > .paneDivider,
-.shell.isFlowWorkspace .tabs {
+.shell.isFlowWorkspace .tabs,
+.shell.isNetLogWorkspace .requestPane,
+.shell.isNetLogWorkspace > .paneDivider,
+.shell.isNetLogWorkspace .tabs {
   display: none;
 }
 
-.shell.isFlowWorkspace .detailPane {
+.shell.isFlowWorkspace .detailPane,
+.shell.isNetLogWorkspace .detailPane {
   grid-template-rows: minmax(0, 1fr);
 }
 
@@ -696,6 +705,29 @@ button:disabled {
   white-space: normal;
 }
 
+.authChallengeHeader,
+.authChallengeValue {
+  background: var(--auth-challenge-bg);
+  color: var(--auth-challenge);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--auth-challenge) 38%, transparent);
+}
+
+.authChallengeHeader {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-weight: 800;
+}
+
+.authChallengeValue {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 4px;
+  padding: 2px 5px;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
 .badgeOauth,
 .tokenOauth {
   background: var(--oauth-bg);
@@ -848,6 +880,736 @@ button:disabled {
   white-space: normal;
   word-break: normal;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.detailOutput.isNetLogAnalysis {
+  padding: 0;
+  overflow: hidden;
+  white-space: normal;
+  word-break: normal;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.isNetLogMode #captureButton,
+body.isNetLogMode #exportMenu,
+body.isNetLogMode #assessmentExportMenu,
+body.isNetLogMode #loadNetworkHarButton,
+body.isNetLogMode .filterGroup,
+body.isNetLogMode .searchFilter,
+body.isNetLogMode #toolsMenu {
+  display: none;
+}
+
+.netLogWorkspace {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.netLogWorkspace.netLogEmpty {
+  display: block;
+  overflow: auto;
+  padding: 32px;
+  text-align: center;
+}
+
+.netLogEmpty > div {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.netLogEmpty strong {
+  font-size: 16px;
+}
+
+.netLogEmpty p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.netLogHeader {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(460px, auto);
+  gap: 18px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.netLogEyebrow {
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.netLogHeader h2 {
+  margin: 2px 0;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.netLogHeader p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.netLogCaptureGuide {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.netLogCaptureGuide > summary {
+  padding: 9px 11px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.netLogGuideBody {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+}
+
+.netLogGuideBody section {
+  padding: 12px 14px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.netLogGuideBody section:nth-child(2n) {
+  border-right: 0;
+}
+
+.netLogGuideBody h3 {
+  margin: 0 0 7px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.netLogGuideBody ul,
+.netLogGuideBody ol {
+  margin: 0;
+  padding-left: 21px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.netLogGuideBody li + li {
+  margin-top: 5px;
+}
+
+.netLogGuideBody aside {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--danger) 7%, var(--panel));
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.netLogGuideBody aside span {
+  color: var(--text);
+}
+
+.netLogEmpty .netLogCaptureGuide {
+  margin-top: 18px;
+  text-align: left;
+}
+
+.netLogEmpty > div {
+  width: min(100%, 920px);
+}
+
+.netLogMetrics {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(58px, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.netLogMetric {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 6px 8px;
+  border-right: 1px solid var(--line);
+}
+
+.netLogMetric:last-child {
+  border-right: 0;
+}
+
+.netLogMetric span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.netLogMetric strong {
+  font-size: 14px;
+}
+
+.netLogMetric.is-error strong {
+  color: var(--danger);
+}
+
+.netLogMetric.is-warning strong {
+  color: var(--oam);
+}
+
+.netLogFilters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 45px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.netLogCategoryFilters {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.netLogCategoryFilters button {
+  height: 27px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0 9px;
+  white-space: nowrap;
+}
+
+.netLogCategoryFilters button:last-child {
+  border-right: 0;
+}
+
+.netLogCategoryFilters button.isActive {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.netLogSearch {
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: 7px;
+  min-width: 190px;
+}
+
+.netLogSearch span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.netLogSearch input {
+  width: 100%;
+  height: 28px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
+.netLogBody {
+  display: grid;
+  grid-template-columns: minmax(240px, 28%) minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.netLogSources,
+.netLogAnalysis {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.netLogSources {
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.netLogPaneHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.netLogPaneHeading > div {
+  display: grid;
+}
+
+.netLogPaneHeading span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.netLogSource {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  width: 100%;
+  height: auto;
+  min-height: 49px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.netLogSource > span {
+  display: grid;
+  min-width: 0;
+}
+
+.netLogSource strong,
+.netLogSource small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.netLogSource em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.netLogSource small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.netLogSource b {
+  min-width: 27px;
+  border-radius: 3px;
+  padding: 2px 5px;
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--muted);
+  text-align: center;
+}
+
+.netLogSource b.hasError {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  color: var(--danger);
+}
+
+.netLogSource b.hasWarning {
+  background: color-mix(in srgb, var(--oam) 18%, transparent);
+  color: var(--oam);
+}
+
+.netLogSource.isActive {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+.netLogFindings,
+.netLogTimeline {
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.netLogFinding {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.netLogFindingBadge {
+  align-self: start;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 2px 5px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.netLogFinding.is-error .netLogFindingBadge {
+  color: var(--danger);
+}
+
+.netLogFinding.is-warning .netLogFindingBadge {
+  color: var(--oam);
+}
+
+.netLogFinding.is-info .netLogFindingBadge {
+  color: var(--accent);
+}
+
+.netLogFinding p,
+.netLogFinding small {
+  display: block;
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+.netLogFinding small {
+  color: var(--text);
+}
+
+.netLogTraceAction {
+  margin-top: 8px;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.netLogAuthTrace {
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.netLogAuthTrace > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.netLogAuthTrace > header span {
+  color: var(--accent);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.netLogAuthTrace h3 {
+  margin: 1px 0;
+  font-size: 13px;
+}
+
+.netLogAuthTrace header p,
+.netLogTraceStage p,
+.netLogTraceNote {
+  margin: 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.netLogTraceNavigation {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+}
+
+.netLogTraceNavigation button {
+  height: 25px;
+  padding: 0 8px;
+  font-size: 9px;
+}
+
+.netLogTraceStages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.netLogTlsTrace .netLogTraceStages {
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+}
+
+.netLogTlsTrace .netLogTraceStage:nth-child(3n) {
+  border-right: 0;
+}
+
+.netLogTlsTrace .netLogTraceStage:nth-child(-n + 3) {
+  border-bottom: 1px solid var(--line);
+}
+
+.netLogTraceStage {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 7px;
+  min-width: 0;
+  min-height: 96px;
+  padding: 10px;
+  border-right: 1px solid var(--line);
+}
+
+.netLogTraceStage:last-child {
+  border-right: 0;
+}
+
+.netLogTraceStage > span {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 23px;
+  height: 23px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.netLogTraceStage > div {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.netLogTraceStage small {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.netLogTraceStage strong {
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.netLogTraceStage p {
+  overflow-wrap: anywhere;
+}
+
+.netLogTraceStage.is-success > span,
+.netLogTraceStage.is-success strong {
+  color: var(--oauth);
+}
+
+.netLogTraceStage.is-failure > span,
+.netLogTraceStage.is-failure strong {
+  color: var(--danger);
+}
+
+.netLogTraceStage.is-review > span,
+.netLogTraceStage.is-review strong,
+.netLogTraceStage.is-incomplete > span,
+.netLogTraceStage.is-incomplete strong {
+  color: var(--oam);
+}
+
+.netLogTraceNote {
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.netLogInvestigationAction {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 14px;
+  padding: 11px 12px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.netLogInvestigationAction strong {
+  color: var(--accent);
+}
+
+.netLogInvestigationAction p {
+  margin: 0;
+  color: var(--text);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.netLogEvent.isTraceRoot > summary {
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+.netLogEvent {
+  border-bottom: 1px solid var(--line);
+}
+
+.netLogEvent > summary {
+  display: grid;
+  grid-template-columns: 74px 54px minmax(190px, 0.8fr) minmax(180px, 1fr) auto minmax(120px, auto);
+  gap: 8px;
+  align-items: center;
+  min-height: 39px;
+  padding: 6px 10px;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.netLogEvent.is-error > summary {
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
+}
+
+.netLogEvent.is-warn > summary {
+  background: color-mix(in srgb, var(--oam) 7%, var(--panel));
+}
+
+.netLogEvent time,
+.netLogCategory,
+.netLogSourceRef {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.netLogCategory {
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 2px 4px;
+  text-align: center;
+}
+
+.netLogEvent strong,
+.netLogEventSummary,
+.netLogSourceRef {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.netLogEvent strong {
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.netLogErrorName {
+  color: var(--danger);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.netLogEventDetail {
+  display: grid;
+  grid-template-columns: minmax(220px, 28%) minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.netLogEventDetail dl {
+  display: grid;
+  align-content: start;
+  margin: 0;
+}
+
+.netLogEventDetail dl > div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.netLogEventDetail dt {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.netLogEventDetail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.netLogParams {
+  max-height: 360px;
+  margin: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 9px;
+  background: var(--panel);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.netLogNoResults {
+  display: grid;
+  gap: 3px;
+  place-items: center;
+  min-height: 90px;
+  padding: 20px;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .netLogHeader {
+    grid-template-columns: 1fr;
+  }
+
+  .netLogMetrics {
+    grid-template-columns: repeat(7, minmax(52px, 1fr));
+  }
+
+  .netLogEvent > summary {
+    grid-template-columns: 70px 50px minmax(160px, 1fr) minmax(140px, 1fr);
+  }
+
+  .netLogTraceStages {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .netLogTlsTrace .netLogTraceStages {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .netLogTraceStage:nth-child(2) {
+    border-right: 0;
+  }
+
+  .netLogTraceStage:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .netLogTlsTrace .netLogTraceStage:nth-child(odd) {
+    border-right: 1px solid var(--line);
+  }
+
+  .netLogTlsTrace .netLogTraceStage:nth-child(even) {
+    border-right: 0;
+  }
+
+  .netLogTlsTrace .netLogTraceStage:nth-child(-n + 4) {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .netLogEventSummary,
+  .netLogErrorName {
+    display: none;
+  }
 }
 
 .nameValueDetail {
@@ -1404,6 +2166,10 @@ button:disabled {
 
 .legendFail {
   color: var(--danger);
+}
+
+.legendAuthChallenge {
+  color: var(--auth-challenge);
 }
 
 .legendEcid {

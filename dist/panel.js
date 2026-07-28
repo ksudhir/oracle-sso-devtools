@@ -13,7 +13,14 @@ const state = {
   selectedFlowKey: null,
   flowNavigatorWidth: null,
   flowScrollPositions: { navigator: 0, assessment: 0 },
-  captureSource: "Live DevTools traffic"
+  captureSource: "Live DevTools traffic",
+  netLog: null,
+  netLogCategory: "relevant",
+  netLogSearch: "",
+  selectedNetLogSourceId: null,
+  netLogAuthTraceIndex: null,
+  netLogTlsTraceIndex: null,
+  netLogInvestigationIndex: null
 };
 
 const PANE_WIDTH_STORAGE_KEY = "oamSamlOauth.requestPaneWidth";
@@ -102,11 +109,120 @@ detailOutput.addEventListener("click", (event) => {
     return;
   }
 
+  const netLogCategoryButton = event.target.closest("[data-netlog-category]");
+  if (netLogCategoryButton) {
+    state.netLogCategory = netLogCategoryButton.dataset.netlogCategory;
+    state.selectedNetLogSourceId = null;
+    state.netLogAuthTraceIndex = null;
+    state.netLogTlsTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    render();
+    return;
+  }
+
+  const netLogAuthTraceButton = event.target.closest("[data-netlog-auth-trace]");
+  if (netLogAuthTraceButton) {
+    state.netLogAuthTraceIndex = Number(netLogAuthTraceButton.dataset.netlogAuthTrace);
+    state.netLogTlsTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    state.netLogCategory = "trace";
+    state.netLogSearch = "";
+    state.selectedNetLogSourceId = null;
+    render();
+    return;
+  }
+
+  const closeNetLogAuthTraceButton = event.target.closest("[data-close-netlog-auth-trace]");
+  if (closeNetLogAuthTraceButton) {
+    state.netLogAuthTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    state.netLogCategory = "auth";
+    render();
+    return;
+  }
+
+  const netLogTlsTraceButton = event.target.closest("[data-netlog-tls-trace]");
+  if (netLogTlsTraceButton) {
+    state.netLogTlsTraceIndex = Number(netLogTlsTraceButton.dataset.netlogTlsTrace);
+    state.netLogAuthTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    state.netLogCategory = "tls-trace";
+    state.netLogSearch = "";
+    state.selectedNetLogSourceId = null;
+    render();
+    return;
+  }
+
+  const closeNetLogTlsTraceButton = event.target.closest("[data-close-netlog-tls-trace]");
+  if (closeNetLogTlsTraceButton) {
+    state.netLogTlsTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    state.netLogCategory = "tls";
+    render();
+    return;
+  }
+
+  const netLogInvestigationButton = event.target.closest("[data-netlog-investigate]");
+  if (netLogInvestigationButton) {
+    state.netLogInvestigationIndex = Number(netLogInvestigationButton.dataset.netlogInvestigate);
+    state.netLogAuthTraceIndex = null;
+    state.netLogTlsTraceIndex = null;
+    state.netLogCategory = "investigation";
+    state.netLogSearch = "";
+    state.selectedNetLogSourceId = null;
+    render();
+    return;
+  }
+
+  const closeNetLogInvestigationButton = event.target.closest("[data-close-netlog-investigation]");
+  if (closeNetLogInvestigationButton) {
+    const root = state.netLog?.events.find((item) => item.index === state.netLogInvestigationIndex);
+    state.netLogInvestigationIndex = null;
+    state.netLogCategory = root?.category || "issues";
+    render();
+    return;
+  }
+
+  const netLogSourceButton = event.target.closest("[data-netlog-source-id]");
+  if (netLogSourceButton) {
+    state.selectedNetLogSourceId = netLogSourceButton.dataset.netlogSourceId || null;
+    state.netLogAuthTraceIndex = null;
+    state.netLogTlsTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    if (["trace", "tls-trace", "investigation"].includes(state.netLogCategory)) state.netLogCategory = "relevant";
+    render();
+    return;
+  }
+
+  const resetNetLogButton = event.target.closest("[data-reset-netlog-filters]");
+  if (resetNetLogButton) {
+    state.netLogCategory = "relevant";
+    state.netLogSearch = "";
+    state.selectedNetLogSourceId = null;
+    state.netLogAuthTraceIndex = null;
+    state.netLogTlsTraceIndex = null;
+    state.netLogInvestigationIndex = null;
+    render();
+    return;
+  }
+
   const evidenceButton = event.target.closest("[data-entry-id]");
   if (evidenceButton) {
     state.selectedId = evidenceButton.dataset.entryId;
     render();
   }
+});
+
+detailOutput.addEventListener("input", (event) => {
+  if (!event.target.matches?.("[data-netlog-search]")) return;
+  state.netLogSearch = event.target.value.trim().toLowerCase();
+  render();
+  queueMicrotask(() => {
+    const input = detailOutput.querySelector?.("[data-netlog-search]");
+    if (!input) return;
+    input.focus();
+    input.setSelectionRange?.(input.value.length, input.value.length);
+  });
 });
 
 detailOutput.addEventListener("scroll", recordFlowUserScroll, true);
@@ -363,6 +479,7 @@ const SAML_DECODE_TIMEOUT_MS = 1500;
 const HAR_ENTRY_TIMEOUT_MS = 3000;
 const FLOW_LIVE_RENDER_DELAY_MS = 350;
 const FLOW_SCROLL_SETTLE_MS = 800;
+const NETLOG_RENDER_LIMIT = 800;
 
 let liveCaptureRenderTimer = null;
 let lastFlowUserScrollAt = 0;
@@ -413,6 +530,13 @@ captureButton.addEventListener("click", () => {
 clearButton.addEventListener("click", () => {
   state.entries = [];
   state.selectedId = null;
+  state.netLog = null;
+  state.netLogCategory = "relevant";
+  state.netLogSearch = "";
+  state.selectedNetLogSourceId = null;
+  state.netLogAuthTraceIndex = null;
+  state.netLogTlsTraceIndex = null;
+  state.netLogInvestigationIndex = null;
   state.captureSource = "Live DevTools traffic";
   setImportStatus("");
   render();
@@ -703,7 +827,7 @@ loadNetworkHarButton.addEventListener("click", async () => {
 
 importButton.addEventListener("click", () => {
   importInput.value = "";
-  setImportStatus("Choose a HAR or JSON file...");
+  setImportStatus("Choose a HAR, JSON, or Chromium NetLog file...");
   if (typeof importInput.showPicker === "function") {
     importInput.showPicker();
   } else {
@@ -917,8 +1041,27 @@ async function handleImportSelection() {
     setImportStatus(`Parsing ${file.name}...`);
     setDetailText(`Parsing ${file.name}...`);
     const imported = JSON.parse(stripJsonBom(text));
+    if (isNetLogDump(imported)) {
+      setImportStatus("Analyzing Chromium NetLog events...");
+      setDetailText("Analyzing Chromium NetLog events...");
+      state.netLog = parseNetLogDump(imported, file.name);
+      state.entries = [];
+      state.selectedId = null;
+      state.captureSource = `Imported file: ${file.name}`;
+      state.netLogCategory = "relevant";
+      state.netLogSearch = "";
+      state.selectedNetLogSourceId = null;
+      state.netLogAuthTraceIndex = null;
+      state.netLogTlsTraceIndex = null;
+      state.netLogInvestigationIndex = null;
+      state.workspaceMode = "netlog";
+      render();
+      setImportStatus(`Imported ${state.netLog.events.length} NetLog events`);
+      return;
+    }
     setImportStatus("Normalizing HAR entries...");
     setDetailText("Normalizing HAR entries...");
+    state.netLog = null;
     state.entries = await parseImportedEntries(imported);
     state.captureSource = `Imported file: ${file.name}`;
     resetFiltersAfterImport();
@@ -1062,7 +1205,223 @@ async function parseImportedEntries(imported) {
     return normalizeHarEntries(imported.log.entries);
   }
 
-  throw new Error("Expected an Enterprise Authentication Flow Inspector export, an entries array, or a HAR file with log.entries.");
+  throw new Error("Expected an Inspector export, an entries array, a HAR file with log.entries, or a Chromium NetLog dump with constants and events.");
+}
+
+function isNetLogDump(imported) {
+  return Boolean(
+    imported
+    && !Array.isArray(imported?.log?.entries)
+    && Array.isArray(imported.events)
+    && imported.constants
+    && typeof imported.constants === "object"
+  );
+}
+
+function parseNetLogDump(imported, filename = "") {
+  if (!isNetLogDump(imported)) throw new Error("This file is not a recognized Chromium NetLog dump.");
+
+  const constants = imported.constants || {};
+  const eventTypeNames = reverseNetLogConstants(
+    constants.logEventTypes || constants.eventTypes || constants.event_types
+  );
+  const sourceTypeNames = reverseNetLogConstants(
+    constants.logSourceType || constants.logSourceTypes || constants.sourceTypes || constants.source_types
+  );
+  const phaseNames = reverseNetLogConstants(
+    constants.logEventPhase || constants.eventPhases || constants.event_phases
+  );
+  const netErrorNames = reverseNetLogConstants(
+    constants.netError || constants.netErrors || constants.net_error
+  );
+  const rawEvents = imported.events || [];
+  const numericTimes = rawEvents
+    .map((event) => Number(event?.time))
+    .filter(Number.isFinite);
+  const firstTime = numericTimes.length ? Math.min(...numericTimes) : 0;
+
+  const events = rawEvents.map((event, index) => normalizeNetLogEvent(event, index, {
+    eventTypeNames,
+    sourceTypeNames,
+    phaseNames,
+    netErrorNames,
+    firstTime
+  }));
+  const sourcesByKey = new Map();
+
+  for (const event of events) {
+    const key = event.sourceKey;
+    if (!sourcesByKey.has(key)) {
+      sourcesByKey.set(key, {
+        key,
+        id: event.sourceId,
+        type: event.sourceType,
+        eventCount: 0,
+        errorCount: 0,
+        warningCount: 0,
+        categories: new Set(),
+        firstRelativeMs: event.relativeMs,
+        lastRelativeMs: event.relativeMs
+      });
+    }
+    const source = sourcesByKey.get(key);
+    source.eventCount += 1;
+    if (event.severity === "error") source.errorCount += 1;
+    if (event.severity === "warn") source.warningCount += 1;
+    source.categories.add(event.category);
+    source.firstRelativeMs = Math.min(source.firstRelativeMs, event.relativeMs);
+    source.lastRelativeMs = Math.max(source.lastRelativeMs, event.relativeMs);
+  }
+
+  const sources = [...sourcesByKey.values()]
+    .map((source) => ({ ...source, categories: [...source.categories] }))
+    .sort((left, right) => (
+      right.errorCount - left.errorCount
+      || right.warningCount - left.warningCount
+      || left.firstRelativeMs - right.firstRelativeMs
+    ));
+
+  return {
+    filename,
+    importedAt: new Date().toISOString(),
+    clientInfo: imported.clientInfo || imported.client_info || {},
+    constants,
+    events,
+    sources,
+    stats: {
+      events: events.length,
+      sources: sources.length,
+      errors: events.filter((event) => event.severity === "error").length,
+      warnings: events.filter((event) => event.severity === "warn").length,
+      auth: events.filter((event) => event.category === "auth").length,
+      dns: events.filter((event) => event.category === "dns").length,
+      proxy: events.filter((event) => event.category === "proxy").length,
+      tls: events.filter((event) => event.category === "tls").length,
+      socket: events.filter((event) => event.category === "socket").length,
+      http: events.filter((event) => ["http", "http2", "quic"].includes(event.category)).length
+    }
+  };
+}
+
+function reverseNetLogConstants(values) {
+  if (!values || typeof values !== "object") return new Map();
+  return new Map(Object.entries(values).map(([name, value]) => (
+    /^-?\d+$/u.test(name) && typeof value === "string"
+      ? [name, value]
+      : [String(value), name]
+  )));
+}
+
+function normalizeNetLogEvent(event, index, lookup) {
+  const source = event?.source || {};
+  const type = resolveNetLogConstant(event?.type, lookup.eventTypeNames, "EVENT");
+  const sourceType = resolveNetLogConstant(source?.type, lookup.sourceTypeNames, "SOURCE");
+  const phase = resolveNetLogConstant(event?.phase, lookup.phaseNames, "PHASE");
+  const sourceId = source?.id === undefined || source?.id === null ? "unscoped" : String(source.id);
+  const params = event?.params && typeof event.params === "object" ? event.params : {};
+  const rawTime = Number(event?.time);
+  const relativeMs = Number.isFinite(rawTime) ? Math.max(0, rawTime - lookup.firstTime) : index;
+  const netErrorCode = findNetLogErrorCode(params);
+  const netErrorName = netErrorCode === null
+    ? ""
+    : lookup.netErrorNames.get(String(netErrorCode)) || `NET_ERROR_${netErrorCode}`;
+  const searchable = `${type}\n${sourceType}\n${phase}\n${safeJsonStringify(params)}`.toUpperCase();
+  const category = classifyNetLogEvent(searchable);
+  const severity = classifyNetLogSeverity(type, searchable, netErrorCode);
+
+  return {
+    index,
+    id: `netlog-${index}`,
+    rawTime: event?.time ?? "",
+    relativeMs,
+    type,
+    sourceId,
+    sourceType,
+    sourceKey: `${sourceType}:${sourceId}`,
+    dependencySourceIds: collectNetLogDependencySourceIds(params),
+    phase,
+    params,
+    category,
+    severity,
+    netErrorCode,
+    netErrorName,
+    summary: summarizeNetLogEvent(type, params, netErrorName),
+    searchText: `${type}\n${sourceType}\n${phase}\n${netErrorName}\n${safeJsonStringify(params)}`.toLowerCase()
+  };
+}
+
+function collectNetLogDependencySourceIds(value, results = new Set(), insideDependency = false) {
+  if (!value || typeof value !== "object") return [...results];
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectNetLogDependencySourceIds(item, results, insideDependency));
+    return [...results];
+  }
+
+  for (const [key, item] of Object.entries(value)) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z]/gu, "");
+    const isDependency = insideDependency || normalizedKey.includes("sourcedependency");
+    if (isDependency && normalizedKey === "id" && item !== undefined && item !== null) {
+      results.add(String(item));
+    }
+    collectNetLogDependencySourceIds(item, results, isDependency);
+  }
+  return [...results];
+}
+
+function resolveNetLogConstant(value, names, fallback) {
+  if (typeof value === "string" && !/^-?\d+$/u.test(value)) return value;
+  return names.get(String(value)) || `${fallback}_${value ?? "UNKNOWN"}`;
+}
+
+function findNetLogErrorCode(params) {
+  const candidates = [
+    params?.net_error,
+    params?.netError,
+    params?.error_code,
+    params?.errorCode
+  ];
+  const value = candidates.map(Number).find((candidate) => Number.isFinite(candidate) && candidate !== 0);
+  return value === undefined ? null : value;
+}
+
+function classifyNetLogEvent(searchable) {
+  if (/(?:HTTP_AUTH|AUTH_CONTROLLER|AUTH_REQUIRED|AUTH_CHALLENGE|WWW_AUTHENTICATE|PROXY_AUTH|NEGOTIATE(?:["\s:]|$)|KERBEROS|NTLMSSP|SPNEGO|GSSAPI)/u.test(searchable)) return "auth";
+  if (/(?:HOST_RESOLVER|DNS)/u.test(searchable)) return "dns";
+  if (/(?:PROXY|PAC_)/u.test(searchable)) return "proxy";
+  if (/(?:SSL|TLS|CERT|TRANSPORT_SECURITY)/u.test(searchable)) return "tls";
+  if (/(?:SOCKET|CONNECT_JOB|TCP_|UDP_)/u.test(searchable)) return "socket";
+  if (/(?:HTTP2|SPDY)/u.test(searchable)) return "http2";
+  if (/(?:QUIC|HTTP3)/u.test(searchable)) return "quic";
+  if (/(?:HTTP|URL_REQUEST|NETWORK_TRANSACTION)/u.test(searchable)) return "http";
+  return "other";
+}
+
+function classifyNetLogSeverity(type, searchable, netErrorCode) {
+  if ((netErrorCode !== null && netErrorCode < 0) || /(?:FAILED|FAILURE|ERROR)/u.test(type)) return "error";
+  if (/(?:AUTH_REQUIRED|CHALLENGE|RETRY|CERT_STATUS)/u.test(searchable)) return "warn";
+  return "info";
+}
+
+function summarizeNetLogEvent(type, params, netErrorName) {
+  if (netErrorName) return netErrorName;
+  const candidates = [
+    params?.url,
+    params?.host,
+    params?.hostname,
+    params?.address,
+    params?.endpoint,
+    params?.source_dependency?.id !== undefined ? `Source ${params.source_dependency.id}` : ""
+  ];
+  const detail = candidates.find((value) => value !== undefined && String(value).trim());
+  return detail ? `${type}: ${String(detail)}` : type;
+}
+
+function safeJsonStringify(value) {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value || "");
+  }
 }
 
 async function normalizeHarEntries(entries) {
@@ -1097,8 +1456,9 @@ async function loadCurrentDevToolsHar(mode) {
         return;
       }
 
-      if (mode === "startup" && state.entries.length) return;
+      if (mode === "startup" && (state.entries.length || state.netLog)) return;
 
+      state.netLog = null;
       state.entries = sortEntriesChronologically(await Promise.all(harEntries.map(normalizeHarEntry)));
       state.captureSource = "Chrome DevTools Network HAR";
       resetFiltersAfterImport();
@@ -1390,25 +1750,36 @@ let renderVersion = 0;
 function render({ preserveFlowScroll = true } = {}) {
   const version = ++renderVersion;
   const isFlowWorkspace = state.workspaceMode === "flow";
+  const isNetLogWorkspace = state.workspaceMode === "netlog";
+  const isFullWorkspace = isFlowWorkspace || isNetLogWorkspace;
   if (isFlowWorkspace && !preserveFlowScroll) resetFlowScrollPositions();
   const flowScrollPositions = preserveFlowScroll && isFlowWorkspace
     ? captureFlowScrollPositions()
     : null;
   flowScrollRestorationPending = Boolean(flowScrollPositions);
-  const visibleEntries = getVisibleEntries();
+  const visibleEntries = isNetLogWorkspace ? [] : getVisibleEntries();
   const filteredEntryCount = state.entries.filter(matchesActiveFilters).length;
   const timingStats = getTimingStats(visibleEntries);
   shell.classList.toggle("isFlowWorkspace", isFlowWorkspace);
+  shell.classList.toggle("isNetLogWorkspace", isNetLogWorkspace);
   detailOutput.classList.toggle("isFlowAnalysis", isFlowWorkspace);
-  requestPane.setAttribute("aria-hidden", String(isFlowWorkspace));
-  detailPane.setAttribute("aria-label", isFlowWorkspace ? "Authentication flow analysis" : "Request details");
+  detailOutput.classList.toggle("isNetLogAnalysis", isNetLogWorkspace);
+  document.body?.classList?.toggle("isNetLogMode", isNetLogWorkspace);
+  requestPane.setAttribute("aria-hidden", String(isFullWorkspace));
+  detailPane.setAttribute("aria-label", isFlowWorkspace
+    ? "Authentication flow analysis"
+    : isNetLogWorkspace
+      ? "Chromium NetLog analysis"
+      : "Request details");
   requestList.replaceChildren(...visibleEntries.map((entry) => renderRequestRow(entry, timingStats)));
-  summary.textContent = renderToolbarSummary(filteredEntryCount);
+  summary.textContent = isNetLogWorkspace
+    ? renderNetLogToolbarSummary()
+    : renderToolbarSummary(filteredEntryCount);
   renderCaptureSourceLabel();
   captureButton.textContent = state.isCapturing ? "Stop capture" : "Start capture";
   captureButton.classList.toggle("isCapturing", state.isCapturing);
   captureButton.classList.toggle("isPaused", !state.isCapturing);
-  clearButton.disabled = state.entries.length === 0;
+  clearButton.disabled = state.entries.length === 0 && !state.netLog;
   exportFullButton.disabled = state.entries.length === 0;
   exportSanitizedButton.disabled = state.entries.length === 0;
   exportAssessmentSanitizedButton.disabled = state.entries.length === 0;
@@ -1442,7 +1813,7 @@ function render({ preserveFlowScroll = true } = {}) {
   }
 
   Promise.resolve(detailRender)
-    .catch((error) => renderDetailFailure(version, isFlowWorkspace, error))
+    .catch((error) => renderDetailFailure(version, isFullWorkspace, error))
     .then(() => {
       if (version === renderVersion && isFlowWorkspace) {
         restoreFlowScrollPositions(flowScrollPositions);
@@ -1461,15 +1832,15 @@ function commitDetailText(version, value) {
   return commitDetailHtml(version, highlightArtifacts(value));
 }
 
-function renderDetailFailure(version, isFlowWorkspace, error) {
+function renderDetailFailure(version, isFullWorkspace, error) {
   if (version !== renderVersion) return;
   console.error("Could not render inspector details", error);
   const message = error?.message || "Unknown rendering error";
-  if (isFlowWorkspace) {
+  if (isFullWorkspace) {
     setDetailHtml([
-      `<div class="flowWorkspace">`,
+      `<div class="${state.workspaceMode === "netlog" ? "netLogWorkspace" : "flowWorkspace"}">`,
       `<div class="flowEmpty flowRenderError">`,
-      `<strong>Flow Analysis could not be rendered.</strong>`,
+      `<strong>${state.workspaceMode === "netlog" ? "NetLog Analysis" : "Flow Analysis"} could not be rendered.</strong>`,
       `<span>${escapeHtml(message)}</span>`,
       `<span>Switch to Traffic Inspector and select another request, or import the capture again.</span>`,
       `</div>`,
@@ -1489,6 +1860,15 @@ function renderToolbarSummary(filteredEntryCount) {
     ? `${state.entries.length} requests`
     : `${filteredEntryCount} of ${state.entries.length} requests`;
   return [count, ...labels].join(" · ");
+}
+
+function renderNetLogToolbarSummary() {
+  if (!state.netLog) return "No NetLog imported";
+  const visible = getFilteredNetLogEvents().length;
+  const count = visible === state.netLog.events.length
+    ? `${state.netLog.events.length} events`
+    : `${visible} of ${state.netLog.events.length} events`;
+  return `${count} · ${state.netLog.sources.length} sources · ${state.netLog.stats.errors} errors`;
 }
 
 function renderCaptureSourceLabel() {
@@ -2172,11 +2552,15 @@ function extractProviderPattern(entries, pattern, group = 0) {
 }
 
 function isKerberosEntry(entry) {
-  return extractHttpAuthInfo(entry).some((item) => item.protocol !== "NTLM");
+  return extractHttpAuthInfo(entry).some((item) => (
+    item.source === "request" && item.token && item.protocol === "Kerberos"
+  ));
 }
 
 function isNtlmEntry(entry) {
-  return extractHttpAuthInfo(entry).some((item) => item.protocol === "NTLM");
+  return extractHttpAuthInfo(entry).some((item) => (
+    item.source === "request" && item.token && item.protocol === "NTLM"
+  ));
 }
 
 function isX509Entry(entry) {
@@ -2194,7 +2578,980 @@ function getEntrySearchText(entry) {
   ].join("\n").toLowerCase();
 }
 
+function getFilteredNetLogEvents() {
+  if (!state.netLog) return [];
+  const search = state.netLogSearch;
+  const traceEventIndexes = state.netLogCategory === "trace"
+    ? new Set(buildNetLogAuthenticationExchange(state.netLog, state.netLogAuthTraceIndex)?.events.map((event) => event.index) || [])
+    : state.netLogCategory === "tls-trace"
+      ? new Set(buildNetLogTlsExchange(state.netLog, state.netLogTlsTraceIndex)?.events.map((event) => event.index) || [])
+      : state.netLogCategory === "investigation"
+        ? new Set(buildNetLogInvestigation(state.netLog, state.netLogInvestigationIndex)?.events.map((event) => event.index) || [])
+      : null;
+  return state.netLog.events.filter((event) => {
+    if (traceEventIndexes && !traceEventIndexes.has(event.index)) return false;
+    if (state.selectedNetLogSourceId && event.sourceKey !== state.selectedNetLogSourceId) return false;
+    if (state.netLogCategory === "issues" && event.severity === "info") return false;
+    if (state.netLogCategory === "relevant" && event.category === "other" && event.severity === "info") return false;
+    if (!["all", "issues", "relevant", "trace", "tls-trace", "investigation"].includes(state.netLogCategory) && event.category !== state.netLogCategory) return false;
+    return !search || event.searchText.includes(search);
+  });
+}
+
+function getNetLogAuthenticationChallenges(netLog = state.netLog) {
+  if (!netLog) return [];
+  return netLog.events.filter((event) => (
+    event.category === "auth"
+    && /(?:CHALLENGE|AUTH_REQUIRED|WWW_AUTHENTICATE|PROXY_AUTH|HANDLE_AUTH)/u.test(event.searchText.toUpperCase())
+  ));
+}
+
+function buildNetLogAuthenticationExchange(netLog, rootIndex) {
+  if (!netLog || !Number.isFinite(Number(rootIndex))) return null;
+  const root = netLog.events.find((event) => event.index === Number(rootIndex));
+  if (!root) return null;
+
+  const relatedSourceIds = collectRelatedNetLogSourceIds(netLog.events, root.sourceId, 3);
+  const windowStart = root.relativeMs - 5000;
+  const windowEnd = root.relativeMs + 30000;
+  const nearbyStart = Math.max(0, root.index - 25);
+  const nearbyEnd = root.index + 40;
+  const events = netLog.events.filter((event) => {
+    const inTimeWindow = event.relativeMs >= windowStart && event.relativeMs <= windowEnd;
+    if (!inTimeWindow) return false;
+    if (relatedSourceIds.has(event.sourceId)) return true;
+    return relatedSourceIds.size === 1
+      && event.index >= nearbyStart
+      && event.index <= nearbyEnd
+      && (["auth", "http", "proxy"].includes(event.category) || event.severity !== "info");
+  });
+
+  if (!events.some((event) => event.index === root.index)) events.push(root);
+  events.sort((left, right) => left.index - right.index);
+
+  const challengeEvents = events.filter((event) => (
+    event.category === "auth"
+    && /(?:CHALLENGE|AUTH_REQUIRED|WWW_AUTHENTICATE|PROXY_AUTH|HANDLE_AUTH)/u.test(event.searchText.toUpperCase())
+  ));
+  const browserResponse = events.find((event) => (
+    event.index > root.index
+    && event.category === "auth"
+    && !challengeEvents.some((challenge) => challenge.index === event.index)
+    && /(?:AUTHORIZATION|GENERATE_AUTH_TOKEN|AUTH_TOKEN|CREDENTIAL|AUTH_CONTROLLER)/u.test(event.searchText.toUpperCase())
+  )) || null;
+  const retryEvents = challengeEvents.filter((event) => event.index > root.index);
+  const finalEvent = findNetLogAuthenticationOutcome(events, root.index);
+  const tokenProtocol = classifyNetLogAuthenticationProtocol(browserResponse);
+
+  return {
+    root,
+    events,
+    browserResponse,
+    retryEvents,
+    finalEvent,
+    tokenProtocol,
+    relatedSourceIds,
+    correlation: relatedSourceIds.size > 1
+      ? `${relatedSourceIds.size} linked Chromium sources plus nearby authentication/HTTP evidence`
+      : "Nearby authentication and HTTP evidence; no explicit source dependency was captured"
+  };
+}
+
+function collectRelatedNetLogSourceIds(events, rootSourceId, maxDepth) {
+  const graph = new Map();
+  const connect = (left, right) => {
+    if (!graph.has(left)) graph.set(left, new Set());
+    if (!graph.has(right)) graph.set(right, new Set());
+    graph.get(left).add(right);
+    graph.get(right).add(left);
+  };
+  for (const event of events) {
+    for (const dependencyId of event.dependencySourceIds || []) {
+      connect(String(event.sourceId), String(dependencyId));
+    }
+  }
+
+  const visited = new Set([String(rootSourceId)]);
+  let frontier = [String(rootSourceId)];
+  for (let depth = 0; depth < maxDepth && frontier.length; depth += 1) {
+    const next = [];
+    for (const sourceId of frontier) {
+      for (const linkedId of graph.get(sourceId) || []) {
+        if (visited.has(linkedId)) continue;
+        visited.add(linkedId);
+        next.push(linkedId);
+      }
+    }
+    frontier = next;
+  }
+  return visited;
+}
+
+function findNetLogAuthenticationOutcome(events, rootIndex) {
+  const laterEvents = events.filter((event) => event.index > rootIndex);
+  const withStatus = laterEvents
+    .map((event) => ({ event, status: extractNetLogHttpStatus(event.params) }))
+    .filter((item) => item.status);
+  if (withStatus.length) return withStatus[withStatus.length - 1];
+  const failure = laterEvents.find((event) => event.severity === "error");
+  return failure ? { event: failure, status: 0 } : null;
+}
+
+function extractNetLogHttpStatus(value) {
+  if (!value || typeof value !== "object") return 0;
+  for (const [key, item] of Object.entries(value)) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z]/gu, "");
+    if (["status", "statuscode", "responsecode", "httpstatus"].includes(normalizedKey)) {
+      const number = Number(item);
+      if (number >= 100 && number <= 599) return number;
+    }
+    if (typeof item === "string") {
+      const match = item.match(/(?:HTTP\/\d(?:\.\d)?\s+|:status["':=\s]+)([1-5]\d{2})/iu);
+      if (match) return Number(match[1]);
+    }
+    const nested = extractNetLogHttpStatus(item);
+    if (nested) return nested;
+  }
+  return 0;
+}
+
+function classifyNetLogAuthenticationProtocol(event) {
+  if (!event) return { label: "Not observed", tone: "incomplete", detail: "No browser authorization event was identified in the captured exchange." };
+  const text = event.searchText.toUpperCase();
+  if (/NTLMSSP|(?:^|[^A-Z])NTLM(?:[^A-Z]|$)/u.test(text)) {
+    return { label: "NTLM fallback", tone: "failure", detail: "Client authentication evidence contains NTLM or the NTLMSSP signature." };
+  }
+  if (/KERBEROS|AP-REQ|1\.2\.840\.113554\.1\.2\.2/u.test(text)) {
+    return { label: "Kerberos", tone: "success", detail: "Client authentication evidence contains Kerberos mechanism or AP-REQ indicators." };
+  }
+  if (/NEGOTIATE|SPNEGO|GSSAPI/u.test(text)) {
+    return { label: "SPNEGO / Negotiate", tone: "review", detail: "A browser authorization event was found, but the inner Kerberos or NTLM mechanism is not conclusive." };
+  }
+  return { label: "Authorization observed", tone: "review", detail: "A browser authentication response was found without a recognized Kerberos or NTLM marker." };
+}
+
+function getNetLogTlsTraceCandidates(netLog = state.netLog) {
+  if (!netLog) return [];
+  return netLog.events.filter((event) => (
+    event.category === "tls"
+    && (
+      event.severity === "error"
+      || /(?:SSL_CONNECT|TLS_HANDSHAKE|SSL_HANDSHAKE)/u.test(event.type)
+    )
+  ));
+}
+
+function buildNetLogTlsExchange(netLog, rootIndex) {
+  if (!netLog || !Number.isFinite(Number(rootIndex))) return null;
+  const root = netLog.events.find((event) => event.index === Number(rootIndex));
+  if (!root) return null;
+
+  const relatedSourceIds = collectRelatedNetLogSourceIds(netLog.events, root.sourceId, 4);
+  const windowStart = root.relativeMs - 15000;
+  const windowEnd = root.relativeMs + 30000;
+  const nearbyStart = Math.max(0, root.index - 35);
+  const nearbyEnd = root.index + 45;
+  const relevantCategories = new Set(["dns", "proxy", "socket", "tls", "http", "http2", "quic"]);
+  const events = netLog.events.filter((event) => {
+    const inTimeWindow = event.relativeMs >= windowStart && event.relativeMs <= windowEnd;
+    if (!inTimeWindow) return false;
+    if (relatedSourceIds.has(event.sourceId) && relevantCategories.has(event.category)) return true;
+    return relatedSourceIds.size === 1
+      && event.index >= nearbyStart
+      && event.index <= nearbyEnd
+      && relevantCategories.has(event.category);
+  });
+  if (!events.some((event) => event.index === root.index)) events.push(root);
+  events.sort((left, right) => left.index - right.index);
+
+  const connectionEvent = events.find((event) => (
+    event.category === "socket"
+    || /(?:CONNECT_JOB|TCP_CONNECT|SOCKET_POOL)/u.test(event.type)
+  )) || null;
+  const handshakeEvent = events.find((event) => (
+    event.category === "tls"
+    && /(?:SSL_CONNECT|TLS_HANDSHAKE|SSL_HANDSHAKE)/u.test(event.type)
+  )) || root;
+  const certificateEvents = events.filter((event) => (
+    event.category === "tls"
+    && /CERT/u.test(`${event.type}\n${event.searchText}`.toUpperCase())
+  ));
+  const certificateError = events.find((event) => (
+    event.category === "tls"
+    && (event.netErrorName.startsWith("ERR_CERT_") || /CERT.*(?:INVALID|ERROR|FAILED|REVOKED|EXPIRED)/u.test(event.searchText.toUpperCase()))
+  )) || null;
+  const protocol = extractNetLogProtocolNegotiation(events);
+  const reuse = extractNetLogConnectionReuse(events);
+  const fallback = extractNetLogTransportFallback(events);
+  const outcome = describeNetLogTlsOutcome(events, root, certificateError);
+
+  return {
+    root,
+    events,
+    relatedSourceIds,
+    connectionEvent,
+    handshakeEvent,
+    certificateEvents,
+    certificateError,
+    protocol,
+    reuse,
+    fallback,
+    outcome,
+    endpoint: extractNetLogEndpoint(events),
+    correlation: relatedSourceIds.size > 1
+      ? `${relatedSourceIds.size} linked Chromium sources`
+      : "Nearby connection evidence; no explicit source dependency was captured"
+  };
+}
+
+function extractNetLogEndpoint(events) {
+  for (const event of events) {
+    const value = findNetLogParameter(event.params, [
+      "endpoint",
+      "remote_endpoint",
+      "address",
+      "host",
+      "hostname",
+      "url"
+    ]);
+    if (value !== undefined && String(value).trim()) return String(value);
+  }
+  return "Not captured";
+}
+
+function extractNetLogProtocolNegotiation(events) {
+  const values = {};
+  const fieldGroups = {
+    alpn: ["alpn_negotiated_protocol", "negotiated_protocol", "alpn"],
+    version: ["tls_version", "ssl_version", "version"],
+    cipher: ["cipher_suite", "cipher", "cipher_suite_name"],
+    group: ["key_exchange_group", "group", "curve"]
+  };
+  for (const [name, fields] of Object.entries(fieldGroups)) {
+    for (const event of events) {
+      const value = findNetLogParameter(event.params, fields);
+      if (value !== undefined && String(value).trim()) {
+        values[name] = String(value);
+        break;
+      }
+    }
+  }
+  const visible = [
+    values.version,
+    values.alpn ? `ALPN ${values.alpn}` : "",
+    values.cipher,
+    values.group
+  ].filter(Boolean);
+  return {
+    ...values,
+    label: visible.length ? visible.join(" · ") : "Not captured",
+    tone: visible.length ? "success" : "incomplete",
+    detail: visible.length
+      ? "Chromium exposed negotiated TLS or application-protocol parameters."
+      : "TLS version, cipher, and ALPN were not visible in the correlated events."
+  };
+}
+
+function extractNetLogConnectionReuse(events) {
+  for (const event of events) {
+    const value = findNetLogParameter(event.params, [
+      "reused",
+      "was_reused",
+      "reused_socket",
+      "socket_reused",
+      "is_reused"
+    ]);
+    if (value !== undefined) {
+      const reused = value === true || value === 1 || /^(?:true|yes|1)$/iu.test(String(value));
+      return {
+        label: reused ? "Reused connection" : "New connection",
+        tone: reused ? "review" : "neutral",
+        detail: reused
+          ? "Chromium indicates that an existing connection or socket was reused."
+          : "Chromium indicates that a new connection was created."
+      };
+    }
+    if (/(?:SOCKET_REUSED|REUSED_SOCKET|HTTP_STREAM_REQUEST_BOUND_TO_JOB)/u.test(event.type)) {
+      return {
+        label: "Reused connection",
+        tone: "review",
+        detail: `Connection reuse was inferred from ${event.type}.`
+      };
+    }
+  }
+  return {
+    label: "Not established",
+    tone: "incomplete",
+    detail: "The correlated events do not explicitly identify whether the connection was new or reused."
+  };
+}
+
+function extractNetLogTransportFallback(events) {
+  const quicFailure = events.find((event) => event.category === "quic" && event.severity === "error");
+  const laterTls = quicFailure && events.find((event) => event.index > quicFailure.index && event.category === "tls");
+  if (quicFailure && laterTls) {
+    return {
+      label: "QUIC fallback to TLS",
+      tone: "review",
+      detail: `${quicFailure.netErrorName || quicFailure.type} preceded a TLS connection.`
+    };
+  }
+  return null;
+}
+
+function describeNetLogTlsOutcome(events, root, certificateError) {
+  const error = certificateError
+    || events.find((event) => event.category === "tls" && event.severity === "error")
+    || (root.severity === "error" ? root : null);
+  if (error) {
+    return {
+      label: error.netErrorName || "TLS failure",
+      tone: "failure",
+      detail: error.netErrorName.startsWith("ERR_CERT_")
+        ? "Chromium rejected certificate validation during the connection."
+        : "Chromium reported an explicit TLS or connection failure."
+    };
+  }
+  const statuses = events
+    .map((event) => extractNetLogHttpStatus(event.params))
+    .filter(Boolean);
+  const finalStatus = statuses[statuses.length - 1] || 0;
+  if (finalStatus >= 200 && finalStatus < 400) {
+    return {
+      label: `Connected · HTTP ${finalStatus}`,
+      tone: "success",
+      detail: "The correlated TLS connection reached a successful or redirecting HTTP response."
+    };
+  }
+  if (root.phase === "PHASE_END" || /CONNECTED|HANDSHAKE_COMPLETE|SSL_CONNECT/u.test(root.type)) {
+    return {
+      label: "Handshake evidence captured",
+      tone: "review",
+      detail: "No explicit TLS error was found, but a final HTTP outcome was not captured."
+    };
+  }
+  return {
+    label: "Incomplete capture",
+    tone: "incomplete",
+    detail: "The captured events do not establish whether the TLS connection completed."
+  };
+}
+
+function findNetLogParameter(value, names) {
+  if (!value || typeof value !== "object") return undefined;
+  const normalizedNames = new Set(names.map((name) => name.toLowerCase().replace(/[^a-z0-9]/gu, "")));
+  for (const [key, item] of Object.entries(value)) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/gu, "");
+    if (normalizedNames.has(normalizedKey) && ["string", "number", "boolean"].includes(typeof item)) return item;
+    const nested = findNetLogParameter(item, names);
+    if (nested !== undefined) return nested;
+  }
+  return undefined;
+}
+
+function buildNetLogInvestigation(netLog, rootIndex) {
+  if (!netLog || !Number.isFinite(Number(rootIndex))) return null;
+  const root = netLog.events.find((event) => event.index === Number(rootIndex));
+  if (!root) return null;
+
+  const relatedSourceIds = collectRelatedNetLogSourceIds(netLog.events, root.sourceId, 3);
+  const windowStart = root.relativeMs - 10000;
+  const windowEnd = root.relativeMs + 20000;
+  const nearbyStart = Math.max(0, root.index - 25);
+  const nearbyEnd = root.index + 35;
+  const events = netLog.events.filter((event) => {
+    if (event.relativeMs < windowStart || event.relativeMs > windowEnd) return false;
+    if (relatedSourceIds.has(event.sourceId)) return true;
+    return relatedSourceIds.size === 1
+      && event.index >= nearbyStart
+      && event.index <= nearbyEnd
+      && (event.category === root.category || event.severity !== "info");
+  });
+  if (!events.some((event) => event.index === root.index)) events.push(root);
+  events.sort((left, right) => left.index - right.index);
+
+  const categoryCounts = new Map();
+  for (const event of events) {
+    categoryCounts.set(event.category, (categoryCounts.get(event.category) || 0) + 1);
+  }
+  const categories = [...categoryCounts.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .map(([category, count]) => `${formatNetLogCategory(category)} ${count}`);
+  const laterEvents = events.filter((event) => event.index >= root.index);
+  const finalEvent = [...laterEvents].reverse().find((event) => (
+    extractNetLogHttpStatus(event.params) || event.severity === "error"
+  )) || root;
+  const finalStatus = extractNetLogHttpStatus(finalEvent.params);
+
+  return {
+    root,
+    events,
+    relatedSourceIds,
+    categories,
+    endpoint: extractNetLogEndpoint(events),
+    outcome: finalStatus
+      ? {
+        label: `HTTP ${finalStatus}`,
+        tone: finalStatus >= 400 ? "failure" : finalStatus >= 300 ? "review" : "success",
+        detail: "This is the last HTTP status found in the correlated browser evidence."
+      }
+      : finalEvent.netErrorName
+        ? {
+          label: finalEvent.netErrorName,
+          tone: "failure",
+          detail: "This is the last explicit Chromium network error found in the correlated evidence."
+        }
+        : {
+          label: "No final outcome captured",
+          tone: "incomplete",
+          detail: "The correlated evidence does not contain a conclusive final HTTP status or network error."
+        }
+  };
+}
+
+function getNetLogInvestigationCandidates(category, netLog = state.netLog) {
+  if (!netLog) return [];
+  return netLog.events.filter((event) => (
+    event.category === category && event.severity !== "info"
+  ));
+}
+
+function renderNetLogWorkspace() {
+  if (!state.netLog) {
+    return [
+      `<section class="netLogWorkspace netLogEmpty">`,
+      `<div>`,
+      `<strong>Import a Chromium NetLog dump to begin.</strong>`,
+      `<p>Capture a JSON dump from <code>chrome://net-export</code>, stop logging, then choose <strong>Import File</strong>.</p>`,
+      `<p>NetLog files can contain sensitive URLs and network metadata. Analysis remains local to this extension.</p>`,
+      renderNetLogCaptureGuide(true),
+      `</div>`,
+      `</section>`
+    ].join("");
+  }
+
+  const netLog = state.netLog;
+  const events = getFilteredNetLogEvents();
+  const displayedEvents = events.slice(0, NETLOG_RENDER_LIMIT);
+  const authExchange = state.netLogCategory === "trace"
+    ? buildNetLogAuthenticationExchange(netLog, state.netLogAuthTraceIndex)
+    : null;
+  const tlsExchange = state.netLogCategory === "tls-trace"
+    ? buildNetLogTlsExchange(netLog, state.netLogTlsTraceIndex)
+    : null;
+  const investigation = state.netLogCategory === "investigation"
+    ? buildNetLogInvestigation(netLog, state.netLogInvestigationIndex)
+    : null;
+  const activeTrace = authExchange || tlsExchange || investigation;
+  const selectedSource = state.selectedNetLogSourceId
+    ? netLog.sources.find((source) => source.key === state.selectedNetLogSourceId)
+    : null;
+
+  return [
+    `<section class="netLogWorkspace">`,
+    `<header class="netLogHeader">`,
+    `<div>`,
+    `<span class="netLogEyebrow">CHROMIUM NETLOG ANALYSIS</span>`,
+    `<h2>${escapeHtml(netLog.filename || "Imported NetLog dump")}</h2>`,
+    `<p>Focused browser-network diagnostics. Unknown fields are preserved because Chromium NetLog schemas can vary by browser version.</p>`,
+    renderNetLogCaptureGuide(false),
+    `</div>`,
+    `<div class="netLogMetrics" aria-label="NetLog summary">`,
+    renderNetLogMetric("Events", netLog.stats.events),
+    renderNetLogMetric("Sources", netLog.stats.sources),
+    renderNetLogMetric("Errors", netLog.stats.errors, netLog.stats.errors ? "error" : ""),
+    renderNetLogMetric("Warnings", netLog.stats.warnings, netLog.stats.warnings ? "warning" : ""),
+    renderNetLogMetric("Auth", netLog.stats.auth),
+    renderNetLogMetric("DNS", netLog.stats.dns),
+    renderNetLogMetric("TLS", netLog.stats.tls),
+    `</div>`,
+    `</header>`,
+    `<div class="netLogFilters">`,
+    `<div class="netLogCategoryFilters" role="group" aria-label="NetLog event category">`,
+    [
+      ["relevant", "Relevant"],
+      ["issues", "Issues"],
+      ["auth", "Auth"],
+      ["dns", "DNS"],
+      ["proxy", "Proxy"],
+      ["tls", "TLS"],
+      ["socket", "Sockets"],
+      ["http", "HTTP"],
+      ["http2", "HTTP/2"],
+      ["quic", "QUIC"],
+      ["all", "All"]
+    ].filter(([value]) => value !== "all" || !activeTrace).concat(
+      authExchange
+        ? [["trace", "Auth Trace"], ["all", "All"]]
+        : tlsExchange
+          ? [["tls-trace", "TLS Trace"], ["all", "All"]]
+          : investigation
+            ? [["investigation", `${formatNetLogCategory(investigation.root.category)} Investigation`], ["all", "All"]]
+            : []
+    ).map(([value, label]) => (
+      `<button type="button" data-netlog-category="${value}" class="${state.netLogCategory === value ? "isActive" : ""}">${label}</button>`
+    )).join(""),
+    `</div>`,
+    `<label class="netLogSearch">`,
+    `<span>Search events</span>`,
+    `<input type="search" data-netlog-search value="${escapeHtml(state.netLogSearch)}" placeholder="Type, source, URL, host, or error">`,
+    `</label>`,
+    `<button type="button" data-reset-netlog-filters>Reset</button>`,
+    `</div>`,
+    `<div class="netLogBody">`,
+    `<aside class="netLogSources" aria-label="NetLog sources">`,
+    `<div class="netLogPaneHeading"><strong>Sources</strong><span>${netLog.sources.length}</span></div>`,
+    `<button type="button" class="netLogSource ${!selectedSource ? "isActive" : ""}" data-netlog-source-id="">`,
+    `<span><strong>All sources</strong><small>Across the imported dump</small></span>`,
+    `<b>${netLog.events.length}</b>`,
+    `</button>`,
+    netLog.sources.map(renderNetLogSource).join(""),
+    `</aside>`,
+    `<main class="netLogAnalysis">`,
+    authExchange ? renderNetLogAuthenticationTrace(authExchange) : "",
+    tlsExchange ? renderNetLogTlsTrace(tlsExchange) : "",
+    investigation ? renderNetLogInvestigation(investigation) : "",
+    activeTrace ? "" : renderNetLogFindings(events, selectedSource),
+    `<section class="netLogTimeline">`,
+    `<div class="netLogPaneHeading">`,
+    `<div><strong>Event timeline</strong><span>${events.length} matched${selectedSource ? ` · ${escapeHtml(selectedSource.type)} ${escapeHtml(selectedSource.id)}` : ""}</span></div>`,
+    events.length > NETLOG_RENDER_LIMIT
+      ? `<span>Showing first ${NETLOG_RENDER_LIMIT.toLocaleString()} events</span>`
+      : "",
+    `</div>`,
+    displayedEvents.length
+      ? displayedEvents.map(renderNetLogEvent).join("")
+      : `<div class="netLogNoResults"><strong>No matching events.</strong><span>Reset the filters or inspect another source.</span></div>`,
+    `</section>`,
+    `</main>`,
+    `</div>`,
+    `</section>`
+  ].join("");
+}
+
+function renderNetLogCaptureGuide(expanded = false) {
+  return [
+    `<details class="netLogCaptureGuide"${expanded ? " open" : ""}>`,
+    `<summary>How to capture a troubleshooting NetLog</summary>`,
+    `<div class="netLogGuideBody">`,
+    `<section>`,
+    `<h3>1. Prepare a clean reproduction</h3>`,
+    `<ul>`,
+    `<li>Record the expected result, actual failure, affected URL, Chrome version, operating system, proxy or VPN state, and the local start time with timezone.</li>`,
+    `<li>Close or pause unrelated tabs and downloads. NetLog records networking activity across Chrome, not only the authentication tab.</li>`,
+    `<li>Use a fresh browser window when practical and reproduce only one login attempt.</li>`,
+    `</ul>`,
+    `</section>`,
+    `<section>`,
+    `<h3>2. Start logging</h3>`,
+    `<ol>`,
+    `<li>Open <code>chrome://net-export</code> in a separate Chrome tab.</li>`,
+    `<li>Under <strong>Log Mode</strong>, start with <strong>Strip private information</strong>.</li>`,
+    `<li>Use <strong>Include cookies and credentials</strong> only when redaction removes evidence required for an approved restricted investigation.</li>`,
+    `<li>Use <strong>Include raw bytes</strong> only for exceptional packet-level troubleshooting; it also includes cookies and credentials.</li>`,
+    `<li>Keep <strong>File Format: JSON</strong>. This workspace does not import NDJSON.</li>`,
+    `<li>Choose a reasonable maximum size for a long reproduction, then click <strong>Start Logging to Disk</strong>.</li>`,
+    `</ol>`,
+    `</section>`,
+    `<section>`,
+    `<h3>3. Reproduce and stop</h3>`,
+    `<ol>`,
+    `<li>Switch to the affected tab and reproduce the problem once.</li>`,
+    `<li>Note the exact failure time, starting URL, final visible error, and any request or correlation ID shown by the application.</li>`,
+    `<li>Return immediately to <code>chrome://net-export</code> and click <strong>Stop Logging</strong>. Short captures are easier to correlate.</li>`,
+    `</ol>`,
+    `</section>`,
+    `<section>`,
+    `<h3>4. Import and analyze</h3>`,
+    `<ol>`,
+    `<li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth Flow Inspector</strong>.</li>`,
+    `<li>Choose <strong>Import File</strong> and select the saved JSON file.</li>`,
+    `<li>Start with <strong>Issues</strong>, then inspect Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>`,
+    `<li>Select a source on the left and expand its events. Correlate the first failure with the reproduction time, hostname, Net error, source dependency, and server-side logs.</li>`,
+    `</ol>`,
+    `</section>`,
+    `<aside>`,
+    `<strong>Handle as sensitive evidence</strong>`,
+    `<span>Even stripped logs list visited URLs and hostnames and can expose network configuration such as proxies. Private-data and raw-byte modes can contain reusable credentials, cookies, and tokens. Store and share the file only through approved restricted channels.</span>`,
+    `</aside>`,
+    `</div>`,
+    `</details>`
+  ].join("");
+}
+
+function renderNetLogMetric(label, value, tone = "") {
+  return `<div class="netLogMetric ${tone ? `is-${tone}` : ""}"><span>${escapeHtml(label)}</span><strong>${Number(value || 0).toLocaleString()}</strong></div>`;
+}
+
+function renderNetLogSource(source) {
+  const active = state.selectedNetLogSourceId === source.key;
+  const issueCount = source.errorCount + source.warningCount;
+  return [
+    `<button type="button" class="netLogSource ${active ? "isActive" : ""}" data-netlog-source-id="${escapeHtml(source.key)}">`,
+    `<span>`,
+    `<strong>${escapeHtml(source.type)} <em>${escapeHtml(source.id)}</em></strong>`,
+    `<small>${escapeHtml(source.categories.map(formatNetLogCategory).join(", "))}</small>`,
+    `</span>`,
+    `<b class="${source.errorCount ? "hasError" : issueCount ? "hasWarning" : ""}">${source.eventCount}</b>`,
+    `</button>`
+  ].join("");
+}
+
+function renderNetLogFindings(events, selectedSource) {
+  const findings = buildNetLogFindings(events);
+  return [
+    `<section class="netLogFindings">`,
+    `<div class="netLogPaneHeading">`,
+    `<div><strong>Diagnostic findings</strong><span>${selectedSource ? "Selected source" : "Current filtered evidence"}</span></div>`,
+    `<span>${findings.length} item${findings.length === 1 ? "" : "s"}</span>`,
+    `</div>`,
+    findings.length
+      ? findings.map((finding) => [
+        `<article class="netLogFinding is-${finding.tone}">`,
+        `<span class="netLogFindingBadge">${escapeHtml(finding.label)}</span>`,
+        `<div><strong>${escapeHtml(finding.title)}</strong><p>${escapeHtml(finding.detail)}</p><small>${escapeHtml(finding.action)}</small>${finding.traceEventIndex === undefined ? "" : `<button type="button" class="netLogTraceAction" data-netlog-auth-trace="${finding.traceEventIndex}">Trace exchange</button>`}${finding.tlsTraceEventIndex === undefined ? "" : `<button type="button" class="netLogTraceAction" data-netlog-tls-trace="${finding.tlsTraceEventIndex}">Trace TLS connection</button>`}${finding.investigateEventIndex === undefined ? "" : `<button type="button" class="netLogTraceAction" data-netlog-investigate="${finding.investigateEventIndex}">Investigate ${escapeHtml(finding.label)}</button>`}</div>`,
+        `</article>`
+      ].join("")).join("")
+      : `<div class="netLogNoResults"><strong>No explicit failures in this view.</strong><span>Review warnings and the raw event timeline before concluding the network path is healthy.</span></div>`,
+    `</section>`
+  ].join("");
+}
+
+function buildNetLogFindings(events) {
+  const errors = events.filter((event) => event.severity === "error");
+  const categories = new Map();
+  for (const event of errors) {
+    if (!categories.has(event.category)) categories.set(event.category, []);
+    categories.get(event.category).push(event);
+  }
+
+  const findings = [];
+  for (const [category, categoryEvents] of categories) {
+    const representative = categoryEvents[0];
+    findings.push({
+      tone: "error",
+      label: formatNetLogCategory(category),
+      title: `${categoryEvents.length} ${formatNetLogCategory(category)} error${categoryEvents.length === 1 ? "" : "s"} detected`,
+      detail: `${representative.type}${representative.netErrorName ? ` reported ${representative.netErrorName}` : " was marked as a failure"}.`,
+      action: netLogNextAction(category),
+      ...(category === "tls"
+        ? { tlsTraceEventIndex: representative.index }
+        : { investigateEventIndex: representative.index })
+    });
+  }
+
+  const tlsEvents = events.filter((event) => event.category === "tls");
+  if (tlsEvents.length && !categories.has("tls")) {
+    const candidate = getNetLogTlsTraceCandidates({ events: tlsEvents })[0] || tlsEvents[0];
+    findings.push({
+      tone: "info",
+      label: "TLS",
+      title: "TLS connection evidence captured",
+      detail: "No explicit TLS error was found in the current view.",
+      action: "Trace the connection to review endpoint setup, handshake, certificate evidence, protocol negotiation, reuse, and final outcome.",
+      tlsTraceEventIndex: candidate.index
+    });
+  }
+
+  const authChallenges = events.filter((event) => (
+    event.category === "auth" && event.severity === "warn"
+  ));
+  if (authChallenges.length) {
+    findings.push({
+      tone: "warning",
+      label: "AUTH",
+      title: `${authChallenges.length} authentication challenge or retry event${authChallenges.length === 1 ? "" : "s"}`,
+      detail: "A challenge is protocol evidence, not automatically a failed login.",
+      action: "Trace the linked URL request, authentication controller, and HTTP connection through the client authorization response and final result.",
+      traceEventIndex: authChallenges[0].index
+    });
+  }
+  return findings.slice(0, 8);
+}
+
+function renderNetLogInvestigation(investigation) {
+  const root = investigation.root;
+  const candidates = getNetLogInvestigationCandidates(root.category);
+  const currentPosition = candidates.findIndex((event) => event.index === root.index);
+  const previous = currentPosition > 0 ? candidates[currentPosition - 1] : null;
+  const next = currentPosition >= 0 && currentPosition < candidates.length - 1 ? candidates[currentPosition + 1] : null;
+  const category = formatNetLogCategory(root.category);
+  const sourceLabel = `${root.sourceType} ${root.sourceId}`;
+  const linkedSourceLabel = investigation.relatedSourceIds.size === 1
+    ? "1 Chromium source"
+    : `${investigation.relatedSourceIds.size} linked Chromium sources`;
+  const relatedEvidence = investigation.categories.length
+    ? investigation.categories.join(" · ")
+    : "No additional categories captured";
+
+  return [
+    `<section class="netLogAuthTrace netLogInvestigation">`,
+    `<header>`,
+    `<div><span>${escapeHtml(category.toUpperCase())} INVESTIGATION</span><h3>${escapeHtml(root.netErrorName || root.type)}</h3><p>${escapeHtml(investigation.endpoint)} · ${escapeHtml(sourceLabel)}</p></div>`,
+    `<div class="netLogTraceNavigation">`,
+    `<button type="button" data-netlog-investigate="${previous?.index ?? ""}" ${previous ? "" : "disabled"} title="Previous ${escapeHtml(category)} issue">Previous</button>`,
+    `<span>${currentPosition + 1} of ${candidates.length}</span>`,
+    `<button type="button" data-netlog-investigate="${next?.index ?? ""}" ${next ? "" : "disabled"} title="Next ${escapeHtml(category)} issue">Next</button>`,
+    `<button type="button" data-close-netlog-investigation>Exit investigation</button>`,
+    `</div>`,
+    `</header>`,
+    `<div class="netLogTraceStages">`,
+    renderNetLogTraceStage("1", "Triggering event", root.type, "failure", root.netErrorName ? `Chromium reported ${root.netErrorName}.` : "Chromium marked this event as a failure or warning."),
+    renderNetLogTraceStage("2", "Source correlation", linkedSourceLabel, investigation.relatedSourceIds.size > 1 ? "neutral" : "review", `The focused timeline contains ${investigation.events.length} event${investigation.events.length === 1 ? "" : "s"} within the correlation window.`),
+    renderNetLogTraceStage("3", "Related evidence", relatedEvidence, investigation.categories.length > 1 ? "neutral" : "review", "Use the expanded timeline to follow source dependencies and event phases in timestamp order."),
+    renderNetLogTraceStage("4", "Final visible outcome", investigation.outcome.label, investigation.outcome.tone, investigation.outcome.detail),
+    `</div>`,
+    `<div class="netLogInvestigationAction"><strong>Recommended investigation path</strong><p>${escapeHtml(netLogNextAction(root.category))}</p></div>`,
+    `<p class="netLogTraceNote">This view narrows the dump to linked Chromium sources and nearby issue evidence. A cancellation or retry can be secondary behavior, so confirm the initiating source and final outcome before assigning root cause.</p>`,
+    `</section>`
+  ].join("");
+}
+
+function renderNetLogAuthenticationTrace(exchange) {
+  const challenges = getNetLogAuthenticationChallenges();
+  const currentPosition = challenges.findIndex((event) => event.index === exchange.root.index);
+  const previous = currentPosition > 0 ? challenges[currentPosition - 1] : null;
+  const next = currentPosition >= 0 && currentPosition < challenges.length - 1 ? challenges[currentPosition + 1] : null;
+  const challengeScheme = getNetLogChallengeScheme(exchange.root);
+  const response = exchange.tokenProtocol;
+  const retry = exchange.retryEvents.length
+    ? {
+      label: `${exchange.retryEvents.length} retry challenge${exchange.retryEvents.length === 1 ? "" : "s"}`,
+      tone: "review",
+      detail: "The server or proxy issued another authentication challenge after the initial exchange."
+    }
+    : {
+      label: "No retry observed",
+      tone: "neutral",
+      detail: "No additional challenge was found in the correlated capture window."
+    };
+  const outcome = describeNetLogAuthenticationOutcome(exchange.finalEvent);
+
+  return [
+    `<section class="netLogAuthTrace">`,
+    `<header>`,
+    `<div><span>AUTHENTICATION EXCHANGE TRACE</span><h3>${escapeHtml(challengeScheme)} challenge at ${formatNetLogRelativeTime(exchange.root.relativeMs)}</h3><p>${escapeHtml(exchange.correlation)}</p></div>`,
+    `<div class="netLogTraceNavigation">`,
+    `<button type="button" data-netlog-auth-trace="${previous?.index ?? ""}" ${previous ? "" : "disabled"} title="Previous authentication challenge">Previous</button>`,
+    `<span>${currentPosition + 1} of ${challenges.length}</span>`,
+    `<button type="button" data-netlog-auth-trace="${next?.index ?? ""}" ${next ? "" : "disabled"} title="Next authentication challenge">Next</button>`,
+    `<button type="button" data-close-netlog-auth-trace>Exit trace</button>`,
+    `</div>`,
+    `</header>`,
+    `<div class="netLogTraceStages">`,
+    renderNetLogTraceStage("1", "Server challenge", challengeScheme, "neutral", "The server or proxy requested browser authentication. The initiating event is expanded below."),
+    renderNetLogTraceStage("2", "Browser response", response.label, response.tone, response.detail),
+    renderNetLogTraceStage("3", "Retry / continuation", retry.label, retry.tone, retry.detail),
+    renderNetLogTraceStage("4", "Final outcome", outcome.label, outcome.tone, outcome.detail),
+    `</div>`,
+    `<p class="netLogTraceNote">The trace follows explicit Chromium source dependencies where present and nearby authentication/HTTP evidence otherwise. Confirm the result against the expanded raw events and server-side logs.</p>`,
+    `</section>`
+  ].join("");
+}
+
+function renderNetLogTlsTrace(exchange) {
+  const candidates = getNetLogTlsTraceCandidates();
+  const currentPosition = candidates.findIndex((event) => event.index === exchange.root.index);
+  const previous = currentPosition > 0 ? candidates[currentPosition - 1] : null;
+  const next = currentPosition >= 0 && currentPosition < candidates.length - 1 ? candidates[currentPosition + 1] : null;
+  const certificate = exchange.certificateError
+    ? {
+      label: exchange.certificateError.netErrorName || "Certificate rejected",
+      tone: "failure",
+      detail: "Chromium reported an explicit certificate-validation failure."
+    }
+    : exchange.certificateEvents.length
+      ? {
+        label: "No explicit certificate error",
+        tone: "success",
+        detail: `${exchange.certificateEvents.length} certificate-related event${exchange.certificateEvents.length === 1 ? " was" : "s were"} captured. This does not independently prove trust validation.`
+      }
+      : {
+        label: "Not captured",
+        tone: "incomplete",
+        detail: "No certificate-specific event was identified in the correlated evidence."
+      };
+  const handshakeError = exchange.events.find((event) => (
+    event.category === "tls"
+    && event.severity === "error"
+    && !event.netErrorName.startsWith("ERR_CERT_")
+  ));
+  const handshake = handshakeError
+    ? {
+      label: handshakeError.netErrorName || "Handshake failed",
+      tone: "failure",
+      detail: "Chromium reported a TLS handshake or transport error."
+    }
+    : {
+      label: exchange.handshakeEvent?.type || "Not captured",
+      tone: exchange.handshakeEvent ? "review" : "incomplete",
+      detail: exchange.handshakeEvent
+        ? "A TLS handshake event is present; use the final outcome to determine whether the connection completed."
+        : "No explicit TLS handshake event was identified."
+    };
+  const protocolDetail = exchange.fallback
+    ? `${exchange.protocol.detail} ${exchange.fallback.detail}`
+    : exchange.protocol.detail;
+
+  return [
+    `<section class="netLogAuthTrace netLogTlsTrace">`,
+    `<header>`,
+    `<div><span>TLS CONNECTION TRACE</span><h3>${escapeHtml(exchange.endpoint)}</h3><p>${escapeHtml(exchange.correlation)}</p></div>`,
+    `<div class="netLogTraceNavigation">`,
+    `<button type="button" data-netlog-tls-trace="${previous?.index ?? ""}" ${previous ? "" : "disabled"} title="Previous TLS connection">Previous</button>`,
+    `<span>${currentPosition + 1} of ${candidates.length}</span>`,
+    `<button type="button" data-netlog-tls-trace="${next?.index ?? ""}" ${next ? "" : "disabled"} title="Next TLS connection">Next</button>`,
+    `<button type="button" data-close-netlog-tls-trace>Exit trace</button>`,
+    `</div>`,
+    `</header>`,
+    `<div class="netLogTraceStages">`,
+    renderNetLogTraceStage("1", "Endpoint / connection", exchange.endpoint, exchange.connectionEvent ? "neutral" : "incomplete", exchange.connectionEvent ? `Connection evidence: ${exchange.connectionEvent.type}.` : "No explicit connect-job event was identified."),
+    renderNetLogTraceStage("2", "TLS handshake", handshake.label, handshake.tone, handshake.detail),
+    renderNetLogTraceStage("3", "Certificate validation", certificate.label, certificate.tone, certificate.detail),
+    renderNetLogTraceStage("4", "Protocol negotiation", exchange.fallback?.label || exchange.protocol.label, exchange.fallback?.tone || exchange.protocol.tone, protocolDetail),
+    renderNetLogTraceStage("5", "Connection reuse", exchange.reuse.label, exchange.reuse.tone, exchange.reuse.detail),
+    renderNetLogTraceStage("6", "Final outcome", exchange.outcome.label, exchange.outcome.tone, exchange.outcome.detail),
+    `</div>`,
+    `<p class="netLogTraceNote">The trace reports only browser-visible NetLog evidence. Certificate trust, negotiated protocol, and reuse are marked as not captured when Chromium does not expose a conclusive field.</p>`,
+    `</section>`
+  ].join("");
+}
+
+function renderNetLogTraceStage(number, title, label, tone, detail) {
+  return [
+    `<article class="netLogTraceStage is-${tone}">`,
+    `<span>${number}</span>`,
+    `<div><small>${escapeHtml(title)}</small><strong>${escapeHtml(label)}</strong><p>${escapeHtml(detail)}</p></div>`,
+    `</article>`
+  ].join("");
+}
+
+function getNetLogChallengeScheme(event) {
+  const params = event?.params || {};
+  const candidate = params.auth_scheme || params.authScheme || params.scheme || params.challenge || "";
+  const match = String(candidate).match(/(?:Negotiate|Kerberos|NTLM|Basic|Digest|Bearer)/iu);
+  return {
+    negotiate: "Negotiate",
+    kerberos: "Kerberos",
+    ntlm: "NTLM",
+    basic: "Basic",
+    digest: "Digest",
+    bearer: "Bearer"
+  }[match?.[0]?.toLowerCase()] || "Authentication";
+}
+
+function describeNetLogAuthenticationOutcome(finalEvent) {
+  if (!finalEvent) {
+    return {
+      label: "Incomplete capture",
+      tone: "incomplete",
+      detail: "No final HTTP status or explicit network failure was identified after the challenge."
+    };
+  }
+  if (finalEvent.status >= 200 && finalEvent.status < 400) {
+    return {
+      label: `HTTP ${finalEvent.status}`,
+      tone: "success",
+      detail: finalEvent.status >= 300
+        ? "The correlated exchange continued with a redirect."
+        : "The correlated exchange reached a successful HTTP response."
+    };
+  }
+  if ([401, 407].includes(finalEvent.status)) {
+    return {
+      label: `HTTP ${finalEvent.status}`,
+      tone: "failure",
+      detail: "Authentication remained challenged at the final visible response."
+    };
+  }
+  if (finalEvent.status) {
+    return {
+      label: `HTTP ${finalEvent.status}`,
+      tone: finalEvent.status >= 400 ? "failure" : "review",
+      detail: "Review the final response and related authentication events."
+    };
+  }
+  return {
+    label: finalEvent.event.netErrorName || "Network failure",
+    tone: "failure",
+    detail: "The exchange ended with an explicit Chromium network error."
+  };
+}
+
+function netLogNextAction(category) {
+  return {
+    auth: "Inspect the challenge, client Authorization event, credentials source, and the final response on the same source.",
+    dns: "Verify the hostname, resolver result, DNS policy, VPN, and split-horizon resolution.",
+    proxy: "Inspect proxy selection, PAC evaluation, bypass rules, and proxy authentication events.",
+    tls: "Inspect certificate verification, trust chain, hostname, protocol version, and enterprise TLS interception.",
+    socket: "Trace the connect job and socket source for address selection, timeout, reset, or refusal.",
+    http: "Inspect redirects, response headers, stream lifecycle, and the associated URL_REQUEST source.",
+    http2: "Inspect HTTP/2 session and stream errors, then correlate the parent socket and URL request.",
+    quic: "Inspect QUIC session errors and whether Chromium falls back to TCP/TLS.",
+    other: "Expand the event parameters and follow its source dependencies to the originating URL request."
+  }[category] || "Expand the event parameters and follow its source dependencies.";
+}
+
+function renderNetLogEvent(event) {
+  const errorText = event.netErrorName
+    ? `<span class="netLogErrorName">${escapeHtml(event.netErrorName)}</span>`
+    : "";
+  const isTraceRoot = (
+    state.netLogCategory === "trace" && event.index === state.netLogAuthTraceIndex
+  ) || (
+    state.netLogCategory === "tls-trace" && event.index === state.netLogTlsTraceIndex
+  ) || (
+    state.netLogCategory === "investigation" && event.index === state.netLogInvestigationIndex
+  );
+  return [
+    `<details class="netLogEvent is-${event.severity}${isTraceRoot ? " isTraceRoot" : ""}"${isTraceRoot ? " open" : ""}>`,
+    `<summary>`,
+    `<time title="Raw NetLog time: ${escapeHtml(event.rawTime)}">${formatNetLogRelativeTime(event.relativeMs)}</time>`,
+    `<span class="netLogCategory">${escapeHtml(formatNetLogCategory(event.category))}</span>`,
+    `<strong>${escapeHtml(event.type)}</strong>`,
+    `<span class="netLogEventSummary">${escapeHtml(event.summary)}</span>`,
+    `${errorText}`,
+    `<span class="netLogSourceRef">${escapeHtml(event.sourceType)} ${escapeHtml(event.sourceId)}</span>`,
+    `</summary>`,
+    `<div class="netLogEventDetail">`,
+    `<dl>`,
+    `<div><dt>Phase</dt><dd>${escapeHtml(event.phase)}</dd></div>`,
+    `<div><dt>Source</dt><dd>${escapeHtml(event.sourceType)} ${escapeHtml(event.sourceId)}</dd></div>`,
+    `<div><dt>Raw time</dt><dd>${escapeHtml(event.rawTime)}</dd></div>`,
+    `${event.netErrorCode === null ? "" : `<div><dt>Net error</dt><dd>${escapeHtml(event.netErrorName)} (${event.netErrorCode})</dd></div>`}`,
+    `</dl>`,
+    `<pre class="netLogParams"><code>${highlightJson(event.params)}</code></pre>`,
+    `</div>`,
+    `</details>`
+  ].join("");
+}
+
+function formatNetLogRelativeTime(value) {
+  const milliseconds = Math.max(0, Number(value) || 0);
+  if (milliseconds < 1000) return `+${milliseconds.toFixed(0)} ms`;
+  return `+${(milliseconds / 1000).toFixed(3)} s`;
+}
+
+function formatNetLogCategory(category) {
+  return {
+    auth: "Auth",
+    dns: "DNS",
+    proxy: "Proxy",
+    tls: "TLS",
+    socket: "Socket",
+    http: "HTTP",
+    http2: "HTTP/2",
+    quic: "QUIC",
+    other: "Other"
+  }[category] || category;
+}
+
 async function renderDetails(version = renderVersion) {
+  if (state.workspaceMode === "netlog") {
+    commitDetailHtml(version, renderNetLogWorkspace());
+    return;
+  }
+
   if (state.workspaceMode !== "flow" && state.activeTab === "about") {
     commitDetailHtml(version, renderAbout());
     return;
@@ -2337,17 +3694,30 @@ function isEcidFieldName(name) {
   return normalized === "ecid" || ECID_HEADER_NAMES.includes(normalized);
 }
 
+function isAuthenticationChallengeFieldName(name) {
+  const normalized = String(name || "").trim().toLowerCase();
+  return normalized === "www-authenticate" || normalized === "proxy-authenticate";
+}
+
 function formatCorrelationFieldName(name) {
   const escaped = escapeHtml(name);
-  return isEcidFieldName(name)
-    ? `<span class="artifactToken tokenEcid" title="Oracle Execution Context identifier">${escaped}</span>`
-    : escaped;
+  if (isEcidFieldName(name)) {
+    return `<span class="artifactToken tokenEcid" title="Oracle Execution Context identifier">${escaped}</span>`;
+  }
+  if (isAuthenticationChallengeFieldName(name)) {
+    return `<span class="authChallengeHeader" title="HTTP authentication challenge returned by the server">${escaped}</span>`;
+  }
+  return escaped;
 }
 
 function formatCorrelationFieldValue(name, value) {
-  return isEcidFieldName(name)
-    ? `<code class="ecidValue" title="Use this ECID for server-log correlation">${escapeHtml(value)}</code>`
-    : highlightArtifacts(value);
+  if (isEcidFieldName(name)) {
+    return `<code class="ecidValue" title="Use this ECID for server-log correlation">${escapeHtml(value)}</code>`;
+  }
+  if (isAuthenticationChallengeFieldName(name)) {
+    return `<span class="authChallengeValue" title="Authentication scheme and challenge parameters">${highlightArtifacts(value)}</span>`;
+  }
+  return highlightArtifacts(value);
 }
 
 function renderAbout() {
@@ -2358,6 +3728,12 @@ function renderAbout() {
     renderInfoCard("Enterprise Authentication Flow Inspector", [
       ["Created by", "Sudhir Kulkarni"],
       ["Contact", "ksudhir@gmail.com"]
+    ], true),
+    renderInfoCard("Chromium NetLog Analysis", [
+      ["Purpose", "Focused authentication and connection diagnostics from chrome://net-export JSON dumps"],
+      ["Coverage", "Authentication, DNS, proxy, TLS, sockets, HTTP/2, and QUIC events"],
+      ["Processing", "Imported and analyzed locally; unknown Chromium fields remain available as raw evidence"],
+      ["Compatibility", "Best effort because Chromium NetLog schemas are not guaranteed to be backwards compatible"]
     ], true),
     renderAboutLinks(),
     renderColorLegend(),
@@ -2401,6 +3777,7 @@ function renderColorLegend() {
     ["legendPass", "Pass or active", "Successful validation, active validity window, or observed expected evidence"],
     ["legendWarn", "Review or warning", "Expiring soon, near-future clock skew, incomplete evidence, or a condition needing investigation"],
     ["legendFail", "Failure or invalid", "Expired or not-yet-valid artifact, failed validation, HTTP failure, or NTLM fallback"],
+    ["legendAuthChallenge", "Authentication challenge", "WWW-Authenticate or Proxy-Authenticate challenge returned by a server"],
     ["legendEcid", "ECID correlation", "Oracle execution-context identifier for server-log correlation"]
   ];
   return [
@@ -2430,8 +3807,8 @@ function renderLabelAndTagLegend() {
       [`<mark class="badge badgeBearer">Bearer</mark>`, "API request carrying an OAuth Bearer access token"],
       [`<mark class="badge badgeFed">FED</mark>`, "Federation endpoint such as /fed/sp, /fed/idp, or /oamfed/"],
       [`<mark class="badge badgeWna">WNA</mark>`, "OAM Windows Native Authentication credential collector"],
-      [`<mark class="badge badgeKerberos">Kerberos</mark>`, "Negotiate or Kerberos authentication header evidence"],
-      [`<mark class="badge badgeNtlm">NTLM</mark>`, "NTLM authentication header evidence or fallback"],
+      [`<mark class="badge badgeKerberos">Kerberos</mark>`, "Client token contains the Kerberos mechanism OID or AP-REQ evidence, or uses the explicit Kerberos scheme"],
+      [`<mark class="badge badgeNtlm">NTLM</mark>`, "Client token contains the NTLMSSP signature or uses the explicit NTLM scheme"],
       [`<mark class="badge badgeX509">X509</mark>`, "X.509 collector endpoint or forwarded client-certificate evidence"],
       [`<mark class="badge badgeOkta">OKTA</mark>`, "Confidence-based Okta provider evidence"],
       [`<mark class="badge badgeEntra">ENTRA</mark>`, "Confidence-based Microsoft Entra ID provider evidence"]
@@ -2558,18 +3935,25 @@ function renderHttpAuthenticationSection(items) {
 function renderHttpAuthenticationEvidence(item) {
   const isRequest = item.source === "request";
   const tokenPresent = Boolean(item.token);
-  const protocolClass = item.protocol === "NTLM" ? "badgeNtlm" : "badgeKerberos";
+  const protocolClass = item.protocol === "NTLM"
+    ? "badgeNtlm"
+    : item.protocol === "Kerberos"
+      ? "badgeKerberos"
+      : "badgeWna";
+  const protocolLabel = tokenPresent ? item.detection : item.protocol;
   return [
     `<article class="httpAuthEvidence">`,
     `<header class="httpAuthEvidenceHeader">`,
     `<span><strong>${isRequest ? "Browser to server" : "Server to browser"}</strong><small>${isRequest ? "Authorization request header" : "Authentication challenge response"}</small></span>`,
-    `<mark class="badge ${protocolClass}">${escapeHtml(item.protocol)}</mark>`,
+    `<mark class="badge ${protocolClass}">${escapeHtml(protocolLabel)}</mark>`,
     `</header>`,
     `<dl class="httpAuthFacts">`,
     renderHttpAuthFact("Header", item.header),
     renderHttpAuthFact("Scheme", item.scheme),
     renderHttpAuthFact("Token Present", tokenPresent ? "Yes" : "No", tokenPresent ? "isPresent" : "isAbsent"),
     renderHttpAuthFact("Token Length", tokenPresent ? `${item.token.length.toLocaleString()} characters` : "Not applicable"),
+    renderHttpAuthFact("Token Type", item.detection),
+    renderHttpAuthFact("Detection Evidence", item.evidence),
     `</dl>`,
     `<div class="httpAuthTokenPreview">`,
     `<span>Token Preview</span>`,
@@ -2582,10 +3966,13 @@ function renderHttpAuthenticationEvidence(item) {
 }
 
 function renderHttpAuthFact(label, value, className = "") {
+  const renderedValue = label === "Header"
+    ? formatCorrelationFieldName(value)
+    : escapeHtml(value);
   return [
     `<div class="httpAuthFact${className ? ` ${className}` : ""}">`,
     `<dt>${escapeHtml(label)}</dt>`,
-    `<dd>${escapeHtml(value)}</dd>`,
+    `<dd>${renderedValue}</dd>`,
     `</div>`
   ].join("");
 }
@@ -2605,21 +3992,125 @@ function collectHttpAuthFromHeaders(headers, source, items) {
 
     const match = value.match(/\b(Negotiate|Kerberos|NTLM)\b(?:\s+([A-Za-z0-9+/=._-]+))?/iu);
     if (!match) continue;
+    const token = match[2] || "";
+    const classification = classifyHttpAuthToken(match[1], token, source);
 
     items.push({
       source,
       header: name,
       scheme: match[1],
-      protocol: getLikelyHttpAuthProtocol(match[1]),
-      token: match[2] || ""
+      token,
+      ...classification
     });
   }
 }
 
-function getLikelyHttpAuthProtocol(scheme) {
-  if (/^ntlm$/iu.test(scheme)) return "NTLM";
-  if (/^kerberos$/iu.test(scheme)) return "Kerberos";
-  return "SPNEGO / Negotiate";
+const NTLMSSP_SIGNATURE = new Uint8Array([0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00]);
+const KERBEROS_MECHANISM_OID_DER = new Uint8Array([0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x12, 0x01, 0x02, 0x02]);
+
+function classifyHttpAuthToken(scheme, token, source = "request") {
+  const normalizedScheme = String(scheme || "").toLowerCase();
+  const isClientToken = source === "request" && Boolean(token);
+
+  if (!isClientToken) {
+    return {
+      protocol: /^ntlm$/u.test(normalizedScheme) ? "NTLM" : /^kerberos$/u.test(normalizedScheme) ? "Kerberos" : "SPNEGO / Negotiate",
+      detection: "Challenge only",
+      evidence: "The server advertised an authentication scheme; no client token was present."
+    };
+  }
+
+  if (/^ntlm$/u.test(normalizedScheme)) {
+    return {
+      protocol: "NTLM",
+      detection: "Confirmed NTLM",
+      evidence: "The client used the explicit NTLM authentication scheme."
+    };
+  }
+
+  if (/^kerberos$/u.test(normalizedScheme)) {
+    return {
+      protocol: "Kerberos",
+      detection: "Confirmed Kerberos",
+      evidence: "The client used the explicit Kerberos authentication scheme."
+    };
+  }
+
+  const bytes = decodeHttpAuthToken(token);
+  if (!bytes) {
+    return {
+      protocol: "SPNEGO / Negotiate",
+      detection: "Undetermined SPNEGO",
+      evidence: "The Negotiate token was not valid Base64 in a supported form and could not be inspected."
+    };
+  }
+
+  if (containsByteSequence(bytes, NTLMSSP_SIGNATURE)) {
+    return {
+      protocol: "NTLM",
+      detection: "Confirmed NTLM",
+      evidence: "The decoded Negotiate token contains the NTLMSSP signature."
+    };
+  }
+
+  if (containsByteSequence(bytes, KERBEROS_MECHANISM_OID_DER)) {
+    return {
+      protocol: "Kerberos",
+      detection: "Confirmed Kerberos",
+      evidence: "The decoded Negotiate token contains Kerberos OID 1.2.840.113554.1.2.2."
+    };
+  }
+
+  if (looksLikeKerberosApReq(bytes)) {
+    return {
+      protocol: "Kerberos",
+      detection: "Confirmed Kerberos",
+      evidence: "The decoded token contains a Kerberos AP-REQ structure."
+    };
+  }
+
+  return {
+    protocol: "SPNEGO / Negotiate",
+    detection: "Undetermined SPNEGO",
+    evidence: "No NTLMSSP signature, Kerberos mechanism OID, or AP-REQ structure was found."
+  };
+}
+
+function decodeHttpAuthToken(token) {
+  const compact = String(token || "").replace(/\s+/gu, "");
+  if (!compact || !/^[A-Za-z0-9+/_=-]+$/u.test(compact)) return null;
+  const normalized = compact.replace(/-/gu, "+").replace(/_/gu, "/").replace(/=+$/u, "");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  try {
+    const binary = atob(padded);
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  } catch {
+    return null;
+  }
+}
+
+function containsByteSequence(bytes, sequence) {
+  if (!bytes?.length || !sequence?.length || sequence.length > bytes.length) return false;
+  for (let offset = 0; offset <= bytes.length - sequence.length; offset += 1) {
+    let matched = true;
+    for (let index = 0; index < sequence.length; index += 1) {
+      if (bytes[offset + index] !== sequence[index]) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
+}
+
+function looksLikeKerberosApReq(bytes) {
+  if (!bytes?.length) return false;
+  if (bytes[0] === 0x6e) return true;
+  for (let index = 0; index < bytes.length - 2; index += 1) {
+    if (bytes[index] === 0x01 && bytes[index + 1] === 0x00 && bytes[index + 2] === 0x6e) return true;
+  }
+  return false;
 }
 
 function extractX509Info(entry) {
@@ -3663,7 +5154,9 @@ function renderWnaFlowAssessment(analysis, confidence) {
       ["Challenge Endpoint", analysis.challenge?.entry.url],
       ["Offered Schemes", analysis.offeredSchemes.join(", ")],
       ["Submitted Scheme", analysis.submittedScheme],
-      ["Likely Protocol", analysis.submittedProtocol],
+      ["Detected Protocol", analysis.submittedProtocol],
+      ["Token Classification", analysis.submittedDetection],
+      ["Classification Evidence", analysis.submittedEvidence],
       ["Token Present", analysis.submittedToken ? "Yes" : "No"],
       ["Repeated 401 Responses", analysis.unauthorizedCount],
       ["Final HTTP Status", analysis.finalEntry ? `${analysis.finalEntry.status} ${analysis.finalEntry.statusText || ""}` : ""]
@@ -3695,7 +5188,9 @@ function renderWnaFlowDetails(analysis) {
     renderOidcCard("Browser Response", [
       ["Endpoint", analysis.browserResponse?.entry.url],
       ["Submitted Scheme", analysis.submittedScheme],
-      ["Likely Protocol", analysis.submittedProtocol],
+      ["Detected Protocol", analysis.submittedProtocol],
+      ["Token Classification", analysis.submittedDetection],
+      ["Classification Evidence", analysis.submittedEvidence],
       ["Token Present", analysis.submittedToken ? "Yes" : "No"],
       ["Token Length", analysis.submittedToken ? analysis.submittedToken.length : ""],
       ["Token Preview", analysis.submittedToken ? { html: `<span class="mutedValue">${escapeHtml(previewToken(analysis.submittedToken))}</span>` } : ""]
@@ -3709,7 +5204,7 @@ function renderWnaFlowDetails(analysis) {
     ], true, "wnaFlowCard wnaOutcomeCard"),
     renderOidcCard("Captured Authentication Artifacts", analysis.authArtifacts.map((item) => [
       `${item.header} (${item.source})`,
-      `${item.scheme} · ${item.protocol}${item.token ? ` · ${item.token.length} characters` : ""}`
+      `${item.scheme} · ${item.detection} · ${item.protocol}${item.token ? ` · ${item.token.length} characters` : ""}`
     ]), true, "wnaFlowCard"),
     `</div>`,
     `<p class="flowTroubleshootingNote"><strong>Browser-visible evidence only:</strong> Use klist, SPN and DNS checks, Windows events, ETW/network traces, browser enterprise policy, and OAM/WebGate logs to validate ticket acquisition and server-side causes.</p>`,
@@ -3953,18 +5448,24 @@ function analyzeWnaFlow(entries, selectedEntry) {
   const unauthorizedCount = timeline.filter((item) => Number(item.entry.status) === 401).length;
   const checks = buildWnaChecks({ timeline, challenge, browserResponse, offered, submitted, cookies, finalEntry, unauthorizedCount });
   const overallStatus = flowStatusFromChecks(checks);
-  const fallback = offered.some((scheme) => /negotiate|kerberos/iu.test(scheme)) && /^ntlm$/iu.test(submitted?.scheme || "");
+  const fallback = offered.some((scheme) => /negotiate|kerberos/iu.test(scheme)) && submitted?.protocol === "NTLM";
   return {
     timeline,
     checks,
     overallStatus,
     overallLabel: flowStatusLabel(overallStatus),
-    summary: fallback ? "Negotiate was offered, but the browser submitted NTLM" : submitted ? `Browser submitted ${submitted.scheme}` : "WNA challenge captured; browser response requires review",
+    summary: fallback
+      ? `Negotiate was offered, but the client token was identified as NTLM (${submitted.evidence})`
+      : submitted
+        ? `Browser submitted ${submitted.scheme}; token classification: ${submitted.detection}`
+        : "WNA challenge captured; browser response requires review",
     challenge,
     browserResponse,
     offeredSchemes: [...new Set(offered)],
     submittedScheme: submitted?.scheme || "Not captured",
     submittedProtocol: submitted?.protocol || "Unknown",
+    submittedDetection: submitted?.detection || "Not available",
+    submittedEvidence: submitted?.evidence || "No browser-visible client authentication token was captured.",
     submittedToken: submitted?.token || "",
     authArtifacts,
     cookies,
@@ -3976,13 +5477,25 @@ function analyzeWnaFlow(entries, selectedEntry) {
 function buildWnaChecks({ timeline, challenge, browserResponse, offered, submitted, cookies, finalEntry, unauthorizedCount }) {
   const hasWnaEndpoint = timeline.some((item) => getEntrySearchText(item.entry).includes("/oam/credcollectservlet/wna"));
   const negotiateOffered = offered.some((scheme) => /negotiate|kerberos/iu.test(scheme));
-  const ntlmFallback = negotiateOffered && /^ntlm$/iu.test(submitted?.scheme || "");
+  const ntlmFallback = negotiateOffered && submitted?.protocol === "NTLM";
+  const confirmedKerberos = submitted?.protocol === "Kerberos";
+  const undeterminedSpnego = Boolean(submitted?.token) && submitted?.protocol === "SPNEGO / Negotiate";
   const finalStatus = Number(finalEntry?.status || 0);
   return [
     oidcCheck(hasWnaEndpoint ? "pass" : "warn", "WNA endpoint", hasWnaEndpoint ? "/oam/CredCollectServlet/WNA was captured." : "Authentication headers were found, but the standard OAM WNA endpoint was not captured."),
     oidcCheck(challenge ? (negotiateOffered ? "pass" : "warn") : "fail", "Negotiate challenge", challenge ? (negotiateOffered ? "The server advertised Negotiate or Kerberos." : `The server offered ${offered.join(", ") || "an unknown scheme"}, not Negotiate.`) : "No browser-visible authentication challenge was found."),
     oidcCheck(browserResponse && submitted?.token ? "pass" : "warn", "Browser response", browserResponse && submitted?.token ? `The browser submitted ${submitted.scheme} with a token.` : "No browser-visible Authorization token was captured; Chrome or the HAR may have redacted it."),
-    oidcCheck(ntlmFallback ? "fail" : submitted ? "pass" : "warn", "Protocol selection", ntlmFallback ? "NTLM was submitted after Negotiate was offered. Kerberos/WNA likely fell back to NTLM." : submitted ? `${submitted.scheme} was submitted.` : "The submitted protocol could not be determined."),
+    oidcCheck(
+      ntlmFallback ? "fail" : confirmedKerberos ? "pass" : "warn",
+      "Protocol selection",
+      ntlmFallback
+        ? `The client Negotiate token was identified as NTLM. ${submitted.evidence}`
+        : confirmedKerberos
+          ? `The client token was identified as Kerberos. ${submitted.evidence}`
+          : undeterminedSpnego
+            ? `A Negotiate token was submitted, but its embedded mechanism could not be identified. ${submitted.evidence}`
+            : "The submitted protocol could not be determined."
+    ),
     oidcCheck(unauthorizedCount > 2 ? "fail" : unauthorizedCount > 1 ? "warn" : "pass", "Challenge loop", unauthorizedCount > 2 ? `${unauthorizedCount} HTTP 401 responses suggest an authentication loop.` : `${unauthorizedCount} HTTP 401 challenge response(s) were captured.`),
     oidcCheck(finalStatus >= 400 ? "fail" : finalStatus ? "pass" : "warn", "Final authorization", finalStatus ? `The final captured request returned HTTP ${finalStatus}.` : "No final status was available."),
     oidcCheck(cookies.oamId || cookies.oamAuthnCookie || cookies.obSsoCookie ? "pass" : "warn", "SSO session", cookies.oamId || cookies.oamAuthnCookie || cookies.obSsoCookie ? "An OAM/WebGate session cookie was observed." : "No OAM/WebGate session cookie was observed in the correlated browser flow.")
@@ -4516,7 +6029,7 @@ function buildRecommendedNextActions(protocol, analysis) {
   if (protocol === "wna") {
     const ntlmFallback = analysis.submittedProtocol === "NTLM" && analysis.offeredSchemes.some((scheme) => /negotiate|kerberos/iu.test(scheme));
     if (ntlmFallback) {
-      add("high", "Restore Kerberos instead of NTLM fallback", "Run klist on the client, validate forward and reverse DNS, confirm the HTTP SPN is registered once on the correct service account, and check browser authentication allowlists and delegation policy.", `The server offered ${analysis.offeredSchemes.join(", ")}; the browser submitted NTLM.`);
+      add("high", "Restore Kerberos instead of NTLM fallback", "Run klist on the client, validate forward and reverse DNS, confirm the HTTP SPN is registered once on the correct service account, and check browser authentication allowlists and delegation policy.", `The server offered ${analysis.offeredSchemes.join(", ")}; the client token was identified as NTLM. ${analysis.submittedEvidence}`);
     }
     if (analysis.unauthorizedCount > 1) {
       add(analysis.unauthorizedCount > 2 ? "high" : "medium", "Investigate the repeated 401 challenge", "Check trusted-site and browser integrated-authentication configuration, SPN/DNS resolution, clock synchronization, channel binding, service-account credentials, and OAM/WebGate WNA logs.", `${analysis.unauthorizedCount} HTTP 401 responses were captured.`);
@@ -4805,7 +6318,9 @@ function buildAssessmentArtifactRows(flow, analysis, context) {
   } else if (flow.protocol === "wna") {
     add("Offered authentication schemes", analysis.offeredSchemes?.join(", "));
     add("Submitted authentication scheme", analysis.submittedScheme);
-    add("Likely protocol", analysis.submittedProtocol);
+    add("Detected protocol", analysis.submittedProtocol);
+    add("Token classification", analysis.submittedDetection);
+    add("Classification evidence", analysis.submittedEvidence);
     add("Submitted token", analysis.submittedToken ? `Present (${analysis.submittedToken.length} characters; value excluded)` : "Not captured");
   } else if (flow.protocol === "oidc") {
     add("OIDC correlation", analysis.correlationLabel, "OIDC state correlation", "sensitive-correlation");

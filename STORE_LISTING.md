@@ -24,7 +24,11 @@ Enterprise Authentication Flow Inspector adds a focused authentication troublesh
 - Receive prioritized next actions tied to the exact browser-visible evidence when a flow fails or requires review.
 - See HTTP method, status meaning, duration, response size, and slow-request emphasis.
 - Search request and response content and filter SAML, OAM/WebGate, or static-resource traffic.
-- Import browser HAR files or panel JSON exports for offline analysis.
+- Import browser HAR files, panel JSON exports, or Chromium NetLog dumps for offline analysis.
+- Use a dedicated NetLog Analysis workspace to correlate sources and inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC errors with raw event parameters.
+- Trace authentication challenge exchanges through the browser response, retries, and final HTTP outcome with Kerberos, NTLM fallback, SPNEGO, and incomplete-capture interpretation.
+- Trace TLS connections through endpoint setup, handshake, certificate validation, TLS/ALPN negotiation, connection reuse, QUIC fallback, and the final browser-visible outcome.
+- Open a contextual investigation from every NetLog finding, including DNS, proxy, socket, HTTP, HTTP/2, and QUIC failures, with linked source evidence and category-specific next actions.
 - Export captured sessions as JSON for repeatable troubleshooting.
 - Export sanitized or full-diagnostic Markdown assessment reports with evidence, prioritized next actions, timelines, correlation keys, and protocol-specific log guidance.
 
@@ -72,7 +76,7 @@ Enterprise Authentication Flow Inspector adds a focused authentication troublesh
 
 ### Privacy by design
 
-All analysis runs locally inside the extension. Captured traffic, cookies, tokens, SAML messages, authentication headers, and imported HAR data are not sent to the developer or to third parties. Users remain responsible for protecting exported traces because authentication data can be sensitive.
+All analysis runs locally inside the extension. Captured traffic, cookies, tokens, SAML messages, authentication headers, and imported HAR or Chromium NetLog data are not sent to the developer or to third parties. Users remain responsible for protecting imported and exported traces because authentication and network data can be sensitive.
 
 ### Important scope
 
@@ -92,7 +96,7 @@ Created by Sudhir Kulkarni
 
 ## Single Purpose
 
-This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, and authorization traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, and HAR data.
+This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, and authorization traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, HAR data, and focused Chromium NetLog evidence.
 
 ## Permission Justification
 
@@ -108,7 +112,7 @@ No. All JavaScript, HTML, CSS, icons, and processing logic are packaged inside t
 2. **Decoded SAML intelligence** — Read formatted federation details, deployment-specific values, bindings, assertions, attributes, and certificate metadata.
 3. **Correlated OIDC flow analysis** — Connect Okta, Microsoft Entra ID, and standards-based authorization, callback, token, UserInfo, discovery, and JWKS traffic with state, nonce, PKCE, audience, issuer, and lifetime checks.
 4. **Windows authentication and X.509** — Inspect Negotiate/SPNEGO, Kerberos/WNA, NTLM fallback, credential-collection endpoints, and forwarded client-certificate headers.
-5. **OAM/WebGate diagnostics** — Analyze authentication cookies, redirects, HTTP failures, response timing, content size, and imported HAR evidence.
+5. **Contextual Chromium NetLog diagnostics** — Open an action from every finding and trace DNS, proxy, socket, HTTP, HTTP/2, QUIC, TLS, certificate, and authentication problems through linked Chromium sources and final outcomes.
 
 ## YouTube Metadata
 
@@ -120,7 +124,7 @@ Troubleshoot OAM, SAML, Okta, Entra & OIDC in Chrome DevTools
 
 See how Enterprise Authentication Flow Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
 
-The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Okta, Microsoft Entra ID, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, and imported HAR sessions.
+The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Okta, Microsoft Entra ID, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, imported HAR sessions, and focused Chromium NetLog evidence.
 
 Highlights:
 
@@ -131,6 +135,7 @@ Highlights:
 - Identify Negotiate/SPNEGO, Kerberos, NTLM, and WNA credential-collection requests.
 - Highlight OAM/WebGate cookies and FED endpoints.
 - Import HAR files for offline troubleshooting.
+- Inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC events from Chromium NetLog dumps.
 - Keep captured authentication data local to the browser extension.
 
 Open-source project:
@@ -140,4 +145,4 @@ Created by Sudhir Kulkarni
 
 ### Suggested Tags
 
-OAM, Oracle Access Manager, WebGate, SAML, OAuth, OIDC, OpenID Connect, Okta, Microsoft Entra ID, Azure AD, SSO, federation, Kerberos, WNA, SPNEGO, NTLM, X.509, JWT, HAR, Chrome DevTools, identity troubleshooting
+OAM, Oracle Access Manager, WebGate, SAML, OAuth, OIDC, OpenID Connect, Okta, Microsoft Entra ID, Azure AD, SSO, federation, Kerberos, WNA, SPNEGO, NTLM, X.509, JWT, HAR, NetLog, Chrome DevTools, identity troubleshooting

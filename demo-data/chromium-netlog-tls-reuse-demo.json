@@ -1,0 +1,79 @@
+{
+  "constants": {
+    "logEventTypes": {
+      "URL_REQUEST_START_JOB": 1,
+      "CONNECT_JOB": 2,
+      "SSL_CONNECT": 3,
+      "CERT_VERIFIER_JOB": 4,
+      "HTTP_STREAM_REQUEST_BOUND_TO_JOB": 5,
+      "URL_REQUEST_RESPONSE_STARTED": 6
+    },
+    "logSourceType": {
+      "URL_REQUEST": 10,
+      "CONNECT_JOB": 11,
+      "SOCKET": 12,
+      "CERT_VERIFIER_JOB": 13
+    },
+    "logEventPhase": {
+      "PHASE_NONE": 0,
+      "PHASE_BEGIN": 1,
+      "PHASE_END": 2
+    },
+    "netError": {}
+  },
+  "clientInfo": {
+    "name": "Enterprise Authentication Flow Inspector TLS reuse demonstration",
+    "notes": "Synthetic NetLog-style data. It contains no real credentials, hosts, certificates, or user information."
+  },
+  "events": [
+    {
+      "time": "200000",
+      "type": 1,
+      "phase": 1,
+      "source": { "id": 201, "type": 10 },
+      "params": { "method": "GET", "url": "https://sso.example.test/authorize", "source_dependency": { "id": 203, "type": 12 } }
+    },
+    {
+      "time": "200008",
+      "type": 2,
+      "phase": 2,
+      "source": { "id": 202, "type": 11 },
+      "params": { "endpoint": "192.0.2.80:443", "source_dependency": { "id": 203, "type": 12 } }
+    },
+    {
+      "time": "200018",
+      "type": 4,
+      "phase": 2,
+      "source": { "id": 204, "type": 13 },
+      "params": { "cert_status": 0, "verified_cert": true, "source_dependency": { "id": 203, "type": 12 } }
+    },
+    {
+      "time": "200025",
+      "type": 3,
+      "phase": 2,
+      "source": { "id": 203, "type": 12 },
+      "params": {
+        "host": "sso.example.test",
+        "tls_version": "TLS 1.3",
+        "alpn_negotiated_protocol": "h2",
+        "cipher_suite": "TLS_AES_128_GCM_SHA256",
+        "key_exchange_group": "X25519",
+        "was_reused": true
+      }
+    },
+    {
+      "time": "200030",
+      "type": 5,
+      "phase": 0,
+      "source": { "id": 201, "type": 10 },
+      "params": { "reused_socket": true, "source_dependency": { "id": 203, "type": 12 } }
+    },
+    {
+      "time": "200045",
+      "type": 6,
+      "phase": 0,
+      "source": { "id": 201, "type": 10 },
+      "params": { "status_code": 200, "headers": "HTTP/2 200" }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "constants": {
+    "logEventTypes": {
+      "URL_REQUEST_START_JOB": 1,
+      "PROXY_RESOLUTION_SERVICE_RESOLVED_PROXY_LIST": 2,
+      "HOST_RESOLVER_MANAGER_JOB": 3,
+      "CONNECT_JOB": 4,
+      "SSL_CONNECT": 5,
+      "HTTP_AUTH_CONTROLLER_HANDLE_AUTH_CHALLENGE": 6,
+      "HTTP_STREAM_JOB_CONTROLLER": 7,
+      "HTTP_AUTH_GENERATE_TOKEN": 8,
+      "URL_REQUEST_RESPONSE_STARTED": 9
+    },
+    "logSourceType": {
+      "URL_REQUEST": 10,
+      "PROXY_RESOLUTION_SERVICE": 11,
+      "HOST_RESOLVER_JOB": 12,
+      "CONNECT_JOB": 13,
+      "SOCKET": 14,
+      "HTTP_AUTH_CONTROLLER": 15
+    },
+    "logEventPhase": {
+      "PHASE_NONE": 0,
+      "PHASE_BEGIN": 1,
+      "PHASE_END": 2
+    },
+    "netError": {
+      "ERR_CERT_DATE_INVALID": -201
+    }
+  },
+  "clientInfo": {
+    "name": "Enterprise Authentication Flow Inspector demonstration",
+    "notes": "Synthetic NetLog-style data. It contains no real credentials, tokens, hosts, or user information."
+  },
+  "events": [
+    {
+      "time": "100000",
+      "type": 1,
+      "phase": 1,
+      "source": { "id": 101, "type": 10 },
+      "params": { "method": "GET", "url": "https://login.example.test/sso/start" }
+    },
+    {
+      "time": "100006",
+      "type": 2,
+      "phase": 2,
+      "source": { "id": 102, "type": 11 },
+      "params": { "proxy_server": "DIRECT" }
+    },
+    {
+      "time": "100012",
+      "type": 3,
+      "phase": 2,
+      "source": { "id": 103, "type": 12 },
+      "params": { "host": "login.example.test", "address": "192.0.2.25" }
+    },
+    {
+      "time": "100020",
+      "type": 4,
+      "phase": 1,
+      "source": { "id": 104, "type": 13 },
+      "params": { "endpoint": "192.0.2.25:443", "source_dependency": { "id": 105, "type": 14 } }
+    },
+    {
+      "time": "100055",
+      "type": 5,
+      "phase": 2,
+      "source": { "id": 105, "type": 14 },
+      "params": {
+        "host": "login.example.test",
+        "net_error": -201,
+        "cert_status": 2,
+        "tls_version": "TLS 1.2",
+        "alpn_negotiated_protocol": "h2",
+        "cipher_suite": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+        "was_reused": false
+      }
+    },
+    {
+      "time": "100061",
+      "type": 6,
+      "phase": 0,
+      "source": { "id": 106, "type": 15 },
+      "params": { "auth_scheme": "negotiate", "challenge": "Negotiate", "source_dependency": { "id": 101, "type": 10 } }
+    },
+    {
+      "time": "100068",
+      "type": 7,
+      "phase": 2,
+      "source": { "id": 101, "type": 10 },
+      "params": { "net_error": -201, "source_dependency": { "id": 105, "type": 14 } }
+    },
+    {
+      "time": "100074",
+      "type": 8,
+      "phase": 2,
+      "source": { "id": 106, "type": 15 },
+      "params": { "auth_scheme": "negotiate", "mechanism_oid": "1.2.840.113554.1.2.2", "source_dependency": { "id": 101, "type": 10 } }
+    },
+    {
+      "time": "100082",
+      "type": 9,
+      "phase": 0,
+      "source": { "id": 101, "type": 10 },
+      "params": { "status_code": 302, "headers": "HTTP/1.1 302 Found" }
+    }
+  ]
+}

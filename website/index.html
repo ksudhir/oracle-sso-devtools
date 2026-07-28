@@ -100,8 +100,9 @@
               <button role="tab" aria-selected="true" aria-controls="gallery-panel" data-image="./assets/traffic-inspector.png" data-alt="Traffic Inspector with tagged authentication requests" data-caption="Traffic Inspector" data-description="Scan status, timing, size, method, provider and protocol tags while host-specific URL colors preserve redirect context.">Traffic</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/saml-analysis.png" data-alt="Decoded SAML federation analysis" data-caption="SAML Details" data-description="Decode SAML messages and surface issuer, destination, bindings, assertions, conditions, signatures, attributes and certificate metadata.">SAML</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oidc-analysis.png" data-alt="Correlated OIDC flow analysis" data-caption="OIDC Flow Analysis" data-description="Correlate authorization, callback, token and provider evidence with state, nonce, PKCE, audience, issuer and lifetime checks.">OIDC</button>
-              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/wna-x509-analysis.png" data-alt="Kerberos WNA NTLM and X.509 authentication assessment" data-caption="Kerberos / X.509" data-description="Inspect browser-visible Negotiate challenges, Kerberos or NTLM selection, repeated 401s, WNA endpoints and forwarded certificates.">WNA / X.509</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/wna-x509-analysis.png" data-alt="Kerberos WNA NTLM and X.509 authentication assessment" data-caption="Kerberos / X.509" data-description="Inspect browser-visible Negotiate challenges and classify client tokens using NTLMSSP, Kerberos OID, or AP-REQ evidence alongside repeated 401s, WNA endpoints, and forwarded certificates.">WNA / X.509</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oam-diagnostics.png" data-alt="OAM and WebGate flow diagnostics" data-caption="OAM / WebGate" data-description="Follow request identifiers, WebGate and OAM transitions, authentication cookies, credential collection, ECIDs and the application return.">OAM</button>
+              <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/netlog-investigation.jpg" data-alt="Contextual Chromium NetLog DNS investigation" data-caption="NetLog Investigation" data-description="Open a contextual action from every finding and follow the triggering event, linked Chromium sources, related evidence, final outcome, and category-specific troubleshooting path.">NetLog</button>
             </div>
             <div id="gallery-panel" class="gallery-panel" role="tabpanel" tabindex="0">
               <figure>
@@ -148,7 +149,7 @@
             <article>
               <span class="protocol-mark mark-red">WNA</span>
               <h3>Kerberos and NTLM</h3>
-              <p>Negotiate challenges, browser responses, protocol selection, NTLM fallback and repeated authorization failures.</p>
+              <p>Negotiate challenges, browser responses, NTLMSSP/Kerberos token classification, fallback detection, and repeated authorization failures.</p>
             </article>
             <article>
               <span class="protocol-mark mark-violet">X.509</span>
@@ -160,6 +161,11 @@
               <h3>Okta and Entra ID</h3>
               <p>Provider recognition, tenant or organization context, provider errors and log correlation identifiers.</p>
             </article>
+            <article>
+              <span class="protocol-mark mark-blue">NET</span>
+              <h3>Chromium NetLog</h3>
+              <p>Open a contextual investigation from every finding: authentication and TLS traces plus focused DNS, proxy, socket, HTTP, HTTP/2, QUIC and raw-event evidence.</p>
+            </article>
           </div>
         </div>
       </section>
@@ -170,15 +176,15 @@
             <p class="eyebrow dark">A repeatable investigation path</p>
             <h2>From capture to an engineer-ready assessment.</h2>
             <p>
-              Work live in DevTools or import a HAR from another environment. Export a sanitized report for
+              Work live in DevTools, import a HAR from another environment, or investigate a Chromium NetLog. Export a sanitized report for
               collaboration or retain full correlation values for controlled diagnostic work.
             </p>
             <a class="text-link" href="./docs/">Read the documentation <span aria-hidden="true">&rarr;</span></a>
           </div>
           <ol class="workflow-steps">
-            <li><span>01</span><div><h3>Capture or import</h3><p>Record the active inspected tab, load the Network HAR, or import a saved HAR/JSON trace.</p></div></li>
+            <li><span>01</span><div><h3>Capture or import</h3><p>Record the active inspected tab, load the Network HAR, or import a saved HAR, JSON, or Chromium NetLog trace.</p></div></li>
             <li><span>02</span><div><h3>Reduce the noise</h3><p>Filter by protocol, hide static resources and search across browser-visible requests and responses.</p></div></li>
-            <li><span>03</span><div><h3>Correlate the flow</h3><p>Use Flow Analysis to group related exchanges, validation checks, evidence and recommended next actions.</p></div></li>
+            <li><span>03</span><div><h3>Correlate the evidence</h3><p>Use Flow Analysis for authentication transactions or open contextual NetLog investigations for DNS, proxy, TLS, sockets, HTTP and transport failures.</p></div></li>
             <li><span>04</span><div><h3>Share the assessment</h3><p>Export sanitized or full-diagnostic Markdown with timelines, correlation keys and server-log guidance.</p></div></li>
           </ol>
         </div>
@@ -193,7 +199,7 @@
           <div class="boundary-copy">
             <p>
               Analysis runs locally inside the extension. Captured traffic, cookies, tokens, SAML messages,
-              authentication headers and imported HAR data are not sent to the developer or third parties.
+              authentication headers and imported HAR or NetLog data are not sent to the developer or third parties.
             </p>
             <p class="scope-note">
               The inspector analyzes browser-visible evidence. Server-to-server exchanges, KDC traffic,

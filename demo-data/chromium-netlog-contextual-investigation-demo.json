@@ -1,0 +1,200 @@
+{
+  "constants": {
+    "logEventTypes": {
+      "URL_REQUEST_START_JOB": 1,
+      "HOST_RESOLVER_MANAGER_JOB": 2,
+      "URL_REQUEST_FAILED": 3,
+      "HTTP_PROXY_CONNECT_JOB_CONNECT": 4,
+      "HTTP_STREAM_JOB_CONTROLLER": 5,
+      "CONNECT_JOB": 6,
+      "SSL_CONNECT": 7,
+      "SOCKET_POOL": 8,
+      "QUIC_SESSION": 9,
+      "HTTP2_SESSION": 10,
+      "HTTP_AUTH_CONTROLLER_HANDLE_AUTH_CHALLENGE": 11,
+      "HTTP_AUTH_GENERATE_TOKEN": 12
+    },
+    "logSourceType": {
+      "URL_REQUEST": 20,
+      "HOST_RESOLVER_JOB": 21,
+      "PROXY_CONNECT_JOB": 22,
+      "HTTP_STREAM_JOB": 23,
+      "CONNECT_JOB": 24,
+      "SOCKET": 25,
+      "QUIC_SESSION": 26,
+      "HTTP2_SESSION": 27,
+      "HTTP_AUTH_CONTROLLER": 28
+    },
+    "logEventPhase": {
+      "PHASE_NONE": 0,
+      "PHASE_BEGIN": 1,
+      "PHASE_END": 2
+    },
+    "netError": {
+      "ERR_NAME_NOT_RESOLVED": -105,
+      "ERR_CONNECTION_REFUSED": -102,
+      "ERR_PROXY_CONNECTION_FAILED": -130,
+      "ERR_CERT_DATE_INVALID": -201,
+      "ERR_WS_UPGRADE": -324,
+      "ERR_HTTP2_PROTOCOL_ERROR": -337,
+      "ERR_QUIC_PROTOCOL_ERROR": -356
+    }
+  },
+  "clientInfo": {
+    "name": "Enterprise Authentication Flow Inspector demonstration",
+    "notes": "Synthetic NetLog-style data. It contains no real credentials, tokens, hosts, or user information."
+  },
+  "events": [
+    {
+      "time": "200000",
+      "type": 1,
+      "phase": 1,
+      "source": { "id": 201, "type": 20 },
+      "params": { "method": "GET", "url": "https://portal.example.test/signin" }
+    },
+    {
+      "time": "200008",
+      "type": 2,
+      "phase": 2,
+      "source": { "id": 202, "type": 21 },
+      "params": {
+        "host": "portal.example.test",
+        "net_error": -105,
+        "source_dependency": { "id": 201, "type": 20 }
+      }
+    },
+    {
+      "time": "200011",
+      "type": 3,
+      "phase": 2,
+      "source": { "id": 201, "type": 20 },
+      "params": {
+        "url": "https://portal.example.test/signin",
+        "net_error": -105,
+        "source_dependency": { "id": 202, "type": 21 }
+      }
+    },
+    {
+      "time": "200100",
+      "type": 1,
+      "phase": 1,
+      "source": { "id": 203, "type": 20 },
+      "params": { "method": "CONNECT", "url": "https://proxy-check.example.test/" }
+    },
+    {
+      "time": "200112",
+      "type": 4,
+      "phase": 2,
+      "source": { "id": 204, "type": 22 },
+      "params": {
+        "proxy_server": "https://proxy.example.test:8443",
+        "net_error": -130,
+        "source_dependency": { "id": 203, "type": 20 }
+      }
+    },
+    {
+      "time": "200200",
+      "type": 1,
+      "phase": 1,
+      "source": { "id": 205, "type": 20 },
+      "params": { "method": "GET", "url": "wss://events.example.test/session" }
+    },
+    {
+      "time": "200218",
+      "type": 5,
+      "phase": 2,
+      "source": { "id": 206, "type": 23 },
+      "params": {
+        "url": "wss://events.example.test/session",
+        "net_error": -324,
+        "source_dependency": { "id": 205, "type": 20 }
+      }
+    },
+    {
+      "time": "200300",
+      "type": 1,
+      "phase": 1,
+      "source": { "id": 207, "type": 20 },
+      "params": { "method": "GET", "url": "https://expired.example.test/login" }
+    },
+    {
+      "time": "200306",
+      "type": 6,
+      "phase": 1,
+      "source": { "id": 208, "type": 24 },
+      "params": {
+        "endpoint": "192.0.2.45:443",
+        "source_dependency": { "id": 207, "type": 20 }
+      }
+    },
+    {
+      "time": "200324",
+      "type": 7,
+      "phase": 2,
+      "source": { "id": 209, "type": 25 },
+      "params": {
+        "host": "expired.example.test",
+        "net_error": -201,
+        "tls_version": "TLS 1.3",
+        "alpn_negotiated_protocol": "h2",
+        "cipher_suite": "TLS_AES_128_GCM_SHA256",
+        "source_dependency": { "id": 208, "type": 24 }
+      }
+    },
+    {
+      "time": "200400",
+      "type": 8,
+      "phase": 2,
+      "source": { "id": 210, "type": 25 },
+      "params": {
+        "endpoint": "192.0.2.55:443",
+        "net_error": -102,
+        "source_dependency": { "id": 207, "type": 20 }
+      }
+    },
+    {
+      "time": "200500",
+      "type": 9,
+      "phase": 2,
+      "source": { "id": 211, "type": 26 },
+      "params": {
+        "host": "api.example.test",
+        "net_error": -356,
+        "source_dependency": { "id": 207, "type": 20 }
+      }
+    },
+    {
+      "time": "200600",
+      "type": 10,
+      "phase": 2,
+      "source": { "id": 212, "type": 27 },
+      "params": {
+        "host": "api.example.test",
+        "net_error": -337,
+        "source_dependency": { "id": 207, "type": 20 }
+      }
+    },
+    {
+      "time": "200700",
+      "type": 11,
+      "phase": 0,
+      "source": { "id": 213, "type": 28 },
+      "params": {
+        "auth_scheme": "negotiate",
+        "challenge": "Negotiate",
+        "source_dependency": { "id": 207, "type": 20 }
+      }
+    },
+    {
+      "time": "200712",
+      "type": 12,
+      "phase": 2,
+      "source": { "id": 213, "type": 28 },
+      "params": {
+        "auth_scheme": "negotiate",
+        "mechanism_oid": "1.2.840.113554.1.2.2",
+        "source_dependency": { "id": 207, "type": 20 }
+      }
+    }
+  ]
+}

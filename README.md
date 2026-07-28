@@ -1,6 +1,6 @@
 # Enterprise Authentication Flow Inspector
 
-A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise authentication and SSO troubleshooting. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, and HAR/JSON import and export.
+A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise authentication and SSO troubleshooting. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR/JSON import, and focused Chromium NetLog analysis.
 
 [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 
@@ -28,18 +28,18 @@ For local development and testing:
 - Color-codes SAML, OAM, and WebGate artifacts in request rows and detail panes. Requests containing `/oam/server`, `obreq.cgi`, `obrareq.cgi`, or `OAM_ID` are tagged as OAM; requests containing only `REQUEST_ID` / `request_id` are not tagged as OAM. Requests containing `obrar.cgi` or `OAMAuthnCookie` are tagged as WebGate, with an additional SAML tag when a SAML message is found.
 - Highlights OAM/WebGate cookie names in **Request** and **Response** tabs, including suffix variants such as `OAMAuthnCookie...`, `ObSSOCookie...`, `OAM_ID...`, `OAM_REQ...`, and `ORA_OSFS_SESSION...`.
 - Adds a **Cookies** tab with separate **Request Cookies** and **Response Cookies** sections rendered as name/value pairs.
-- Separates the interface into primary **Traffic Inspector** and **Flow Analysis** workspaces. Traffic Inspector contains request-specific tabs, while Flow Analysis uses the full panel width for correlated OAM, SAML, Windows Native Authentication (WNA), and OIDC transactions, protocol-specific confidence and outcomes, a chronological Flow Navigator, and expandable selected-request evidence.
+- Separates the interface into primary **Traffic Inspector**, **Flow Analysis**, and **NetLog Analysis** workspaces. Traffic Inspector contains request-specific tabs, Flow Analysis uses the full panel width for correlated OAM, SAML, Windows Native Authentication (WNA), and OIDC transactions, and NetLog Analysis provides lower-level Chromium network diagnostics.
 - Generates prioritized **Recommended Next Actions** when Flow Analysis finds failures or review conditions. Each action identifies the browser-visible evidence that triggered it and directs the user toward relevant OAM/WebGate, SAML, WNA/Kerberos, OIDC, Okta, or Microsoft Entra configuration and authoritative logs.
 - Adds a draggable vertical divider between the Flow Navigator and assessment pane. The width is keyboard-adjustable with Left/Right arrows, respects minimum pane widths, and persists across DevTools sessions while both panes retain independent scrolling.
-- Correlates WNA attempts from the HTTP challenge and browser token response, distinguishes Negotiate/Kerberos from NTLM fallback, and treats the initial `401` challenge as expected protocol evidence rather than an automatic login failure.
+- Correlates WNA attempts from the HTTP challenge and browser token response, inspects client `Authorization: Negotiate` tokens for the `NTLMSSP` signature, Kerberos mechanism OID, and AP-REQ evidence, and treats the initial `401` challenge as expected protocol evidence rather than an automatic login failure.
 - Correlates OIDC transactions primarily by `state`, associates authorization, callback, token, broker-context, UserInfo, discovery, and JWKS evidence, and flags a callback with mismatched state inside the originating transaction. Multiple transactions can be nested inside one user login journey when applications, brokers, and identity providers use separate state values.
 - Adds confidence-based **Okta** and **Microsoft Entra ID** provider profiles to Flow Analysis and request rows. Detection combines official authority domains, distinctive endpoint patterns, provider headers, issuer/redirect metadata, error formats, and supporting cookies rather than assigning a provider from one generic cookie or path.
 - Extracts Okta organization, authorization-server ID, provider errors, and `X-Okta-Request-Id`; extracts Microsoft Entra tenant, `AADSTS` errors, trace ID, correlation ID, and provider request ID when browser-visible.
 - Correlates SAML requests and responses using `InResponseTo`, AuthnRequest ID, `RelayState`, timing, and request adjacency. The assessment summarizes issuer, destination, SAML status, and visible XML-signature presence without claiming cryptographic validation.
 - Adds a **Kerberos / X.509** tab for browser-visible Kerberos/SPNEGO/NTLM headers and forwarded X.509 client-certificate headers.
 - Adds expandable **WNA Details** inside Flow Analysis for the authentication challenge, browser token response, Negotiate/Kerberos versus NTLM selection, token metadata, captured authentication artifacts, final authorization, and OAM/WebGate session cookies.
-- Flags NTLM fallback when the server offers Negotiate but the browser submits NTLM, while separating browser-visible evidence from ticket-cache, SPN, DNS, KDC, and server-log validation.
-- Tags requests as **Kerberos** when `Authorization`, `WWW-Authenticate`, or `Proxy-Authenticate` contains `Negotiate` / `Kerberos`.
+- Flags NTLM fallback even when NTLMSSP is wrapped by the `Negotiate` scheme, confirms browser-visible Kerberos token evidence where possible, and separates this classification from ticket-cache, SPN, DNS, KDC, cryptographic, and server-log validation.
+- Tags a client request as **Kerberos** only when its browser-visible Authorization token uses the explicit Kerberos scheme or contains the Kerberos mechanism OID/AP-REQ evidence; a bare server `Negotiate` challenge remains WNA/SPNEGO evidence rather than confirmed Kerberos.
 - Tags requests as **NTLM** when those headers contain `NTLM`.
 - Highlights `/oam/CredCollectServlet/WNA` as Kerberos/WNA-related and `/oam/CredCollectServlet/X509` as X.509-related.
 - Tags requests as **X509** when client-certificate forwarding headers are present, such as `SSL_CLIENT_CERT`, `X-SSL-Client-Cert`, `X-Client-Cert`, `X-Forwarded-Client-Cert`, or `X-ARR-ClientCert`.
@@ -57,6 +57,11 @@ For local development and testing:
 - Exports the selected correlated login attempt as either a sanitized or full-diagnostic Markdown assessment. Reports include the outcome, validation evidence, prioritized next actions, request timeline, correlation keys, protocol-specific log locations, search guidance, capture limitations, and an explicit data-handling summary.
 - Imports Enterprise Authentication Flow Inspector exports, raw entry arrays, and browser HAR files.
 - Adds **Load Network HAR** to import entries currently available in Chrome DevTools' Network HAR model, including HAR files imported into the Network tab when Chrome exposes them to DevTools extensions.
+- Imports Chromium NetLog JSON dumps created with `chrome://net-export` into a dedicated **NetLog Analysis** workspace. It reverses numeric Chromium constants when available, groups events by source, classifies authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC evidence, highlights Net errors, and provides focused next actions while preserving unknown event fields.
+- Turns authentication challenge findings into an interactive **Trace exchange** view. It follows Chromium source dependencies and nearby authentication/HTTP evidence, expands the initiating challenge, summarizes the server challenge, browser response, retries, and final outcome, and provides previous/next challenge navigation. Kerberos, NTLM fallback, inconclusive SPNEGO, and incomplete captures remain visibly distinct.
+- Turns TLS findings into an interactive **Trace TLS connection** view. It correlates endpoint/connect jobs, handshake events, certificate-validation evidence, TLS version, cipher, key-exchange group, ALPN negotiation, QUIC fallback, connection reuse, and the final HTTP or network outcome. Missing fields are labeled as not captured rather than inferred as successful.
+- Gives every diagnostic finding a contextual action. DNS, proxy, socket, HTTP, HTTP/2, QUIC, and uncategorized failures open a focused investigation with the triggering event, linked Chromium sources, related event categories, final visible outcome, recommended investigation path, and previous/next issue navigation.
+- NetLog support is intentionally focused on authentication and connection troubleshooting; it is not a replacement for Chromium's full NetLog Viewer. Chromium does not guarantee backwards-compatible NetLog schemas, so unfamiliar events remain available as raw expandable evidence.
 - Adds a multi-select **Protocol filter** for SAML, OAM/WebGate, WNA/Kerberos/NTLM, OAuth/OIDC/Bearer, and X.509. The OAuth family filter includes canonical OAuth endpoints, OIDC parameter/callback/token evidence, and APIs carrying a Bearer access token; matching rows identify the reason with distinct `OAuth`, `OIDC`, or `Bearer` tags. Multiple selected protocols use OR matching; Hide static and Search remain additional constraints.
 - Adds a **Search** field that filters captured entries across URL, request headers/body, response headers/body, status/mime fields, and decoded SAML data.
 - Filters browser-to-OAM and browser-to-WebGate communication through the **OAM/WebGate** protocol choice. Matching checks URLs, headers, cookies, and bodies, while endpoint badges use URL paths, redirect roles, and learned host-plus-port roles. OAM cookies remain highlighted as artifacts without incorrectly changing a WebGate endpoint into an OAM endpoint.
@@ -92,6 +97,7 @@ Color supplements the visible labels; it is never the only indication of meaning
 | Green status | Passed validation, active token/assertion/certificate validity, successful status, or expected evidence observed |
 | Amber status | Expiring soon, near-future clock skew, incomplete evidence, warning, or review recommended |
 | Red status | Failed validation, expired or not-yet-valid token/assertion/certificate, HTTP failure, or NTLM fallback |
+| Blue authentication challenge | `WWW-Authenticate` or `Proxy-Authenticate` server challenge and its authentication parameters |
 | Magenta ECID | Oracle execution-context identifier intended for server-log correlation |
 
 Context distinguishes the two green uses: a green protocol value is informational, while a green `PASS`, `Success`, `Signed`, or `Active` label is a positive assessment. Protocol badge colors identify artifact families such as SAML, OAM, WebGate, OAuth/OIDC, WNA/Kerberos, NTLM, X.509, and FED; they do not indicate health. Cookie-name colors identify ownership: WebGate, OAM Server, DCC, or ambiguous OAM-related data. Hover tooltips provide the owner where available.
@@ -106,7 +112,7 @@ Context distinguishes the two green uses: a green protocol value is informationa
 | `OAuth` | OAuth endpoint, including URLs under `/oauth2/` |
 | `FED` | Federation endpoint such as `/fed/sp`, `/fed/idp`, or `/oamfed/` |
 | `WNA` | OAM Windows Native Authentication credential collector |
-| `Kerberos` | Negotiate or Kerberos authentication-header evidence |
+| `Kerberos` | Client token with explicit Kerberos, Kerberos mechanism OID, or AP-REQ evidence |
 | `NTLM` | NTLM authentication-header evidence or fallback |
 | `X509` | X.509 collector endpoint or forwarded client-certificate evidence |
 | `OKTA` | Confidence-based Okta provider evidence |
