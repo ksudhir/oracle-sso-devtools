@@ -7,7 +7,8 @@ const projectRoot = path.resolve(__dirname, "..");
 const checks = [
   ["JavaScript syntax", ["--check", "panel.js"]],
   ["Flow analysis", ["scripts/test-flow-analysis.cjs"]],
-  ["Generated distribution", ["scripts/build-dist.cjs", "--check"]]
+  ["Chrome distribution", ["scripts/build-dist.cjs", "--check"]],
+  ["Microsoft Edge distribution", ["scripts/build-edge-dist.cjs", "--check"]]
 ];
 
 for (const [label, argumentsList] of checks) {

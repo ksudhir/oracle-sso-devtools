@@ -1,5 +1,18 @@
 "use strict";
 
+const DEFAULT_BROWSER_PROFILE = Object.freeze({
+  id: "chromium",
+  browserName: "Chromium browser",
+  devToolsName: "Chromium DevTools",
+  netExportUrl: "chrome://net-export",
+  storeName: "",
+  storeUrl: ""
+});
+const browserProfile = Object.freeze({
+  ...DEFAULT_BROWSER_PROFILE,
+  ...(globalThis.AUTH_FLOW_INSPECTOR_BROWSER_PROFILE || {})
+});
+
 const state = {
   entries: [],
   selectedId: null,
@@ -1462,7 +1475,7 @@ async function loadCurrentDevToolsHar(mode) {
 
       state.netLog = null;
       state.entries = sortEntriesChronologically(await Promise.all(harEntries.map(normalizeHarEntry)));
-      state.captureSource = "Chrome DevTools Network HAR";
+      state.captureSource = `${browserProfile.devToolsName} Network HAR`;
       resetFiltersAfterImport();
       state.workspaceMode = "traffic";
       state.activeTab = "request";
@@ -1885,7 +1898,7 @@ function formatCaptureSourceLabel(source) {
   if (value.startsWith("Imported file:")) {
     return `Imported:${value.slice("Imported file:".length)}`;
   }
-  if (value === "Chrome DevTools Network HAR") return "Loaded: Network HAR";
+  if (value.endsWith("DevTools Network HAR")) return "Loaded: Network HAR";
   return "";
 }
 
@@ -3140,7 +3153,7 @@ function renderNetLogWorkspace() {
       `<section class="netLogWorkspace netLogEmpty">`,
       `<div>`,
       `<strong>Import a Chromium NetLog dump to begin.</strong>`,
-      `<p>Capture a JSON dump from <code>chrome://net-export</code>, stop logging, then choose <strong>Import File</strong>.</p>`,
+      `<p>Capture a JSON dump from <code>${escapeHtml(browserProfile.netExportUrl)}</code>, stop logging, then choose <strong>Import File</strong>.</p>`,
       `<p>NetLog files can contain sensitive URLs and network metadata. Analysis remains local to this extension.</p>`,
       renderNetLogCaptureGuide(true),
       `</div>`,
@@ -3255,15 +3268,15 @@ function renderNetLogCaptureGuide(expanded = false) {
     `<section>`,
     `<h3>1. Prepare a clean reproduction</h3>`,
     `<ul>`,
-    `<li>Record the expected result, actual failure, affected URL, Chrome version, operating system, proxy or VPN state, and the local start time with timezone.</li>`,
-    `<li>Close or pause unrelated tabs and downloads. NetLog records networking activity across Chrome, not only the authentication tab.</li>`,
+    `<li>Record the expected result, actual failure, affected URL, ${escapeHtml(browserProfile.browserName)} version, operating system, proxy or VPN state, and the local start time with timezone.</li>`,
+    `<li>Close or pause unrelated tabs and downloads. NetLog records networking activity across ${escapeHtml(browserProfile.browserName)}, not only the authentication tab.</li>`,
     `<li>Use a fresh browser window when practical and reproduce only one login attempt.</li>`,
     `</ul>`,
     `</section>`,
     `<section>`,
     `<h3>2. Start logging</h3>`,
     `<ol>`,
-    `<li>Open <code>chrome://net-export</code> in a separate Chrome tab.</li>`,
+    `<li>Open <code>${escapeHtml(browserProfile.netExportUrl)}</code> in a separate ${escapeHtml(browserProfile.browserName)} tab.</li>`,
     `<li>Under <strong>Log Mode</strong>, start with <strong>Strip private information</strong>.</li>`,
     `<li>Use <strong>Include cookies and credentials</strong> only when redaction removes evidence required for an approved restricted investigation.</li>`,
     `<li>Use <strong>Include raw bytes</strong> only for exceptional packet-level troubleshooting; it also includes cookies and credentials.</li>`,
@@ -3276,7 +3289,7 @@ function renderNetLogCaptureGuide(expanded = false) {
     `<ol>`,
     `<li>Switch to the affected tab and reproduce the problem once.</li>`,
     `<li>Note the exact failure time, starting URL, final visible error, and any request or correlation ID shown by the application.</li>`,
-    `<li>Return immediately to <code>chrome://net-export</code> and click <strong>Stop Logging</strong>. Short captures are easier to correlate.</li>`,
+    `<li>Return immediately to <code>${escapeHtml(browserProfile.netExportUrl)}</code> and click <strong>Stop Logging</strong>. Short captures are easier to correlate.</li>`,
     `</ol>`,
     `</section>`,
     `<section>`,
@@ -3916,10 +3929,12 @@ function renderAbout() {
     `<div class="samlInfoGrid">`,
     renderInfoCard("Enterprise Authentication Flow Inspector", [
       ["Created by", "Sudhir Kulkarni"],
-      ["Contact", "ksudhir@gmail.com"]
+      ["Contact", "ksudhir@gmail.com"],
+      ["Browser package", browserProfile.browserName],
+      ["Developer tools", browserProfile.devToolsName]
     ], true),
     renderInfoCard("Chromium NetLog Analysis", [
-      ["Purpose", "Focused authentication and connection diagnostics from chrome://net-export JSON dumps"],
+      ["Purpose", `Focused authentication and connection diagnostics from ${browserProfile.netExportUrl} JSON dumps`],
       ["Coverage", "Authentication, DNS, proxy, TLS, sockets, HTTP/2, and QUIC events"],
       ["Processing", "Imported and analyzed locally; unknown Chromium fields remain available as raw evidence"],
       ["Compatibility", "Best effort because Chromium NetLog schemas are not guaranteed to be backwards compatible"]
@@ -3941,6 +3956,13 @@ function renderAboutLinks() {
     ["Source code", "Review the project and its release history on GitHub", "https://github.com/ksudhir/oracle-sso-devtools"],
     ["Report an issue", "Request support or provide reproducible technical feedback", "https://github.com/ksudhir/oracle-sso-devtools/issues"]
   ];
+  if (browserProfile.storeUrl) {
+    links.unshift([
+      browserProfile.storeName || `${browserProfile.browserName} extension store`,
+      `Install the published ${browserProfile.browserName} package`,
+      browserProfile.storeUrl
+    ]);
+  }
 
   return [
     `<section class="samlInfoCard isWide aboutLinksCard">`,
@@ -5673,7 +5695,7 @@ function buildWnaChecks({ timeline, challenge, browserResponse, offered, submitt
   return [
     oidcCheck(hasWnaEndpoint ? "pass" : "warn", "WNA endpoint", hasWnaEndpoint ? "/oam/CredCollectServlet/WNA was captured." : "Authentication headers were found, but the standard OAM WNA endpoint was not captured."),
     oidcCheck(challenge ? (negotiateOffered ? "pass" : "warn") : "fail", "Negotiate challenge", challenge ? (negotiateOffered ? "The server advertised Negotiate or Kerberos." : `The server offered ${offered.join(", ") || "an unknown scheme"}, not Negotiate.`) : "No browser-visible authentication challenge was found."),
-    oidcCheck(browserResponse && submitted?.token ? "pass" : "warn", "Browser response", browserResponse && submitted?.token ? `The browser submitted ${submitted.scheme} with a token.` : "No browser-visible Authorization token was captured; Chrome or the HAR may have redacted it."),
+    oidcCheck(browserResponse && submitted?.token ? "pass" : "warn", "Browser response", browserResponse && submitted?.token ? `The browser submitted ${submitted.scheme} with a token.` : `No browser-visible Authorization token was captured; ${browserProfile.browserName} or the HAR may have redacted it.`),
     oidcCheck(
       ntlmFallback ? "fail" : confirmedKerberos ? "pass" : "warn",
       "Protocol selection",

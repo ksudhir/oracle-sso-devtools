@@ -1,0 +1,37 @@
+[
+  {
+    "index": 1,
+    "title": "Complete Authentication Traffic",
+    "path": "screenshots/01-complete-sso-traffic.png"
+  },
+  {
+    "index": 2,
+    "title": "SAML Federation Analysis",
+    "path": "screenshots/02-saml-federation-analysis.png"
+  },
+  {
+    "index": 3,
+    "title": "OIDC Flow Analysis",
+    "path": "screenshots/03-oidc-flow-analysis.png"
+  },
+  {
+    "index": 4,
+    "title": "Kerberos WNA, NTLM, and X.509",
+    "path": "screenshots/04-wna-ntlm-x509-auth.png"
+  },
+  {
+    "index": 5,
+    "title": "NetLog Kerberos and NTLM Analysis",
+    "path": "screenshots/05-netlog-kerberos-analysis.jpg"
+  },
+  {
+    "index": 6,
+    "title": "Small Promotional Tile",
+    "path": "promo/small-promo-tile-440x280.png"
+  },
+  {
+    "index": 7,
+    "title": "Large Promotional Tile",
+    "path": "promo/marquee-promo-tile-1400x560.png"
+  }
+]

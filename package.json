@@ -3,10 +3,13 @@
   "version": "3.0.0",
   "private": true,
   "license": "MIT",
-  "description": "Chrome DevTools extension for troubleshooting browser-visible authentication flows and Chromium NetLog evidence.",
+  "description": "Chromium DevTools extension for troubleshooting browser-visible authentication flows and NetLog evidence.",
   "scripts": {
     "build": "node scripts/build-dist.cjs",
+    "build:edge": "node scripts/build-edge-dist.cjs",
     "check:dist": "node scripts/build-dist.cjs --check",
+    "check:edge": "node scripts/build-edge-dist.cjs --check",
+    "package:edge": "node scripts/package-edge.cjs",
     "test": "node scripts/test-project.cjs",
     "start": "node server.js"
   },

@@ -8,6 +8,7 @@ const distRoot = path.join(projectRoot, "dist");
 const checkOnly = process.argv.includes("--check");
 const sourceFiles = [
   "README.md",
+  "browser-config.js",
   "manifest.json",
   "devtools.html",
   "devtools.js",

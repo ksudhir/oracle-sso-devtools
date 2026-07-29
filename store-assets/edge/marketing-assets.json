@@ -1,0 +1,77 @@
+{
+  "product": "Enterprise Authentication Flow Inspector",
+  "browser": "Microsoft Edge",
+  "version": "3.0.0",
+  "reviewStatus": "partner-center-ready",
+  "copySource": "../../EDGE_STORE_LISTING.md",
+  "assets": {
+    "icon": {
+      "path": "../../icons/icon128.png",
+      "width": 128,
+      "height": 128,
+      "format": "PNG"
+    },
+    "screenshots": [
+      {
+        "path": "screenshots/01-complete-sso-traffic.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Microsoft Edge DevTools authentication traffic with protocol and provider recognition"
+      },
+      {
+        "path": "screenshots/02-saml-federation-analysis.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Decoded SAML and federation analysis"
+      },
+      {
+        "path": "screenshots/03-oidc-flow-analysis.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Correlated OpenID Connect flow with provider evidence"
+      },
+      {
+        "path": "screenshots/04-wna-ntlm-x509-auth.png",
+        "width": 1280,
+        "height": 800,
+        "topic": "Kerberos/WNA, NTLM fallback, and forwarded X.509"
+      },
+      {
+        "path": "screenshots/05-netlog-kerberos-analysis.jpg",
+        "width": 1280,
+        "height": 800,
+        "topic": "NetLog Kerberos and NTLM classification, retry trace, outcome, and next check"
+      }
+    ],
+    "promoTiles": [
+      {
+        "path": "promo/small-promo-tile-440x280.png",
+        "width": 440,
+        "height": 280,
+        "format": "24-bit PNG"
+      },
+      {
+        "path": "promo/marquee-promo-tile-1400x560.png",
+        "width": 1400,
+        "height": 560,
+        "format": "24-bit PNG"
+      }
+    ]
+  },
+  "generation": {
+    "command": "node store-assets/build_marketing_assets.cjs --edge",
+    "renderer": "Chromium through Playwright",
+    "browserProfile": "../../edge/browser-config.js"
+  },
+  "provenance": {
+    "productUI": "Rendered deterministically from the shared panel HTML, CSS, and JavaScript with the Microsoft Edge browser profile",
+    "sampleData": "Synthetic and sanitized example.com authentication traffic",
+    "customerData": "None"
+  },
+  "claimBoundaries": [
+    "The extension analyzes browser-visible Microsoft Edge DevTools and imported Chromium NetLog evidence.",
+    "JWT and certificate data is decoded and summarized but not cryptographically validated.",
+    "Client authentication token values remain hidden.",
+    "Server-to-server, KDC, and backend-only exchanges may not be visible."
+  ]
+}

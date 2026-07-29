@@ -7,8 +7,13 @@ const { chromium } = require("playwright");
 const sharp = require("sharp");
 
 const root = path.resolve(__dirname, "..");
-const screenshotDir = path.join(__dirname, "screenshots");
-const promoDir = path.join(__dirname, "promo");
+const isEdge = process.argv.includes("--edge");
+const assetRoot = isEdge ? path.join(__dirname, "edge") : __dirname;
+const screenshotDir = path.join(assetRoot, "screenshots");
+const promoDir = path.join(assetRoot, "promo");
+const browserConfigPath = path.join(root, isEdge ? "edge/browser-config.js" : "browser-config.js");
+const devToolsLabel = isEdge ? "Microsoft Edge DevTools" : "Chrome DevTools";
+const promoLabel = isEdge ? "Microsoft Edge DevTools Extension" : "Chrome DevTools Extension";
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 const darkCss = [
@@ -113,7 +118,8 @@ function panelPage() {
   let html = fs.readFileSync(path.join(root, "panel.html"), "utf8");
   html = html.replace('href="panel.css"', 'href="/panel.css"');
   html = html.replace("</head>", "<style>" + darkCss + "</style></head>");
-  html = html.replace("<body>", '<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>Chrome DevTools</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth Flow Inspector</span></div>');
+  html = html.replace("<body>", `<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>${devToolsLabel}</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth Flow Inspector</span></div>`);
+  html = html.replace('<script src="browser-config.js"></script>', '<script src="/browser-config.js"></script>');
   html = html.replace('<script src="panel.js"></script>', "<script>" + mock + '</script><script src="/panel.js"></script>');
   return html;
 }
@@ -138,7 +144,7 @@ function promoPage(small) {
     ".chip{padding:" + (small ? "4px 7px" : "7px 11px") + ";border:1px solid #34434d;border-radius:4px;background:#141f27;color:#dfe8ec;font-size:" + (small ? 10 : 14) + "px;font-weight:700;white-space:nowrap}" +
     ".proof{position:absolute;right:55px;top:58px;width:540px;height:420px;border:1px solid #34434d;border-radius:8px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.5);transform:rotate(-1deg)}.proof img{width:100%;height:100%;object-fit:cover;object-position:46% 50%}" +
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
-    '</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">Chrome DevTools Extension</div></div>' +
+    `</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">${promoLabel}</div></div>` +
     "<h1>" + (small ? "Enterprise Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
     (small ? "Troubleshoot browser-visible identity flows" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Entra, Kerberos/WNA, X.509, HAR, and Chromium NetLog evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
@@ -158,6 +164,7 @@ async function main() {
     const send = (type, body) => { response.writeHead(200, { "Content-Type": type }); response.end(body); };
     if (pathname === "/panel.css") return send("text/css", fs.readFileSync(path.join(root, "panel.css")));
     if (pathname === "/panel.js") return send("text/javascript", fs.readFileSync(path.join(root, "panel.js")));
+    if (pathname === "/browser-config.js") return send("text/javascript", fs.readFileSync(browserConfigPath));
     if (pathname === "/icon128.png") return send("image/png", fs.readFileSync(path.join(root, "icons/icon128.png")));
     if (pathname === "/netlog-proof.jpg") return send("image/jpeg", fs.readFileSync(path.join(screenshotDir, "05-netlog-kerberos-analysis.jpg")));
     if (pathname === "/promo-small") return send("text/html", promoPage(true));
@@ -358,7 +365,7 @@ async function main() {
     await page.screenshot({ path: output });
     await flatten(output);
   }
-  await sharp(path.join(screenshotDir, "netlog-http-authentication-trace-dark.jpg"))
+  await sharp(path.join(__dirname, "screenshots", "netlog-http-authentication-trace-dark.jpg"))
     .extend({ top: 40, bottom: 40, left: 0, right: 0, background: "#171a1c" })
     .flatten({ background: "#171a1c" })
     .jpeg({ quality: 92, chromaSubsampling: "4:4:4" })
@@ -375,7 +382,7 @@ async function main() {
   await flatten(marqueeOutput);
   await browser.close();
   await new Promise((resolve) => server.close(resolve));
-  console.log("Marketing screenshots and promo tiles updated.");
+  console.log(`${isEdge ? "Microsoft Edge" : "Chrome"} marketing screenshots and promo tiles updated.`);
 }
 
 main().catch((error) => {

@@ -29,7 +29,7 @@
             <p>Exports the selected correlated flow. Both reports exclude passwords, private keys, client secrets, and reusable authentication material.</p>
           </div>
         </details>
-        <button id="loadNetworkHarButton" type="button" title="Load requests currently exposed by the Chrome DevTools Network HAR model">Load Network HAR</button>
+        <button id="loadNetworkHarButton" type="button" title="Load requests currently exposed by the browser DevTools Network HAR model">Load Network HAR</button>
         <button id="importButton" class="importButton" type="button" title="Import a browser HAR, Inspector JSON export, or Chromium NetLog dump">Import File</button>
       </div>
       <input id="importInput" type="file" accept=".json,.har,.HAR,application/json,application/x-har+json">
@@ -98,6 +98,7 @@
       </section>
     </main>
 
+    <script src="browser-config.js"></script>
     <script src="panel.js"></script>
   </body>
 </html>

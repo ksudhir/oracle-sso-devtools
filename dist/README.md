@@ -1,6 +1,6 @@
 # Enterprise Authentication Flow Inspector
 
-A clean Manifest V3 Chrome DevTools extension for browser-visible enterprise authentication and SSO troubleshooting. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR/JSON import, and focused Chromium NetLog analysis.
+A clean Manifest V3 Chromium DevTools extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR/JSON import, and focused Chromium NetLog analysis.
 
 [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 
@@ -18,6 +18,20 @@ For local development and testing:
 4. Select this folder: `oracle-sso-devtools`.
 5. Open DevTools on the tab you want to inspect.
 6. Open the **Auth Flow Inspector** panel before starting the login flow.
+
+## Install In Microsoft Edge
+
+The Microsoft Edge Add-ons package is built from the same runtime and uses an Edge-specific browser profile.
+
+1. Run `npm run build:edge`.
+2. Open `edge://extensions`.
+3. Enable **Developer mode**.
+4. Select **Load unpacked**.
+5. Choose the generated `dist-edge` directory.
+6. Navigate to an ordinary HTTP(S) page.
+7. Open Microsoft Edge DevTools and select **Auth Flow Inspector** from the Activity Bar or **More tools**.
+
+Run `npm run package:edge` to create the ZIP submitted to Microsoft Edge Add-ons. See [MICROSOFT_EDGE_ADDONS_PUBLISHING.md](MICROSOFT_EDGE_ADDONS_PUBLISHING.md) for the complete release process.
 
 ## Features
 
@@ -56,8 +70,8 @@ For local development and testing:
 - Exports captured traffic as full JSON or as a sanitized JSON copy. Sanitized exports preserve request topology, endpoint paths, status, timing, sizes, header names, cookie names, protocol markers, recognized OAuth/OIDC parameter names, and stable pseudonymous correlation aliases while removing body values, decoded SAML XML, credentials, cookie values, tokens, certificates, real correlation values, deployment hostnames, non-allowlisted header values, and sensitive URL parameter values.
 - Exports the selected correlated login attempt as either a sanitized or full-diagnostic Markdown assessment. Reports include the outcome, validation evidence, prioritized next actions, request timeline, correlation keys, protocol-specific log locations, search guidance, capture limitations, and an explicit data-handling summary.
 - Imports Enterprise Authentication Flow Inspector exports, raw entry arrays, and browser HAR files.
-- Adds **Load Network HAR** to import entries currently available in Chrome DevTools' Network HAR model, including HAR files imported into the Network tab when Chrome exposes them to DevTools extensions.
-- Imports Chromium NetLog JSON dumps created with `chrome://net-export` into a dedicated **NetLog Analysis** workspace. It reverses numeric Chromium constants when available, groups events by source, classifies authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC evidence, highlights Net errors, and provides focused next actions while preserving unknown event fields.
+- Adds **Load Network HAR** to import entries currently available in the browser DevTools Network HAR model, including HAR files imported into the Network tab when the browser exposes them to DevTools extensions.
+- Imports Chromium NetLog JSON dumps created with `chrome://net-export` in Chrome or `edge://net-export` in Edge into a dedicated **NetLog Analysis** workspace. It reverses numeric Chromium constants when available, groups events by source, classifies authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC evidence, highlights Net errors, and provides focused next actions while preserving unknown event fields.
 - Turns authentication challenge findings into an interactive **Trace exchange** view. It follows Chromium source dependencies and nearby authentication/HTTP evidence, extracts client tokens from nested NetLog headers and authentication fields, and locally checks decoded bytes for NTLMSSP, the Kerberos mechanism OID, or AP-REQ evidence without rendering the token. Confirmed Kerberos, confirmed NTLM fallback, inconclusive SPNEGO, challenge-only, redacted-token, retry, final-outcome, and recommended-next-check states remain visibly distinct.
 - Turns TLS findings into an interactive **Trace TLS connection** view. It correlates endpoint/connect jobs, handshake events, certificate-validation evidence, TLS version, cipher, key-exchange group, ALPN negotiation, QUIC fallback, connection reuse, and the final HTTP or network outcome. Missing fields are labeled as not captured rather than inferred as successful.
 - Gives every diagnostic finding a contextual action. DNS, proxy, socket, HTTP, HTTP/2, QUIC, and uncategorized failures open a focused investigation with the triggering event, linked Chromium sources, related event categories, final visible outcome, recommended investigation path, and previous/next issue navigation.
@@ -86,7 +100,7 @@ Sanitization substantially reduces accidental disclosure but cannot determine ev
 
 ## Color Legend
 
-Color supplements the visible labels; it is never the only indication of meaning. Chrome DevTools automatically adapts the actual shades for light and dark themes.
+Color supplements the visible labels; it is never the only indication of meaning. Chromium DevTools automatically adapts the actual shades for light and dark themes.
 
 | Visual category | Meaning |
 | --- | --- |
@@ -149,17 +163,21 @@ SAML HTTP Redirect binding values are Base64-encoded raw DEFLATE payloads. Chrom
 
 ## Files
 
-- Root runtime files are the canonical extension source. Do not edit files under `dist/` directly.
+- Root runtime files are the canonical extension source. Do not edit files under `dist/` or `dist-edge/` directly.
+- `browser-config.js` supplies the Chrome profile; `edge/browser-config.js` supplies the Microsoft Edge profile.
 - `manifest.json` declares the MV3 DevTools extension.
 - `devtools.html` and `devtools.js` register the DevTools panel.
 - `panel.html`, `panel.css`, and `panel.js` implement the panel UI and capture logic.
 - `scripts/build-dist.cjs` deterministically regenerates `dist/` from the approved root files and icons.
+- `scripts/build-edge-dist.cjs` deterministically regenerates `dist-edge/` from shared runtime files and the Edge profile.
+- `scripts/package-edge.cjs` builds and verifies the Microsoft Edge Add-ons submission ZIP.
 - `scripts/test-flow-analysis.cjs` verifies OAM/SAML regressions, WNA success and NTLM fallback, consecutive WNA attempts, OIDC state correlation and mismatches, nested OIDC transactions, sanitized correlation aliases, and selected-request evidence rendering.
 
 After changing extension code, regenerate and verify the installable directory:
 
 ```bash
 npm run build
+npm run build:edge
 npm test
 ```
 
@@ -169,6 +187,8 @@ Use `npm run check:dist` in automation or before committing to confirm that `dis
 
 - `STORE_LISTING.md` contains the approved Chrome Web Store description, declarations, screenshot captions, and YouTube metadata.
 - `CHROME_WEB_STORE_PUBLISHING.md` contains the release and review workflow.
+- `EDGE_STORE_LISTING.md` contains the Microsoft Edge Add-ons description, declarations, search terms, and screenshot captions.
+- `MICROSOFT_EDGE_ADDONS_PUBLISHING.md` contains the Edge packaging, sideload, Partner Center, and certification workflow.
 - `store-assets/build_marketing_assets.cjs` deterministically regenerates sanitized screenshots and promotional tiles from the real panel code.
 - `store-assets/video/create_promo_video.swift` regenerates the YouTube-ready product video.
 

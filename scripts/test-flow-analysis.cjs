@@ -101,6 +101,8 @@ const panelMarkup = fs.readFileSync(path.join(__dirname, "..", "panel.html"), "u
 const panelStyles = fs.readFileSync(path.join(__dirname, "..", "panel.css"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest.json"), "utf8"));
 const devtoolsSource = fs.readFileSync(path.join(__dirname, "..", "devtools.js"), "utf8");
+const chromeBrowserProfile = fs.readFileSync(path.join(__dirname, "..", "browser-config.js"), "utf8");
+const edgeBrowserProfile = fs.readFileSync(path.join(__dirname, "..", "edge", "browser-config.js"), "utf8");
 assert.equal(manifest.name, "Enterprise Authentication Flow Inspector");
 assert.ok(manifest.description.length <= 132);
 assert.match(manifest.description, /Troubleshoot SAML/u);
@@ -111,7 +113,11 @@ assert.match(panelMarkup, /<title>Enterprise Authentication Flow Inspector<\/tit
 assert.match(panelMarkup, /data-workspace-mode="traffic">Traffic Inspector</u);
 assert.match(panelMarkup, /data-workspace-mode="flow">Flow Analysis</u);
 assert.match(panelMarkup, /data-workspace-mode="netlog">NetLog Analysis</u);
+assert.ok(panelMarkup.indexOf('src="browser-config.js"') < panelMarkup.indexOf('src="panel.js"'));
 assert.match(panelMarkup, /Chromium NetLog dump/u);
+assert.match(chromeBrowserProfile, /netExportUrl: "chrome:\/\/net-export"/u);
+assert.match(edgeBrowserProfile, /browserName: "Microsoft Edge"/u);
+assert.match(edgeBrowserProfile, /netExportUrl: "edge:\/\/net-export"/u);
 assert.doesNotMatch(panelMarkup, /data-tab="flowAnalysis"/u);
 assert.match(panelMarkup, /Export sanitized data/u);
 assert.match(panelMarkup, /Export Assessment/u);
@@ -560,6 +566,7 @@ assert.equal(evaluate("oidcTokenTimeCheck(testFutureIatClaims).level"), "fail");
 assert.match(evaluate("oidcTokenTimeCheck(testFutureIatClaims).message"), /issued-at time is unexpectedly in the future/u);
 assert.equal(evaluate("formatCaptureSourceLabel('Imported file: customer-x509-login.har')"), "Imported: customer-x509-login.har");
 assert.equal(evaluate("formatCaptureSourceLabel('Chrome DevTools Network HAR')"), "Loaded: Network HAR");
+assert.equal(evaluate("formatCaptureSourceLabel('Microsoft Edge DevTools Network HAR')"), "Loaded: Network HAR");
 assert.equal(evaluate("formatCaptureSourceLabel('Live DevTools traffic')"), "");
 
 context.testDecodedJwt = {

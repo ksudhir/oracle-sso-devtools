@@ -49,8 +49,8 @@
           <p class="eyebrow dark">Version 3.0.0</p>
           <h1>Documentation</h1>
           <p>
-            Enterprise Authentication Flow Inspector is a Manifest V3 Chrome DevTools extension for
-            investigating browser-visible authentication, SSO, federation and authorization traffic.
+            Enterprise Authentication Flow Inspector is a Manifest V3 DevTools extension for Google Chrome and
+            Microsoft Edge that investigates browser-visible authentication, SSO, federation and authorization traffic.
           </p>
           <div class="doc-callout">
             <strong>New to the extension?</strong>
@@ -65,6 +65,25 @@
             automatically after installation.
           </p>
           <p><a class="button button-primary" href="https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha" target="_blank" rel="noopener">Add to Chrome</a></p>
+
+          <h2 id="edge">Install in Microsoft Edge</h2>
+          <p>
+            The Edge package uses the same analyzer and an Edge-specific profile for DevTools labels,
+            <code>edge://net-export</code> guidance, and future Microsoft Edge Add-ons linking.
+          </p>
+          <ol>
+            <li>Download or clone the project from GitHub.</li>
+            <li>Run <code>npm run build:edge</code> from the repository root, or use a reviewed release that already contains <code>dist-edge</code>.</li>
+            <li>Open <code>edge://extensions</code> in Microsoft Edge.</li>
+            <li>Enable <strong>Developer mode</strong> and select <strong>Load unpacked</strong>.</li>
+            <li>Choose the project <code>dist-edge</code> directory.</li>
+            <li>Navigate to an ordinary HTTP(S) page, open Microsoft Edge DevTools, and select <strong>Auth Flow Inspector</strong> from the Activity Bar or <strong>More tools</strong>.</li>
+          </ol>
+          <div class="doc-callout">
+            <strong>Microsoft Edge Add-ons status</strong>
+            The Edge-compatible package is ready for Partner Center submission. A public Add-ons link will be
+            added here after Microsoft approves and publishes the listing.
+          </div>
 
           <h3>Local developer installation</h3>
           <ol>
@@ -154,7 +173,7 @@
 
           <h3>Capture and inspect a Chromium NetLog</h3>
           <ol>
-            <li>Open <code>chrome://net-export</code> in Chrome and choose <strong>Start Logging to Disk</strong>.</li>
+            <li>Open <code>chrome://net-export</code> in Chrome or <code>edge://net-export</code> in Microsoft Edge and choose <strong>Start Logging to Disk</strong>.</li>
             <li>Reproduce one authentication or connection problem, return to the Net Export page, and stop logging.</li>
             <li>Open any ordinary HTTP(S) page, open DevTools, and select <strong>Auth Flow Inspector</strong>.</li>
             <li>Choose <strong>Import File</strong> and select the saved NetLog JSON file.</li>
