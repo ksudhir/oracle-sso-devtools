@@ -13,7 +13,7 @@ This guide covers publishing and updating **Enterprise Authentication Flow Inspe
 
 Manifest summary:
 
-> Troubleshoot and correlate authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Entra ID.
+> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
 
 ## 1. Prepare the Google Developer Account
 
@@ -34,9 +34,11 @@ Manifest summary:
 7. Open a normal browser tab and then open DevTools.
 8. Confirm that the **Auth Flow Inspector** panel appears.
 9. Test live capture, Start/Stop capture, filters, HAR import/export, Flow Analysis with OAM/WNA details and ECID/RID, SAML decoding, cookies, Kerberos / X.509, OAuth Token, and OIDC Details.
-10. Check DevTools and `chrome://extensions` for errors.
+10. Import `demo-data/chromium-netlog-auth-demo.json` and confirm that **NetLog Analysis** shows categorized findings, source timelines, raw parameters, authentication tracing, Kerberos/NTLM classification, and contextual actions.
+11. Exercise **Trace TLS connection** plus at least one DNS, proxy, socket, HTTP, HTTP/2, or QUIC investigation when corresponding sample evidence is available.
+12. Check DevTools and `chrome://extensions` for errors.
 
-Test both a live authentication flow and the supplied HAR-import workflow before every release.
+Test a live authentication flow, the supplied HAR-import workflow, and the supplied Chromium NetLog workflow before every release.
 
 ## 3. Review the Manifest
 
@@ -93,7 +95,7 @@ Use the following title:
 
 Use the package summary:
 
-> Troubleshoot and correlate authentication flows across SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, and Entra ID.
+> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
 
 Use the complete approved copy in `STORE_LISTING.md` for the full description, screenshot captions, single-purpose statement, permission justification, remote-code declaration, and YouTube metadata.
 
@@ -121,6 +123,16 @@ Recommended committed screenshots:
 - `store-assets/screenshots/04-wna-ntlm-x509-auth.png`
 - `store-assets/screenshots/05-netlog-kerberos-analysis.jpg`
 
+Use the fifth screenshot in every release that includes NetLog functionality. Its caption should explicitly mention:
+
+- Chromium NetLog analysis
+- Negotiate challenge and retry tracing
+- Kerberos versus NTLM client-token classification
+- Final HTTP outcome
+- Recommended next check
+
+The full description must retain the dedicated **Chromium NetLog authentication and connection diagnostics** section from `STORE_LISTING.md`. Do not reduce NetLog to a generic “JSON import” statement; it is a primary workspace with protocol-aware investigation tools.
+
 Make sure screenshots contain no real customer names, hostnames, tokens, cookies, email addresses, certificate data, or other confidential information.
 
 ## 7. Complete Privacy Practices
@@ -141,7 +153,7 @@ Privacy-policy URL:
 
 > https://ksudhir.github.io/oracle-sso-devtools/privacy/
 
-Answer every data-use question according to the extension's actual behavior. The panel can process browsing activity, URLs, request and response headers, cookies, authentication information, and imported HAR content. Google requires disclosure of handled user data even when it is processed only locally and is not transmitted to the developer or a third party.
+Answer every data-use question according to the extension's actual behavior. The panel can process browsing activity, URLs, request and response headers, cookies, authentication information, imported HAR content, Inspector JSON exports, and Chromium NetLog files. NetLog can contain URLs, hostnames, headers, cookies, authentication tokens, proxy details, certificate information, and other sensitive network evidence. Google requires disclosure of handled user data even when it is processed only locally and is not transmitted to the developer or a third party.
 
 The dashboard declarations, store description, privacy policy, and extension behavior must agree. Do not claim that the extension handles no data merely because processing occurs locally.
 
@@ -166,10 +178,13 @@ Explain to the reviewer how to find and test the extension:
 > 3. Select the Auth Flow Inspector panel. It may appear under the DevTools overflow menu if the window is narrow.
 > 4. Browse an authentication flow, use Import File to load a sanitized HAR or panel JSON export, or import `demo-data/chromium-netlog-auth-demo.json`.
 > 5. Use Traffic Inspector for Request, Response, Cookies, Kerberos / X.509, SAML XML, SAML Details, OAuth Token, and OIDC Details. Switch to Flow Analysis for correlated attempts and recommended actions.
-> 6. For the NetLog demo, open the authentication finding and select Trace exchange. Review the challenge, client-token classification, retries, final HTTP outcome, and recommended next check. Token values are not displayed.
-> 7. The extension processes inspected and imported traffic locally and does not require an account or external service.
+> 6. Switch to NetLog Analysis. Review the summary counters and categorized Auth, DNS, Proxy, TLS, Sockets, HTTP, HTTP/2, and QUIC findings, then select a source to inspect its event timeline and raw parameters.
+> 7. Open the authentication finding and select Trace exchange. Review the server challenge, browser response, Kerberos/NTLM/undetermined classification, retries, final HTTP outcome, and recommended next check. Reusable token values are not displayed.
+> 8. Open a TLS finding and select Trace TLS connection. Review endpoint setup, handshake and certificate evidence, protocol negotiation, connection reuse or fallback, and the final outcome.
+> 9. Open a DNS, proxy, socket, HTTP, HTTP/2, or QUIC finding and use its contextual Investigate action to see linked sources, related events, and category-specific next actions.
+> 10. The extension processes inspected and imported traffic locally and does not require an account or external service.
 
-Provide only sanitized test data. Never upload a HAR containing real credentials, session cookies, bearer tokens, SAML assertions, personal data, or internal hostnames.
+Provide only sanitized test data. Never upload a HAR or NetLog containing real credentials, session cookies, bearer tokens, authentication tokens, SAML assertions, personal data, certificate material, proxy details, or internal hostnames.
 
 ## 10. Submit for Review
 
@@ -198,8 +213,9 @@ Publishing choices:
 3. Install the Web Store version in a clean Chrome profile.
 4. Open DevTools and verify that the Auth Flow Inspector panel loads.
 5. Test capture, filtering, HAR import, Flow Analysis, SAML decoding, cookie tables, Kerberos / X.509, OAuth Token, and OIDC Details correlation.
-6. Save and share the public listing URL.
-7. Monitor reviews, support email, crash reports, policy notices, and publisher notifications.
+6. Import the sanitized NetLog demo and verify categorized findings, Trace exchange, Trace TLS connection, contextual finding actions, source timelines, and raw event parameters.
+7. Save and share the public listing URL.
+8. Monitor reviews, support email, crash reports, policy notices, and publisher notifications.
 
 ## 13. Publish a Future Update
 
@@ -228,6 +244,8 @@ Uploading an update does not immediately replace the currently published version
 - [ ] ZIP has `manifest.json` at its root
 - [ ] ZIP contains no `.DS_Store`, secrets, HAR files, or private keys
 - [ ] Screenshots and promo images contain no confidential data
+- [ ] Store description contains the dedicated Chromium NetLog diagnostics section
+- [ ] Fifth screenshot clearly demonstrates NetLog authentication tracing
 - [ ] Store listing is accurate
 - [ ] Single-purpose statement is accurate
 - [ ] Data-use disclosures match local processing behavior
@@ -238,7 +256,11 @@ Uploading an update does not immediately replace the currently published version
 - [ ] Reviewer instructions added
 - [ ] Automatic or deferred publishing choice confirmed
 - [ ] Web Store installation tested after publication
-- [ ] HAR/JSON import and NetLog Trace exchange tested after publication
+- [ ] NetLog categorized findings and raw source timeline tested
+- [ ] NetLog Trace exchange and Kerberos/NTLM classification tested
+- [ ] NetLog Trace TLS connection tested
+- [ ] Contextual DNS, proxy, socket, HTTP, HTTP/2, or QUIC investigation tested
+- [ ] HAR/JSON/NetLog import tested after publication
 
 ## Official References
 
