@@ -1,7 +1,7 @@
 {
   "product": "Enterprise Authentication & NetLog Inspector",
   "browser": "Microsoft Edge",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "reviewStatus": "partner-center-ready",
   "copySource": "../../EDGE_STORE_LISTING.md",
   "assets": {

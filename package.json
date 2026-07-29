@@ -1,6 +1,6 @@
 {
   "name": "authentication-flow-inspector",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": true,
   "license": "MIT",
   "description": "Chromium DevTools extension for troubleshooting browser-visible authentication flows and NetLog evidence.",

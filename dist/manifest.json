@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Enterprise Authentication & NetLog Inspector",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.",
   "devtools_page": "devtools.html",
   "permissions": [],
