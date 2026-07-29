@@ -38,13 +38,16 @@ Enterprise Authentication Flow Inspector adds a focused authentication troublesh
 - Correlate challenge, retry, client authorization, and final HTTP outcome.
 - Identify OAM WNA and X.509 credential-collection endpoints and forwarded certificate headers.
 
-### Focused Chromium NetLog analysis
+### Chromium NetLog authentication and connection diagnostics
 
-- Import JSON dumps captured from `edge://net-export`.
-- Classify authentication, DNS, proxy, TLS, socket, HTTP, HTTP/2, and QUIC findings.
-- Trace authentication challenges and retries through related NetLog sources.
-- Trace TLS connection setup, handshake, certificate validation, protocol negotiation, reuse, and fallback.
-- Open a contextual investigation for every diagnostic finding with related evidence and recommended next actions.
+- Import NetLog JSON captured from `edge://net-export` and analyze it locally in a dedicated **NetLog Analysis** workspace.
+- Start with categorized findings for authentication, DNS, proxy, TLS, sockets, HTTP, HTTP/2, and QUIC instead of manually searching a large raw event dump.
+- Follow linked Chromium sources and event timelines while retaining unknown fields as expandable raw evidence.
+- Open **Trace exchange** for HTTP authentication evidence to follow the server challenge, browser authorization, retries, continuation, and final HTTP outcome.
+- Classify browser-visible Negotiate client-token evidence as Kerberos, NTLM fallback, undetermined SPNEGO, challenge only, or redacted using NTLMSSP, Kerberos mechanism OID, and AP-REQ indicators. Reusable token values remain hidden.
+- Open **Trace TLS connection** to review endpoint setup, handshake events, certificate-validation evidence, TLS version, cipher, key-exchange group, ALPN negotiation, connection reuse, QUIC fallback, and the final visible outcome.
+- Use a contextual investigation action on every DNS, proxy, socket, HTTP, HTTP/2, QUIC, and uncategorized finding to isolate related evidence and receive category-specific next actions.
+- Distinguish missing or redacted browser evidence from a confirmed success or failure; the analyzer does not invent fields that the NetLog did not capture.
 
 ### Local processing and scope
 
