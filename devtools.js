@@ -1,5 +1,5 @@
 chrome.devtools.panels.create(
-  "Auth Flow Inspector",
+  "Auth & NetLog Inspector",
   "icons/icon48.png",
   "panel.html"
 );

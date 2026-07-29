@@ -3295,7 +3295,7 @@ function renderNetLogCaptureGuide(expanded = false) {
     `<section>`,
     `<h3>4. Import and analyze</h3>`,
     `<ol>`,
-    `<li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth Flow Inspector</strong>.</li>`,
+    `<li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth & NetLog Inspector</strong>.</li>`,
     `<li>Choose <strong>Import File</strong> and select the saved JSON file.</li>`,
     `<li>Start with <strong>Issues</strong>, then inspect Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>`,
     `<li>For an authentication finding, choose <strong>Trace exchange</strong>. The browser response is classified as Confirmed Kerberos, Confirmed NTLM fallback, Undetermined SPNEGO, Challenge only, or Token redacted/not captured when the available NetLog evidence permits it.</li>`,
@@ -3927,7 +3927,7 @@ function renderAbout() {
     `<div class="samlInfo">`,
     `<h3 class="samlInfoTitle">About</h3>`,
     `<div class="samlInfoGrid">`,
-    renderInfoCard("Enterprise Authentication Flow Inspector", [
+    renderInfoCard("Enterprise Authentication & NetLog Inspector", [
       ["Created by", "Sudhir Kulkarni"],
       ["Contact", "ksudhir@gmail.com"],
       ["Browser package", browserProfile.browserName],
@@ -6461,7 +6461,7 @@ function buildAssessmentMarkdown(flow, analysis, options = {}) {
     ]),
     "",
     "---",
-    "Generated locally by Enterprise Authentication Flow Inspector."
+    "Generated locally by Enterprise Authentication & NetLog Inspector."
   );
 
   return `${lines.join("\n").replace(/\n{3,}/gu, "\n\n").trim()}\n`;

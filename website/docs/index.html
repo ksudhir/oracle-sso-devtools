@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Installation and usage documentation for Enterprise Authentication Flow Inspector." />
+    <meta name="description" content="Installation and usage documentation for Enterprise Authentication &amp; NetLog Inspector." />
     <meta name="theme-color" content="#0b1218" />
     <link rel="icon" href="../assets/icon128.png" />
     <link rel="stylesheet" href="../styles.css" />
-    <title>Documentation | Enterprise Authentication Flow Inspector</title>
+    <title>Documentation | Enterprise Authentication &amp; NetLog Inspector</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+      <a class="brand" href="../" aria-label="Enterprise Authentication &amp; NetLog Inspector home">
         <img src="../assets/icon128.png" alt="" width="40" height="40" />
-        <span>Auth Flow Inspector</span>
+        <span>Auth &amp; NetLog Inspector</span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
@@ -49,7 +49,7 @@
           <p class="eyebrow dark">Version 3.0.0</p>
           <h1>Documentation</h1>
           <p>
-            Enterprise Authentication Flow Inspector is a Manifest V3 DevTools extension for Google Chrome and
+            Enterprise Authentication &amp; NetLog Inspector is a Manifest V3 DevTools extension for Google Chrome and
             Microsoft Edge that investigates browser-visible authentication, SSO, federation and authorization traffic.
           </p>
           <div class="doc-callout">
@@ -77,7 +77,7 @@
             <li>Open <code>edge://extensions</code> in Microsoft Edge.</li>
             <li>Enable <strong>Developer mode</strong> and select <strong>Load unpacked</strong>.</li>
             <li>Choose the project <code>dist-edge</code> directory.</li>
-            <li>Navigate to an ordinary HTTP(S) page, open Microsoft Edge DevTools, and select <strong>Auth Flow Inspector</strong> from the Activity Bar or <strong>More tools</strong>.</li>
+            <li>Navigate to an ordinary HTTP(S) page, open Microsoft Edge DevTools, and select <strong>Auth &amp; NetLog Inspector</strong> from the Activity Bar or <strong>More tools</strong>.</li>
           </ol>
           <div class="doc-callout">
             <strong>Microsoft Edge Add-ons status</strong>
@@ -92,7 +92,7 @@
             <li>Enable <strong>Developer mode</strong>.</li>
             <li>Select <strong>Load unpacked</strong>.</li>
             <li>Choose the project <code>dist</code> directory.</li>
-            <li>Navigate to a normal <code>http://</code> or <code>https://</code> page, open DevTools, and select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Navigate to a normal <code>http://</code> or <code>https://</code> page, open DevTools, and select <strong>Auth &amp; NetLog Inspector</strong>.</li>
           </ol>
 
           <h2 id="offline">Install on an offline computer</h2>
@@ -114,7 +114,7 @@
             <li>Enable <strong>Developer mode</strong>.</li>
             <li>Select <strong>Load unpacked</strong>.</li>
             <li>Select the extracted project <code>dist</code> directory, not the ZIP file or repository root.</li>
-            <li>Navigate to a normal <code>http://</code> or <code>https://</code> page, open DevTools, and select <strong>Auth Flow Inspector</strong>. Check the DevTools overflow menu if the panel is hidden.</li>
+            <li>Navigate to a normal <code>http://</code> or <code>https://</code> page, open DevTools, and select <strong>Auth &amp; NetLog Inspector</strong>. Check the DevTools overflow menu if the panel is hidden.</li>
           </ol>
           <div class="doc-callout">
             <strong>Offline updates are manual</strong>
@@ -141,7 +141,7 @@
           <ol>
             <li>Navigate to the normal application page that will begin the authentication attempt.</li>
             <li>Open DevTools before beginning the authentication attempt.</li>
-            <li>Select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Select <strong>Auth &amp; NetLog Inspector</strong>.</li>
             <li>Confirm that capture is running.</li>
             <li>Perform the login or reproduce the failure in the inspected tab.</li>
             <li>Stop capture when the relevant application return or failure is visible.</li>
@@ -162,7 +162,7 @@
             <strong>Opening the panel for offline analysis</strong>
             Even when analyzing a HAR from another system, Chrome still requires the DevTools extension to be
             hosted by an inspectable tab. Open any ordinary <code>http://</code> or <code>https://</code> page,
-            open DevTools, select <strong>Auth Flow Inspector</strong>, and then choose <strong>Import File</strong>.
+            open DevTools, select <strong>Auth &amp; NetLog Inspector</strong>, and then choose <strong>Import File</strong>.
             The open webpage does not need to match any host in the HAR.
           </div>
           <ul>
@@ -175,7 +175,7 @@
           <ol>
             <li>Open <code>chrome://net-export</code> in Chrome or <code>edge://net-export</code> in Microsoft Edge and choose <strong>Start Logging to Disk</strong>.</li>
             <li>Reproduce one authentication or connection problem, return to the Net Export page, and stop logging.</li>
-            <li>Open any ordinary HTTP(S) page, open DevTools, and select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Open any ordinary HTTP(S) page, open DevTools, and select <strong>Auth &amp; NetLog Inspector</strong>.</li>
             <li>Choose <strong>Import File</strong> and select the saved NetLog JSON file.</li>
             <li>Open <strong>NetLog Analysis</strong>. Start with <strong>Issues</strong>, then inspect Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>
             <li>Select a source to isolate its timeline and expand an event to inspect all raw parameters.</li>
@@ -285,7 +285,7 @@
 
     <footer class="site-footer">
       <div class="section-inner footer-inner">
-        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication &amp; NetLog Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
         <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../getting-started/">Getting Started</a><a href="../tutorials/">Tutorials</a><a href="../privacy/">Privacy</a><a href="https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha" target="_blank" rel="noopener">Chrome Web Store</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
       </div>
     </footer>

@@ -103,13 +103,13 @@ const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "manifest
 const devtoolsSource = fs.readFileSync(path.join(__dirname, "..", "devtools.js"), "utf8");
 const chromeBrowserProfile = fs.readFileSync(path.join(__dirname, "..", "browser-config.js"), "utf8");
 const edgeBrowserProfile = fs.readFileSync(path.join(__dirname, "..", "edge", "browser-config.js"), "utf8");
-assert.equal(manifest.name, "Enterprise Authentication Flow Inspector");
+assert.equal(manifest.name, "Enterprise Authentication & NetLog Inspector");
 assert.ok(manifest.description.length <= 132);
 assert.match(manifest.description, /Troubleshoot SAML/u);
-assert.match(manifest.description, /Chromium NetLog evidence/u);
-assert.match(manifest.description, /SAML, OAuth\/OIDC, OAM\/WebGate, Kerberos\/WNA, NTLM, X\.509, Okta, Entra ID/u);
-assert.match(devtoolsSource, /"Auth Flow Inspector"/u);
-assert.match(panelMarkup, /<title>Enterprise Authentication Flow Inspector<\/title>/u);
+assert.match(manifest.description, /Chromium NetLog authentication evidence/u);
+assert.match(manifest.description, /SAML, OAuth\/OIDC, OAM\/WebGate, Kerberos\/WNA, NTLM, X\.509/u);
+assert.match(devtoolsSource, /"Auth & NetLog Inspector"/u);
+assert.match(panelMarkup, /<title>Enterprise Authentication &amp; NetLog Inspector<\/title>/u);
 assert.match(panelMarkup, /data-workspace-mode="traffic">Traffic Inspector</u);
 assert.match(panelMarkup, /data-workspace-mode="flow">Flow Analysis</u);
 assert.match(panelMarkup, /data-workspace-mode="netlog">NetLog Analysis</u);
@@ -430,7 +430,7 @@ assert.deepEqual(
 );
 
 const renderedAbout = evaluate("renderAbout()");
-assert.match(renderedAbout, /Enterprise Authentication Flow Inspector/u);
+assert.match(renderedAbout, /Enterprise Authentication &amp; NetLog Inspector/u);
 assert.match(renderedAbout, /Resources and Support/u);
 for (const resource of ["Product website", "Getting Started", "Documentation", "Privacy Policy", "Source code", "Report an issue"]) {
   assert.match(renderedAbout, new RegExp(`>${resource}<`, "u"));

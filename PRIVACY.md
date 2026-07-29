@@ -1,4 +1,4 @@
-# Privacy Policy for Enterprise Authentication Flow Inspector
+# Privacy Policy for Enterprise Authentication & NetLog Inspector
 
 This extension is designed for local troubleshooting of enterprise authentication, single sign-on, federation, and authorization traffic inside Chrome Developer Tools.
 

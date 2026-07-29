@@ -9,7 +9,7 @@
 5. Enable **Developer mode**.
 6. Select **Load unpacked** and choose the repository's `dist-edge` directory.
 7. Navigate to an ordinary HTTP(S) page before opening DevTools. Browser-protected pages do not expose extension DevTools panels.
-8. Open Microsoft Edge DevTools and select **Auth Flow Inspector** from the Activity Bar or **More tools**.
+8. Open Microsoft Edge DevTools and select **Auth & NetLog Inspector** from the Activity Bar or **More tools**.
 9. Test live capture, HAR import, Inspector JSON import, filters, Flow Analysis, and both assessment exports.
 10. Import `demo-data/chromium-netlog-auth-demo.json` and confirm that **NetLog Analysis** shows categorized findings, source timelines, raw parameters, authentication tracing, Kerberos/NTLM classification, and contextual actions.
 11. Exercise **Trace TLS connection** plus at least one DNS, proxy, socket, HTTP, HTTP/2, or QUIC investigation when corresponding sample evidence is available.
@@ -18,9 +18,9 @@
 ## 2. Create The Partner Center Submission
 
 1. Sign in to [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview).
-2. Reserve the product name **Enterprise Authentication Flow Inspector**.
+2. Reserve the product name **Enterprise Authentication & NetLog Inspector**.
 3. Create a new extension submission.
-4. Upload `enterprise-auth-flow-inspector-edge-v3.0.0.zip`.
+4. Upload `enterprise-auth-netlog-inspector-edge-v3.0.0.zip`.
 5. Complete the properties and store listing with `EDGE_STORE_LISTING.md`.
 6. Provide the public privacy-policy URL:
    `https://ksudhir.github.io/oracle-sso-devtools/privacy/`
@@ -34,7 +34,7 @@ Keep the dedicated **Chromium NetLog authentication and connection diagnostics**
 
 Use notes similar to:
 
-> 1. This is a Manifest V3 DevTools extension with no requested host permissions. Install it, navigate to an ordinary HTTPS page, open Microsoft Edge DevTools, and select Auth Flow Inspector from the Activity Bar or More tools.
+> 1. This is a Manifest V3 DevTools extension with no requested host permissions. Install it, navigate to an ordinary HTTPS page, open Microsoft Edge DevTools, and select Auth & NetLog Inspector from the Activity Bar or More tools.
 > 2. Choose Import File and select a sanitized HAR, Inspector JSON export, or `demo-data/chromium-netlog-auth-demo.json`.
 > 3. For NetLog review, open NetLog Analysis and inspect categorized Auth, DNS, Proxy, TLS, Sockets, HTTP, HTTP/2, and QUIC findings, source timelines, and raw event parameters.
 > 4. Open an authentication finding and choose Trace exchange. Review the server challenge, browser response, Kerberos/NTLM/undetermined classification, retries, final outcome, and recommended next check. Reusable token values are not displayed.

@@ -118,7 +118,7 @@ function panelPage() {
   let html = fs.readFileSync(path.join(root, "panel.html"), "utf8");
   html = html.replace('href="panel.css"', 'href="/panel.css"');
   html = html.replace("</head>", "<style>" + darkCss + "</style></head>");
-  html = html.replace("<body>", `<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>${devToolsLabel}</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth Flow Inspector</span></div>`);
+  html = html.replace("<body>", `<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>${devToolsLabel}</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth &amp; NetLog Inspector</span></div>`);
   html = html.replace('<script src="browser-config.js"></script>', '<script src="/browser-config.js"></script>');
   html = html.replace('<script src="panel.js"></script>', "<script>" + mock + '</script><script src="/panel.js"></script>');
   return html;
@@ -145,7 +145,7 @@ function promoPage(small) {
     ".proof{position:absolute;right:55px;top:58px;width:540px;height:420px;border:1px solid #34434d;border-radius:8px;overflow:hidden;box-shadow:0 28px 70px rgba(0,0,0,.5);transform:rotate(-1deg)}.proof img{width:100%;height:100%;object-fit:cover;object-position:46% 50%}" +
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
     `</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">${promoLabel}</div></div>` +
-    "<h1>" + (small ? "Enterprise Authentication Flow Inspector" : "See the complete authentication flow") + "</h1><p>" +
+    "<h1>" + (small ? "Enterprise Authentication &amp; NetLog Inspector" : "See the complete authentication flow") + "</h1><p>" +
     (small ? "Troubleshoot browser-visible identity flows" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Entra, Kerberos/WNA, X.509, HAR, and Chromium NetLog evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
 }
@@ -323,7 +323,8 @@ async function main() {
     [3, "Request", "01-complete-sso-traffic.png"],
     [2, "SAML Details", "02-saml-federation-analysis.png"],
     [1, "Flow Analysis", "03-oidc-flow-analysis.png", "oidc"],
-    [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"]
+    [5, "Flow Analysis", "04-wna-ntlm-x509-auth.png", "wna", ".wnaFlowDetails > summary"],
+    [8, "Flow Analysis", "05-oam-webgate-diagnostics.png", "oam", ".oamFlowDetails > summary"]
   ];
   for (const [row, tab, filename, protocol, detailsSelector] of shots) {
     await page.goto("http://127.0.0.1:" + port + "/panel");
@@ -364,6 +365,19 @@ async function main() {
     const output = path.join(screenshotDir, filename);
     await page.screenshot({ path: output });
     await flatten(output);
+  }
+  if (!isEdge) {
+    const websiteAssetDir = path.join(root, "website", "assets");
+    const websiteCopies = new Map([
+      ["01-complete-sso-traffic.png", "traffic-inspector.png"],
+      ["02-saml-federation-analysis.png", "saml-analysis.png"],
+      ["03-oidc-flow-analysis.png", "oidc-analysis.png"],
+      ["04-wna-ntlm-x509-auth.png", "wna-x509-analysis.png"],
+      ["05-oam-webgate-diagnostics.png", "oam-diagnostics.png"]
+    ]);
+    for (const [sourceName, destinationName] of websiteCopies) {
+      fs.copyFileSync(path.join(screenshotDir, sourceName), path.join(websiteAssetDir, destinationName));
+    }
   }
   await sharp(path.join(__dirname, "screenshots", "netlog-http-authentication-trace-dark.jpg"))
     .extend({ top: 40, bottom: 40, left: 0, right: 0, background: "#171a1c" })

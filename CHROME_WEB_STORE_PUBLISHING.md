@@ -1,19 +1,19 @@
 # Chrome Web Store Publishing Guide
 
-This guide covers publishing and updating **Enterprise Authentication Flow Inspector** in the Chrome Web Store.
+This guide covers publishing and updating **Enterprise Authentication & NetLog Inspector** in the Chrome Web Store.
 
 ## Current Package Information
 
-- Extension name: `Enterprise Authentication Flow Inspector`
+- Extension name: `Enterprise Authentication & NetLog Inspector`
 - Version: `3.0.0`
 - Package directory: `dist/`
-- Upload archive: `oracle-sso-devtools-v3.0.0.zip`
+- Upload archive: `enterprise-auth-netlog-inspector-chrome-v3.0.0.zip`
 - Privacy policy: `PRIVACY.md`
 - Public privacy-policy URL: <https://ksudhir.github.io/oracle-sso-devtools/privacy/>
 
 Manifest summary:
 
-> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
+> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
 
 ## 1. Prepare the Google Developer Account
 
@@ -32,7 +32,7 @@ Manifest summary:
 5. Click **Load unpacked**.
 6. Select this project's `dist` directory.
 7. Open a normal browser tab and then open DevTools.
-8. Confirm that the **Auth Flow Inspector** panel appears.
+8. Confirm that the **Auth & NetLog Inspector** panel appears.
 9. Test live capture, Start/Stop capture, filters, HAR import/export, Flow Analysis with OAM/WNA details and ECID/RID, SAML decoding, cookies, Kerberos / X.509, OAuth Token, and OIDC Details.
 10. Import `demo-data/chromium-netlog-auth-demo.json` and confirm that **NetLog Analysis** shows categorized findings, source timelines, raw parameters, authentication tracing, Kerberos/NTLM classification, and contextual actions.
 11. Exercise **Trace TLS connection** plus at least one DNS, proxy, socket, HTTP, HTTP/2, or QUIC investigation when corresponding sample evidence is available.
@@ -59,21 +59,15 @@ The current feature release is version `3.0.0`. For later releases, increase the
 The manifest must be at the root of the ZIP, not inside a `dist` folder. From the project directory, run:
 
 ```bash
-npm run build
 npm test
-cd dist
-zip -r ../oracle-sso-devtools-v3.0.0.zip \
-  manifest.json devtools.html devtools.js \
-  panel.html panel.css panel.js README.md icons \
-  -x '*.DS_Store'
-cd ..
+npm run package:chrome
 ```
 
 Check the package:
 
 ```bash
-unzip -l oracle-sso-devtools-v3.0.0.zip
-unzip -p oracle-sso-devtools-v3.0.0.zip manifest.json
+unzip -l enterprise-auth-netlog-inspector-chrome-v3.0.0.zip
+unzip -p enterprise-auth-netlog-inspector-chrome-v3.0.0.zip manifest.json
 ```
 
 Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screenshots, or store-promotion assets in the extension ZIP.
@@ -82,7 +76,7 @@ Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screensh
 
 1. Open the Chrome Web Store Developer Dashboard.
 2. For the first release, click **New item**.
-3. Upload `oracle-sso-devtools-v3.0.0.zip`.
+3. Upload `enterprise-auth-netlog-inspector-chrome-v3.0.0.zip`.
 4. For an existing item, open it, select **Package**, and click **Upload new package**.
 
 Keep using the same Web Store item for future production releases. Creating another item for the same extension can be treated as repetitive content.
@@ -91,11 +85,11 @@ Keep using the same Web Store item for future production releases. Creating anot
 
 Use the following title:
 
-> Enterprise Authentication Flow Inspector
+> Enterprise Authentication & NetLog Inspector
 
 Use the package summary:
 
-> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
+> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
 
 Use the complete approved copy in `STORE_LISTING.md` for the full description, screenshot captions, single-purpose statement, permission justification, remote-code declaration, and YouTube metadata.
 
@@ -175,7 +169,7 @@ Explain to the reviewer how to find and test the extension:
 
 > 1. Install the extension.
 > 2. Open any browser tab and launch Chrome DevTools.
-> 3. Select the Auth Flow Inspector panel. It may appear under the DevTools overflow menu if the window is narrow.
+> 3. Select the Auth & NetLog Inspector panel. It may appear under the DevTools overflow menu if the window is narrow.
 > 4. Browse an authentication flow, use Import File to load a sanitized HAR or panel JSON export, or import `demo-data/chromium-netlog-auth-demo.json`.
 > 5. Use Traffic Inspector for Request, Response, Cookies, Kerberos / X.509, SAML XML, SAML Details, OAuth Token, and OIDC Details. Switch to Flow Analysis for correlated attempts and recommended actions.
 > 6. Switch to NetLog Analysis. Review the summary counters and categorized Auth, DNS, Proxy, TLS, Sockets, HTTP, HTTP/2, and QUIC findings, then select a source to inspect its event timeline and raw parameters.
@@ -211,7 +205,7 @@ Publishing choices:
 1. If deferred publishing was selected, click **Publish** within 30 days.
 2. Open the public Web Store listing and verify the title, description, screenshots, privacy link, and support information.
 3. Install the Web Store version in a clean Chrome profile.
-4. Open DevTools and verify that the Auth Flow Inspector panel loads.
+4. Open DevTools and verify that the Auth & NetLog Inspector panel loads.
 5. Test capture, filtering, HAR import, Flow Analysis, SAML decoding, cookie tables, Kerberos / X.509, OAuth Token, and OIDC Details correlation.
 6. Import the sanitized NetLog demo and verify categorized findings, Trace exchange, Trace TLS connection, contextual finding actions, source timelines, and raw event parameters.
 7. Save and share the public listing URL.

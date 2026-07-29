@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Step-by-step guide to capturing, inspecting, analyzing, and exporting authentication flows with Enterprise Authentication Flow Inspector." />
+    <meta name="description" content="Step-by-step guide to capturing, inspecting, analyzing, and exporting authentication flows with Enterprise Authentication &amp; NetLog Inspector." />
     <meta name="theme-color" content="#0b1218" />
     <link rel="icon" href="../assets/icon128.png" />
     <link rel="stylesheet" href="../styles.css" />
-    <title>Getting Started | Enterprise Authentication Flow Inspector</title>
+    <title>Getting Started | Enterprise Authentication &amp; NetLog Inspector</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+      <a class="brand" href="../" aria-label="Enterprise Authentication &amp; NetLog Inspector home">
         <img src="../assets/icon128.png" alt="" width="40" height="40" />
-        <span>Auth Flow Inspector</span>
+        <span>Auth &amp; NetLog Inspector</span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
@@ -75,7 +75,7 @@
           <ol>
             <li>Navigate to the application page whose authentication flow you want to inspect. The tab must display a normal <code>http://</code> or <code>https://</code> page before you open DevTools.</li>
             <li>Open Chrome DevTools with <strong>View &gt; Developer &gt; Developer Tools</strong>, the page's <strong>Inspect</strong> command, or the operating-system keyboard shortcut.</li>
-            <li>Select <strong>Auth Flow Inspector</strong> in the DevTools tab strip.</li>
+            <li>Select <strong>Auth &amp; NetLog Inspector</strong> in the DevTools tab strip.</li>
             <li>If it is not visible, open the DevTools double-chevron overflow menu and select it there.</li>
             <li>Keep DevTools attached to the application tab throughout the login attempt. Undocking DevTools can provide more space without changing capture behavior.</li>
           </ol>
@@ -196,7 +196,7 @@
           <h2 id="netlog">8. Investigate a lower-level Chromium network failure</h2>
           <ol>
             <li>Open <code>chrome://net-export</code>, start logging to disk, reproduce one clean failure, and stop logging.</li>
-            <li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth Flow Inspector</strong>.</li>
+            <li>Open DevTools on any ordinary HTTP(S) page and select <strong>Auth &amp; NetLog Inspector</strong>.</li>
             <li>Choose <strong>Import File</strong> and select the saved NetLog JSON file.</li>
             <li>The extension switches to <strong>NetLog Analysis</strong>. Review the summary counts and <strong>Diagnostic findings</strong>.</li>
             <li>Use <strong>Issues</strong> first, then narrow to Auth, DNS, Proxy, TLS, Sockets, HTTP/2, or QUIC.</li>
@@ -226,7 +226,7 @@
 
           <h2 id="troubleshoot">If the panel shows no useful data</h2>
           <ul>
-            <li>If <strong>Auth Flow Inspector</strong> is completely absent, confirm that the inspected tab is showing a normal <code>http://</code> or <code>https://</code> page rather than New Tab or another <code>chrome://</code> page, then close and reopen DevTools.</li>
+            <li>If <strong>Auth &amp; NetLog Inspector</strong> is completely absent, confirm that the inspected tab is showing a normal <code>http://</code> or <code>https://</code> page rather than New Tab or another <code>chrome://</code> page, then close and reopen DevTools.</li>
             <li>Confirm that DevTools is attached to the tab performing the login.</li>
             <li>Open the panel before starting the authentication flow, then reload the protected page.</li>
             <li>Confirm that the button says <strong>Stop capture</strong>, which means capture is currently running.</li>
@@ -251,7 +251,7 @@
 
     <footer class="site-footer">
       <div class="section-inner footer-inner">
-        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication &amp; NetLog Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
         <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../tutorials/">Tutorials</a><a href="../docs/">Documentation</a><a href="../privacy/">Privacy</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
       </div>
     </footer>

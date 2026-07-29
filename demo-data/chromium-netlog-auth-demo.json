@@ -29,7 +29,7 @@
     }
   },
   "clientInfo": {
-    "name": "Enterprise Authentication Flow Inspector demonstration",
+    "name": "Enterprise Authentication & NetLog Inspector demonstration",
     "notes": "Synthetic NetLog-style data. It contains no real credentials, tokens, hosts, or user information."
   },
   "events": [

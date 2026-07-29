@@ -1,6 +1,6 @@
-# Enterprise Authentication Flow Inspector
+# Enterprise Authentication & NetLog Inspector
 
-A clean Manifest V3 Chromium DevTools extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth Flow Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR/JSON import, and focused Chromium NetLog analysis.
+A clean Manifest V3 Chromium DevTools extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth & NetLog Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR/JSON import, and focused Chromium NetLog analysis.
 
 [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 
@@ -17,7 +17,9 @@ For local development and testing:
 3. Click **Load unpacked**.
 4. Select this folder: `oracle-sso-devtools`.
 5. Open DevTools on the tab you want to inspect.
-6. Open the **Auth Flow Inspector** panel before starting the login flow.
+6. Open the **Auth & NetLog Inspector** panel before starting the login flow.
+
+Run `npm run package:chrome` to build and verify the ZIP submitted to the Chrome Web Store.
 
 ## Install In Microsoft Edge
 
@@ -29,7 +31,7 @@ The Microsoft Edge Add-ons package is built from the same runtime and uses an Ed
 4. Select **Load unpacked**.
 5. Choose the generated `dist-edge` directory.
 6. Navigate to an ordinary HTTP(S) page.
-7. Open Microsoft Edge DevTools and select **Auth Flow Inspector** from the Activity Bar or **More tools**.
+7. Open Microsoft Edge DevTools and select **Auth & NetLog Inspector** from the Activity Bar or **More tools**.
 
 Run `npm run package:edge` to create the ZIP submitted to Microsoft Edge Add-ons. See [MICROSOFT_EDGE_ADDONS_PUBLISHING.md](MICROSOFT_EDGE_ADDONS_PUBLISHING.md) for the complete release process.
 
@@ -69,7 +71,7 @@ Run `npm run package:edge` to create the ZIP submitted to Microsoft Edge Add-ons
 - Parses embedded X.509 certificates to show subject, issuer, serial number, issued-on date, expires-on date, SHA-1 thumbprint, and SHA-256 thumbprint.
 - Exports captured traffic as full JSON or as a sanitized JSON copy. Sanitized exports preserve request topology, endpoint paths, status, timing, sizes, header names, cookie names, protocol markers, recognized OAuth/OIDC parameter names, and stable pseudonymous correlation aliases while removing body values, decoded SAML XML, credentials, cookie values, tokens, certificates, real correlation values, deployment hostnames, non-allowlisted header values, and sensitive URL parameter values.
 - Exports the selected correlated login attempt as either a sanitized or full-diagnostic Markdown assessment. Reports include the outcome, validation evidence, prioritized next actions, request timeline, correlation keys, protocol-specific log locations, search guidance, capture limitations, and an explicit data-handling summary.
-- Imports Enterprise Authentication Flow Inspector exports, raw entry arrays, and browser HAR files.
+- Imports Enterprise Authentication & NetLog Inspector exports, raw entry arrays, and browser HAR files.
 - Adds **Load Network HAR** to import entries currently available in the browser DevTools Network HAR model, including HAR files imported into the Network tab when the browser exposes them to DevTools extensions.
 - Imports Chromium NetLog JSON dumps created with `chrome://net-export` in Chrome or `edge://net-export` in Edge into a dedicated **NetLog Analysis** workspace. It reverses numeric Chromium constants when available, groups events by source, classifies authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC evidence, highlights Net errors, and provides focused next actions while preserving unknown event fields.
 - Turns authentication challenge findings into an interactive **Trace exchange** view. It follows Chromium source dependencies and nearby authentication/HTTP evidence, extracts client tokens from nested NetLog headers and authentication fields, and locally checks decoded bytes for NTLMSSP, the Kerberos mechanism OID, or AP-REQ evidence without rendering the token. Confirmed Kerberos, confirmed NTLM fallback, inconclusive SPNEGO, challenge-only, redacted-token, retry, final-outcome, and recommended-next-check states remain visibly distinct.
@@ -170,6 +172,7 @@ SAML HTTP Redirect binding values are Base64-encoded raw DEFLATE payloads. Chrom
 - `panel.html`, `panel.css`, and `panel.js` implement the panel UI and capture logic.
 - `scripts/build-dist.cjs` deterministically regenerates `dist/` from the approved root files and icons.
 - `scripts/build-edge-dist.cjs` deterministically regenerates `dist-edge/` from shared runtime files and the Edge profile.
+- `scripts/package-chrome.cjs` builds and verifies the Chrome Web Store submission ZIP.
 - `scripts/package-edge.cjs` builds and verifies the Microsoft Edge Add-ons submission ZIP.
 - `scripts/test-flow-analysis.cjs` verifies OAM/SAML regressions, WNA success and NTLM fallback, consecutive WNA attempts, OIDC state correlation and mismatches, nested OIDC transactions, sanitized correlation aliases, and selected-request evidence rendering.
 

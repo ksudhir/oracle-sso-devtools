@@ -22,7 +22,7 @@
     "netError": {}
   },
   "clientInfo": {
-    "name": "Enterprise Authentication Flow Inspector TLS reuse demonstration",
+    "name": "Enterprise Authentication & NetLog Inspector TLS reuse demonstration",
     "notes": "Synthetic NetLog-style data. It contains no real credentials, hosts, certificates, or user information."
   },
   "events": [

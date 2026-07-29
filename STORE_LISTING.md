@@ -2,11 +2,11 @@
 
 ## Title
 
-Enterprise Authentication Flow Inspector
+Enterprise Authentication & NetLog Inspector
 
 ## Package Summary
 
-Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
+Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
 
 ## Short Promotional Description
 
@@ -14,7 +14,7 @@ Troubleshoot enterprise authentication, SSO, federation, and Chromium NetLog evi
 
 ## Full Store Description
 
-Enterprise Authentication Flow Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
+Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
 
 ### One panel for the complete browser-visible authentication flow
 
@@ -133,7 +133,7 @@ Troubleshoot SSO, Kerberos & Chromium NetLog in Chrome DevTools
 
 ### Video Description
 
-See how Enterprise Authentication Flow Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
+See how Enterprise Authentication & NetLog Inspector turns Chrome DevTools into a focused enterprise authentication troubleshooting workspace.
 
 The extension helps analyze browser-visible OAM and WebGate traffic, SAML federation, OAuth and OpenID Connect, Okta, Microsoft Entra ID, Kerberos/WNA and NTLM fallback, forwarded X.509 certificates, cookies, redirects, HTTP status, timing, response size, imported HAR sessions, and focused Chromium NetLog evidence.
 

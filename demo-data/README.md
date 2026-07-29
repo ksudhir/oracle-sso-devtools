@@ -2,7 +2,7 @@
 
 ## X.509 Authentication
 
-`x509-authentication-demo.har` is synthetic demonstration data for the Enterprise Authentication Flow Inspector.
+`x509-authentication-demo.har` is synthetic demonstration data for the Enterprise Authentication & NetLog Inspector.
 
 It models this browser-visible sequence:
 
@@ -15,7 +15,7 @@ It models this browser-visible sequence:
 
 ### Import
 
-1. Open Chrome DevTools and select **Auth Flow Inspector**.
+1. Open Chrome DevTools and select **Auth & NetLog Inspector**.
 2. Click **Import File**.
 3. Select `demo-data/x509-authentication-demo.har`.
 4. Open **Traffic Inspector** and select the request containing `/oam/CredCollectServlet/X509`.
@@ -30,7 +30,7 @@ This file contains synthetic data only. It uses reserved `.example` hostnames, f
 
 `chromium-netlog-auth-demo.json` is synthetic Chromium NetLog-style data for demonstrating the **NetLog Analysis** workspace.
 
-1. Open Chrome DevTools and select **Auth Flow Inspector**.
+1. Open Chrome DevTools and select **Auth & NetLog Inspector**.
 2. Click **Import File**.
 3. Select `demo-data/chromium-netlog-auth-demo.json`.
 4. Open the authentication finding and select **Trace exchange**.

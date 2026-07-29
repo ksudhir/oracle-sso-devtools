@@ -1,5 +1,5 @@
 {
-  "product": "Enterprise Authentication Flow Inspector",
+  "product": "Enterprise Authentication & NetLog Inspector",
   "version": "3.0.0",
   "reviewStatus": "store-ready",
   "copySource": "../STORE_LISTING.md",
@@ -57,13 +57,13 @@
       }
     ],
     "video": {
-      "path": "video/sso-federation-inspector-youtube-promo.mp4",
+      "path": "video/enterprise-auth-netlog-inspector-youtube-promo.mp4",
       "width": 1920,
       "height": 1080,
       "durationSeconds": 54,
       "codec": "H.264",
       "metadataSource": "../STORE_LISTING.md",
-      "status": "Source and output updated for NetLog Kerberos/NTLM token classification and five-stage authentication exchange tracing"
+      "status": "Source and output updated for the Enterprise Authentication & NetLog Inspector name, NetLog Kerberos/NTLM classification, and five-stage authentication exchange tracing"
     }
   },
   "generation": {

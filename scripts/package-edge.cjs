@@ -7,7 +7,7 @@ const { spawnSync } = require("node:child_process");
 const projectRoot = path.resolve(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"));
 const distRoot = path.join(projectRoot, "dist-edge");
-const archiveName = `enterprise-auth-flow-inspector-edge-v${packageJson.version}.zip`;
+const archiveName = `enterprise-auth-netlog-inspector-edge-v${packageJson.version}.zip`;
 const archivePath = path.join(projectRoot, archiveName);
 
 run(process.execPath, [path.join(__dirname, "build-edge-dist.cjs")], projectRoot);

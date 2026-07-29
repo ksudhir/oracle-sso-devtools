@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Enterprise Authentication Flow Inspector",
+  "name": "Enterprise Authentication & NetLog Inspector",
   "version": "3.0.0",
-  "description": "Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.",
+  "description": "Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.",
   "devtools_page": "devtools.html",
   "permissions": [],
   "icons": {

@@ -11,14 +11,14 @@
     <link rel="canonical" href="https://ksudhir.github.io/oracle-sso-devtools/tutorials/" />
     <link rel="icon" href="../assets/icon128.png" />
     <link rel="stylesheet" href="../styles.css" />
-    <title>Troubleshooting Tutorials | Enterprise Authentication Flow Inspector</title>
+    <title>Troubleshooting Tutorials | Enterprise Authentication &amp; NetLog Inspector</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Enterprise Authentication Flow Inspector home">
+      <a class="brand" href="../" aria-label="Enterprise Authentication &amp; NetLog Inspector home">
         <img src="../assets/icon128.png" alt="" width="40" height="40" />
-        <span>Auth Flow Inspector</span>
+        <span>Auth &amp; NetLog Inspector</span>
       </a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span class="sr-only">Open navigation</span><span></span><span></span><span></span>
@@ -273,7 +273,7 @@
             <h3>Import and analyze</h3>
             <ol>
               <li>On the analysis computer, navigate to any ordinary <code>http://</code> or <code>https://</code> page before opening DevTools. New Tab and other <code>chrome://</code> pages cannot host the panel.</li>
-              <li>Open DevTools and select <strong>Auth Flow Inspector</strong>. The open page does not need to be related to the imported HAR.</li>
+              <li>Open DevTools and select <strong>Auth &amp; NetLog Inspector</strong>. The open page does not need to be related to the imported HAR.</li>
               <li>Select <strong>Import File</strong> and choose the HAR or panel JSON export. Use <strong>Load Network HAR</strong> only for entries already available in Chrome's Network model.</li>
               <li>Wait for the imported request count, then use protocol filters and Flow Analysis as for live traffic.</li>
               <li>If decoded SAML, bodies, cookies, or token evidence is absent, verify that the source HAR retained request/response headers and content.</li>
@@ -296,7 +296,7 @@
             <ol>
               <li>Open <code>chrome://net-export</code>, start logging to disk, and reproduce one clean authentication or connection failure.</li>
               <li>Return to Net Export and stop logging. Protect the JSON file as sensitive diagnostic evidence.</li>
-              <li>Open DevTools on any ordinary HTTP(S) page, select <strong>Auth Flow Inspector</strong>, and import the file.</li>
+              <li>Open DevTools on any ordinary HTTP(S) page, select <strong>Auth &amp; NetLog Inspector</strong>, and import the file.</li>
             </ol>
             <h3>Use NetLog Analysis</h3>
             <ol>
@@ -411,7 +411,7 @@
 
     <footer class="site-footer">
       <div class="section-inner footer-inner">
-        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication Flow Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
+        <div class="footer-brand"><img src="../assets/icon128.png" alt="" width="36" height="36" /><div><strong>Enterprise Authentication &amp; NetLog Inspector</strong><span>Created by Sudhir Kulkarni</span></div></div>
         <nav aria-label="Footer navigation"><a href="../">Home</a><a href="../getting-started/">Getting Started</a><a href="./">Tutorials</a><a href="../docs/">Documentation</a><a href="../privacy/">Privacy</a><a href="https://github.com/ksudhir/oracle-sso-devtools">GitHub</a></nav>
       </div>
     </footer>

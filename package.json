@@ -9,6 +9,7 @@
     "build:edge": "node scripts/build-edge-dist.cjs",
     "check:dist": "node scripts/build-dist.cjs --check",
     "check:edge": "node scripts/build-edge-dist.cjs --check",
+    "package:chrome": "node scripts/package-chrome.cjs",
     "package:edge": "node scripts/package-edge.cjs",
     "test": "node scripts/test-project.cjs",
     "start": "node server.js"

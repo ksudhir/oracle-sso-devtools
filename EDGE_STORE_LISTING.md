@@ -2,15 +2,15 @@
 
 ## Product Name
 
-Enterprise Authentication Flow Inspector
+Enterprise Authentication & NetLog Inspector
 
 ## Short Description
 
-Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, Okta, Entra ID, and Chromium NetLog evidence.
+Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
 
 ## Full Description
 
-Enterprise Authentication Flow Inspector adds a focused authentication troubleshooting workspace to Microsoft Edge DevTools. It helps identity, middleware, application, and support engineers understand browser-visible exchanges among protected applications, access gateways, identity providers, service providers, authorization servers, and Oracle Access Manager or WebGate deployments.
+Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting workspace to Microsoft Edge DevTools. It helps identity, middleware, application, and support engineers understand browser-visible exchanges among protected applications, access gateways, identity providers, service providers, authorization servers, and Oracle Access Manager or WebGate deployments.
 
 ### Follow the browser-visible authentication flow
 
@@ -109,4 +109,4 @@ Use no more than seven:
 - Screenshots: `store-assets/edge/screenshots/`
 - Small promotional tile: `store-assets/edge/promo/small-promo-tile-440x280.png`
 - Large promotional tile: `store-assets/edge/promo/marquee-promo-tile-1400x560.png`
-- Submission package: `enterprise-auth-flow-inspector-edge-v3.0.0.zip`
+- Submission package: `enterprise-auth-netlog-inspector-edge-v3.0.0.zip`

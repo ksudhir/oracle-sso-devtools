@@ -3,7 +3,7 @@ import AVFoundation
 import CoreVideo
 
 let project = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-let output = project.appendingPathComponent("store-assets/video/sso-federation-inspector-youtube-promo.mp4")
+let output = project.appendingPathComponent("store-assets/video/enterprise-auth-netlog-inspector-youtube-promo.mp4")
 let width = 1920
 let height = 1080
 let fps: Int32 = 24
@@ -20,7 +20,7 @@ struct Scene {
 }
 
 let scenes = [
-    Scene(start: 0, end: 6, eyebrow: "CHROME DEVTOOLS EXTENSION", title: "Enterprise Authentication Flow Inspector", subtitle: "See the complete browser-visible authentication story in one focused panel.", image: nil, accent: NSColor(calibratedRed: 0.31, green: 0.78, blue: 0.96, alpha: 1)),
+    Scene(start: 0, end: 6, eyebrow: "CHROME DEVTOOLS EXTENSION", title: "Enterprise Authentication & NetLog Inspector", subtitle: "See the complete browser-visible authentication story in one focused panel.", image: nil, accent: NSColor(calibratedRed: 0.31, green: 0.78, blue: 0.96, alpha: 1)),
     Scene(start: 6, end: 14, eyebrow: "COMPLETE AUTHENTICATION TRAFFIC", title: "Follow every redirect and exchange", subtitle: "OAM, SAML, Okta, Microsoft Entra, OAuth/OIDC, Kerberos, NTLM, and X.509 in one trace.", image: "store-assets/screenshots/01-complete-sso-traffic.png", accent: NSColor(calibratedRed: 0.25, green: 0.85, blue: 0.67, alpha: 1)),
     Scene(start: 14, end: 22, eyebrow: "SAML FEDERATION", title: "Decode SAML. Understand the deployment.", subtitle: "Inspect bindings, issuer, destination, NameID policy, assertions, attributes, and certificates.", image: "store-assets/screenshots/02-saml-federation-analysis.png", accent: NSColor(calibratedRed: 0.72, green: 0.55, blue: 1.0, alpha: 1)),
     Scene(start: 22, end: 30, eyebrow: "OKTA · MICROSOFT ENTRA · OIDC", title: "Correlate the complete identity flow", subtitle: "Connect provider evidence, authorization, callback, token, UserInfo, discovery, and JWKS traffic with validation signals.", image: "store-assets/screenshots/03-oidc-flow-analysis.png", accent: NSColor(calibratedRed: 0.38, green: 0.88, blue: 0.76, alpha: 1)),
