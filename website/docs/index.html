@@ -142,6 +142,7 @@
             <li>Navigate to the normal application page that will begin the authentication attempt.</li>
             <li>Open DevTools before beginning the authentication attempt.</li>
             <li>Select <strong>Auth &amp; NetLog Inspector</strong>.</li>
+            <li>For a wider workspace, use the DevTools <strong>three-dot menu &gt; Dock side &gt; Undock into separate window</strong>. You can also press <kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> on macOS or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> on Windows/Linux.</li>
             <li>Confirm that capture is running.</li>
             <li>Perform the login or reproduce the failure in the inspected tab.</li>
             <li>Stop capture when the relevant application return or failure is visible.</li>
@@ -150,6 +151,11 @@
             Start and stop control processing without clearing the existing trace. Use <strong>Clear</strong>
             only when you want to begin a separate investigation.
           </p>
+          <div class="doc-callout">
+            <strong>Undocking does not change the capture target</strong>
+            The separate DevTools window still inspects the browser tab where DevTools was opened. Keep both that
+            application tab and the DevTools window open throughout the authentication attempt.
+          </div>
 
           <h2 id="import">Import HAR, SAML-tracer JSON, or Chromium NetLog</h2>
           <p>

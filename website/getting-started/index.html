@@ -77,8 +77,19 @@
             <li>Open Chrome DevTools with <strong>View &gt; Developer &gt; Developer Tools</strong>, the page's <strong>Inspect</strong> command, or the operating-system keyboard shortcut.</li>
             <li>Select <strong>Auth &amp; NetLog Inspector</strong> in the DevTools tab strip.</li>
             <li>If it is not visible, open the DevTools double-chevron overflow menu and select it there.</li>
-            <li>Keep DevTools attached to the application tab throughout the login attempt. Undocking DevTools can provide more space without changing capture behavior.</li>
+            <li>Keep DevTools open for the application tab throughout the login attempt.</li>
           </ol>
+          <div class="doc-callout undock-callout">
+            <strong>Recommended: open DevTools in a separate window</strong>
+            <p>Give the request timeline, Flow Analysis, and NetLog evidence the full screen width:</p>
+            <ol>
+              <li>In DevTools, select the <strong>three-dot menu</strong> in the upper-right corner.</li>
+              <li>Under <strong>Dock side</strong>, select <strong>Undock into separate window</strong>.</li>
+              <li>Resize or move the DevTools window, then keep it open while reproducing the login.</li>
+            </ol>
+            <p class="shortcut-row"><span>Keyboard shortcut</span><span><kbd>Command</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> on macOS</span><span><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> on Windows or Linux</span></p>
+            <p class="callout-note">The browser normally remembers this placement. The extension cannot force DevTools to undock, and capture remains attached to the original application tab.</p>
+          </div>
           <div class="doc-callout warning-callout">
             <strong>Why the panel does not appear on a newly opened tab</strong>
             A new Chrome tab initially displays the protected <code>chrome://newtab</code> page. Chrome does not

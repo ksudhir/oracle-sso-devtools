@@ -377,6 +377,14 @@ h3 { font-size: 20px; }
 .doc-content pre code { padding: 0; color: inherit; background: transparent; }
 .doc-callout { margin: 24px 0; padding: 18px 20px; background: #dce8e5; border-left: 3px solid var(--cyan-dark); }
 .doc-callout strong { display: block; margin-bottom: 6px; }
+.doc-callout p { margin: 8px 0 0; }
+.undock-callout ol { margin: 12px 0 0; padding-left: 22px; }
+.undock-callout li + li { margin-top: 6px; }
+.undock-callout li strong { display: inline; margin: 0; }
+.shortcut-row { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding-top: 12px; border-top: 1px solid rgba(19, 81, 82, 0.2); }
+.shortcut-row > span:first-child { font-weight: 700; color: var(--cyan-dark); }
+kbd { display: inline-block; min-width: 24px; padding: 2px 6px; border: 1px solid #8aa5a2; border-bottom-width: 2px; border-radius: 4px; background: #f7fbfa; color: #193536; font: 600 0.82em/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-align: center; }
+.callout-note { color: #365657; font-size: 0.92rem; }
 
 .tutorial-layout { grid-template-columns: 230px minmax(0, 900px); }
 .tutorial-content { min-width: 0; }
