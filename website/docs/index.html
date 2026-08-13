@@ -38,7 +38,7 @@
           <a href="#install">Install</a>
           <a href="#offline">Install offline</a>
           <a href="#capture">Capture traffic</a>
-          <a href="#import">Import HAR/JSON/NetLog</a>
+          <a href="#import">Import Files</a>
           <a href="#inspect">Inspect requests</a>
           <a href="#flows">Flow Analysis</a>
           <a href="#export">Export evidence</a>
@@ -151,12 +151,14 @@
             only when you want to begin a separate investigation.
           </p>
 
-          <h2 id="import">Import HAR, JSON, or Chromium NetLog</h2>
+          <h2 id="import">Import HAR, SAML-tracer JSON, or Chromium NetLog</h2>
           <p>
             Use <strong>Load Network HAR</strong> to read traffic currently available in Chrome's Network panel.
-            Use <strong>Import File</strong> for a HAR file, a panel JSON export, a raw entry array, or a JSON object
-            containing an <code>entries</code> array. The same command recognizes Chromium NetLog JSON dumps and
-            opens them in the dedicated <strong>NetLog Analysis</strong> workspace.
+            Use <strong>Import File</strong> for a HAR file, a panel JSON export, a Firefox SAML-tracer JSON export,
+            a raw entry array, or a JSON object containing an <code>entries</code> array. For SAML-tracer exports,
+            the inspector retains decoded SAML XML supplied by the source file even when its form value was redacted.
+            The same command recognizes Chromium NetLog JSON dumps and opens them in the dedicated
+            <strong>NetLog Analysis</strong> workspace.
           </p>
           <div class="doc-callout">
             <strong>Opening the panel for offline analysis</strong>

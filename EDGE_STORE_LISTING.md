@@ -18,7 +18,7 @@ Enterprise Authentication & NetLog Inspector adds a focused authentication troub
 - Correlate related OAM, SAML, OIDC, and Windows Native Authentication transactions.
 - Review redirects, HTTP status, timing, response size, cookies, headers, and request bodies.
 - Search captured request and response content and filter by protocol.
-- Import HAR files, Inspector JSON exports, or Chromium NetLog dumps for offline troubleshooting.
+- Import HAR files, Inspector JSON exports, Firefox SAML-tracer JSON exports, or Chromium NetLog dumps for offline troubleshooting.
 - Export full or sanitized traffic and Markdown assessment reports.
 
 ### SAML, OAuth, and OpenID Connect

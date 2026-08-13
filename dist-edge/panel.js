@@ -1074,8 +1074,9 @@ async function handleImportSelection() {
       setImportStatus(`Imported ${state.netLog.events.length} NetLog events`);
       return;
     }
-    setImportStatus("Normalizing HAR entries...");
-    setDetailText("Normalizing HAR entries...");
+    const importFormat = isSamlTracerExport(imported) ? "SAML-tracer" : "HAR/JSON";
+    setImportStatus(`Normalizing ${importFormat} entries...`);
+    setDetailText(`Normalizing ${importFormat} entries...`);
     state.netLog = null;
     state.entries = await parseImportedEntries(imported);
     state.captureSource = `Imported file: ${file.name}`;
@@ -1208,6 +1209,10 @@ async function createEntry(request, body, bodyEncoding) {
 }
 
 async function parseImportedEntries(imported) {
+  if (isSamlTracerExport(imported)) {
+    return normalizeSamlTracerEntries(imported.requests, imported.timestamp);
+  }
+
   if (Array.isArray(imported)) {
     return sortEntriesChronologically(await Promise.all(imported.map(normalizeImportedEntry)));
   }
@@ -1220,7 +1225,123 @@ async function parseImportedEntries(imported) {
     return normalizeHarEntries(imported.log.entries);
   }
 
-  throw new Error("Expected an Inspector export, an entries array, a HAR file with log.entries, or a Chromium NetLog dump with constants and events.");
+  throw new Error("Expected an Inspector export, a SAML-tracer JSON export, an entries array, a HAR file with log.entries, or a Chromium NetLog dump with constants and events.");
+}
+
+function isSamlTracerExport(imported) {
+  return Boolean(
+    imported
+    && Array.isArray(imported.requests)
+    && imported.requests.length > 0
+    && imported.requests.every((request) => (
+      request
+      && typeof request === "object"
+      && typeof request.url === "string"
+      && (Array.isArray(request.requestHeaders) || Array.isArray(request.responseHeaders))
+    ))
+  );
+}
+
+async function normalizeSamlTracerEntries(requests, exportTimestamp) {
+  return sortEntriesChronologically(await Promise.all(
+    requests.map((request, index) => normalizeSamlTracerEntry(request, exportTimestamp, index))
+  ));
+}
+
+async function normalizeSamlTracerEntry(request, exportTimestamp, index) {
+  const requestHeaders = normalizeHeaderList(request.requestHeaders);
+  const responseHeaders = normalizeHeaderList(request.responseHeaders);
+  const requestBody = getSamlTracerRequestBody(request);
+  const url = String(request.url || "");
+  const suppliedSaml = String(request.saml || "").trim();
+  const saml = suppliedSaml
+    ? [createSamlTracerMessage(suppliedSaml, request, url)]
+    : await findSamlMessages(url, requestBody, "", requestHeaders, responseHeaders);
+  const responseDate = getFirstHeaderValue(responseHeaders, "date");
+  const capturedAt = normalizeImportedTimestamp(responseDate, exportTimestamp, index);
+  const contentLength = getFirstHeaderValue(responseHeaders, "content-length");
+
+  return {
+    id: crypto.randomUUID(),
+    capturedAt,
+    method: String(request.method || "GET").toUpperCase(),
+    url,
+    status: Number(request.responseStatus) || 0,
+    statusText: normalizeSamlTracerStatusText(request.responseStatusText, request.responseStatus),
+    mimeType: getFirstHeaderValue(responseHeaders, "content-type"),
+    requestHeaders,
+    responseHeaders,
+    requestBody,
+    responseBody: "",
+    responseEncoding: "",
+    durationMs: null,
+    timings: {},
+    responseSizeBytes: normalizeSizeBytes(contentLength),
+    saml,
+    sourceRequestId: request.requestId == null ? "" : String(request.requestId),
+    importFormat: "SAML-tracer"
+  };
+}
+
+function normalizeHeaderList(headers) {
+  return (Array.isArray(headers) ? headers : [])
+    .filter((header) => header && typeof header === "object")
+    .map((header) => ({ name: String(header.name || ""), value: String(header.value || "") }));
+}
+
+function getSamlTracerRequestBody(request) {
+  const postData = String(request.postData || "");
+  if (postData && postData !== "{overwritten}") return postData;
+  if (!Array.isArray(request.post)) return "";
+
+  const params = new URLSearchParams();
+  for (const pair of request.post) {
+    if (!Array.isArray(pair) || !pair.length) continue;
+    params.append(String(pair[0] || ""), String(pair[1] || ""));
+  }
+  return params.toString();
+}
+
+function createSamlTracerMessage(xml, request, url) {
+  const parameter = /<(?:\w+:)?Response\b/iu.test(xml) ? "SAMLResponse" : "SAMLRequest";
+  const postParameters = Array.isArray(request.post) ? request.post : [];
+  const isPost = String(request.method || "").toUpperCase() === "POST"
+    || postParameters.some((pair) => Array.isArray(pair) && pair[0] === parameter);
+  const queryValue = getUrlSearchParams(url).get(parameter) || "";
+
+  return {
+    parameter,
+    value: isPost ? getSamlTracerParameterValue(postParameters, parameter) : queryValue,
+    binding: isPost ? "post" : "redirect",
+    source: "SAML-tracer decoded message",
+    decoded: true,
+    xml: formatXml(xml)
+  };
+}
+
+function getSamlTracerParameterValue(parameters, name) {
+  const pair = parameters.find((candidate) => Array.isArray(candidate) && candidate[0] === name);
+  return pair ? String(pair[1] || "") : "";
+}
+
+function getFirstHeaderValue(headers, name) {
+  const normalizedName = String(name || "").toLowerCase();
+  return (headers || []).find((header) => String(header?.name || "").toLowerCase() === normalizedName)?.value || "";
+}
+
+function normalizeImportedTimestamp(responseDate, exportTimestamp, index) {
+  const candidates = [responseDate, exportTimestamp];
+  for (const candidate of candidates) {
+    const timestamp = Date.parse(String(candidate || ""));
+    if (Number.isFinite(timestamp)) return new Date(timestamp + index).toISOString();
+  }
+  return new Date().toISOString();
+}
+
+function normalizeSamlTracerStatusText(value, status) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return text.replace(new RegExp(`^HTTP\\/\\d(?:\\.\\d)?\\s+${Number(status) || "\\d{3}"}\\s*`, "iu"), "").trim() || text;
 }
 
 function isNetLogDump(imported) {
