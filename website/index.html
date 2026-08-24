@@ -49,7 +49,7 @@
     <main id="main">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
-          <p class="eyebrow">Chrome and Microsoft Edge DevTools extension</p>
+          <p class="eyebrow">Chrome and Microsoft Edge authentication extension</p>
           <h1 id="hero-title">Enterprise Authentication &amp; NetLog Inspector</h1>
           <p class="hero-lede">
             Troubleshoot the browser-visible authentication story, from the first protected-resource
@@ -66,10 +66,10 @@
             <li>Open source</li>
           </ul>
         </div>
-        <div class="hero-visual" aria-label="Traffic Inspector showing authentication requests and response evidence">
+        <div class="hero-visual" aria-label="Offline Viewer showing imported authentication requests and request evidence">
           <img
-            src="./assets/traffic-inspector.png"
-            alt="Enterprise Authentication and NetLog Inspector showing tagged requests and structured request details in Chromium DevTools"
+            src="./assets/offline-viewer.png"
+            alt="Enterprise Authentication and NetLog Inspector Offline Viewer showing imported tagged requests and structured request details"
             width="1280"
             height="800"
           />
@@ -98,7 +98,7 @@
 
           <div class="gallery" data-gallery>
             <div class="gallery-tabs" role="tablist" aria-label="Inspector views">
-              <button role="tab" aria-selected="true" aria-controls="gallery-panel" data-image="./assets/traffic-inspector.png" data-alt="Traffic Inspector with tagged authentication requests" data-caption="Traffic Inspector" data-description="Scan status, timing, size, method, provider and protocol tags while host-specific URL colors preserve redirect context.">Traffic</button>
+              <button role="tab" aria-selected="true" aria-controls="gallery-panel" data-image="./assets/offline-viewer.png" data-alt="Offline Viewer with an imported authentication HAR" data-caption="Standalone Offline Viewer" data-description="Open HAR, Inspector JSON, Firefox SAML-tracer JSON, or Chromium NetLog files from the extension toolbar without opening DevTools.">Offline Viewer</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/saml-analysis.png" data-alt="Decoded SAML federation analysis" data-caption="SAML Details" data-description="Decode SAML messages and surface issuer, destination, bindings, assertions, conditions, signatures, attributes and certificate metadata.">SAML</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/oidc-analysis.png" data-alt="Correlated OIDC flow analysis" data-caption="OIDC Flow Analysis" data-description="Correlate authorization, callback, token and provider evidence with state, nonce, PKCE, audience, issuer and lifetime checks.">OIDC</button>
               <button role="tab" aria-selected="false" aria-controls="gallery-panel" data-image="./assets/wna-x509-analysis.png" data-alt="Kerberos WNA NTLM and X.509 authentication assessment" data-caption="Kerberos / X.509" data-description="Inspect browser-visible Negotiate challenges and classify client tokens using NTLMSSP, Kerberos OID, or AP-REQ evidence alongside repeated 401s, WNA endpoints, and forwarded certificates.">WNA / X.509</button>
@@ -107,10 +107,10 @@
             </div>
             <div id="gallery-panel" class="gallery-panel" role="tabpanel" tabindex="0">
               <figure>
-                <img data-gallery-image src="./assets/traffic-inspector.png" alt="Traffic Inspector with tagged authentication requests" width="1280" height="800" />
+                <img data-gallery-image src="./assets/offline-viewer.png" alt="Offline Viewer with an imported authentication HAR" width="1280" height="800" />
                 <figcaption>
-                  <strong data-gallery-caption>Traffic Inspector</strong>
-                  <span data-gallery-description>Scan status, timing, size, method, provider and protocol tags while host-specific URL colors preserve redirect context.</span>
+                  <strong data-gallery-caption>Standalone Offline Viewer</strong>
+                  <span data-gallery-description>Open HAR, Inspector JSON, Firefox SAML-tracer JSON, or Chromium NetLog files from the extension toolbar without opening DevTools.</span>
                 </figcaption>
               </figure>
             </div>

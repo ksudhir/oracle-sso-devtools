@@ -16,7 +16,7 @@
         "path": "screenshots/01-complete-sso-traffic.png",
         "width": 1280,
         "height": 800,
-        "topic": "Complete browser-visible authentication traffic with Okta and Microsoft Entra provider recognition"
+        "topic": "Standalone Offline Viewer analyzing an imported HAR with complete authentication and provider evidence"
       },
       {
         "path": "screenshots/02-saml-federation-analysis.png",
