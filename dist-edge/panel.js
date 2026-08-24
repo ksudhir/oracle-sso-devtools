@@ -50,6 +50,7 @@ const MIN_REQUEST_PANE_WIDTH = 260;
 const MIN_DETAIL_PANE_WIDTH = 360;
 const DIVIDER_WIDTH = 8;
 const FLOW_NAV_WIDTH_STORAGE_KEY = "oamSamlOauth.flowNavigatorWidth";
+const VIEWER_THEME_STORAGE_KEY = "authInspector.offlineViewerTheme";
 const MIN_FLOW_NAVIGATOR_WIDTH = 220;
 const MIN_FLOW_ASSESSMENT_WIDTH = 320;
 const FLOW_DIVIDER_WIDTH = 7;
@@ -89,6 +90,8 @@ const paneDivider = document.querySelector("#paneDivider");
 const tabButtons = [...document.querySelectorAll(".tab")];
 const toolbarMenus = [...document.querySelectorAll(".toolbarMenu")];
 const runtimeModeLabel = document.querySelector("#runtimeModeLabel");
+const viewerThemeControl = document.querySelector("#viewerThemeControl");
+const viewerThemeSelect = document.querySelector("#viewerThemeSelect");
 
 configureRuntimeMode();
 
@@ -97,9 +100,43 @@ function configureRuntimeMode() {
   document.body?.classList?.add("isOfflineViewer");
   document.title = "Offline Viewer · Enterprise Authentication & NetLog Inspector";
   runtimeModeLabel.hidden = false;
+  viewerThemeControl.hidden = false;
+  applyViewerTheme(readViewerThemePreference());
   captureButton.closest?.(".toolbarGroup")?.setAttribute("hidden", "");
   loadNetworkHarButton.hidden = true;
   toolsMenu.hidden = true;
+}
+
+viewerThemeSelect.addEventListener("change", () => {
+  if (!runtimeCapabilities.offlineViewer) return;
+  applyViewerTheme(viewerThemeSelect.value, true);
+});
+
+function applyViewerTheme(theme, shouldPersist = false) {
+  const normalizedTheme = ["light", "dark"].includes(theme) ? theme : "system";
+  viewerThemeSelect.value = normalizedTheme;
+  if (normalizedTheme === "system") {
+    document.documentElement?.removeAttribute?.("data-theme");
+  } else {
+    document.documentElement?.setAttribute?.("data-theme", normalizedTheme);
+  }
+  if (shouldPersist) persistViewerThemePreference(normalizedTheme);
+}
+
+function readViewerThemePreference() {
+  try {
+    return globalThis.localStorage?.getItem(VIEWER_THEME_STORAGE_KEY) || "system";
+  } catch {
+    return "system";
+  }
+}
+
+function persistViewerThemePreference(theme) {
+  try {
+    globalThis.localStorage?.setItem(VIEWER_THEME_STORAGE_KEY, theme);
+  } catch {
+    // The theme still applies for this tab when persistent storage is unavailable.
+  }
 }
 
 document.addEventListener?.("click", (event) => {

@@ -53,7 +53,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #171a1c;
     --panel: #202427;
     --text: #eef1f2;
@@ -105,6 +105,64 @@
     --json-punctuation: #9aa4ad;
     --danger: #ff9a91;
   }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #171a1c;
+  --panel: #202427;
+  --text: #eef1f2;
+  --muted: #a4adb2;
+  --line: #343b40;
+  --accent: #72c7d4;
+  --accent-soft: #17383f;
+  --saml: #8ab9ff;
+  --saml-bg: #173052;
+  --oam: #ffd36a;
+  --oam-bg: #493813;
+  --webgate: #ffaba5;
+  --webgate-bg: #4c2524;
+  --cookie-oam: #7dd3fc;
+  --cookie-oam-bg: #17384a;
+  --cookie-webgate: #fda4af;
+  --cookie-webgate-bg: #4a1f2a;
+  --cookie-dcc: #c4b5fd;
+  --cookie-dcc-bg: #33265a;
+  --cookie-related: #d1d5db;
+  --cookie-related-bg: #343a40;
+  --ecid: #f0abfc;
+  --ecid-bg: #4a174f;
+  --oauth: #a7e5a3;
+  --oauth-bg: #203d24;
+  --fed: #d6b8ff;
+  --fed-bg: #352550;
+  --kerberos: #99f6e4;
+  --kerberos-bg: #153b37;
+  --auth-challenge: #7dd3fc;
+  --auth-challenge-bg: #17384a;
+  --ntlm: #ff9a91;
+  --ntlm-bg: #4c2524;
+  --x509: #fde68a;
+  --x509-bg: #452f10;
+  --okta: #67e8f9;
+  --okta-bg: #153c46;
+  --entra: #a8c7ff;
+  --entra-bg: #24395f;
+  --xml-tag: #d6b8ff;
+  --xml-name: #8bd3dd;
+  --xml-attr: #ffd166;
+  --xml-value: #9be7b0;
+  --xml-comment: #9aa4ad;
+  --json-key: #d6b8ff;
+  --json-string: #9be7b0;
+  --json-number: #ffd166;
+  --json-literal: #8ab9ff;
+  --json-punctuation: #9aa4ad;
+  --danger: #ff9a91;
 }
 
 * {
@@ -192,6 +250,31 @@ button:hover,
 
 .runtimeModeLabel[hidden] {
   display: none;
+}
+
+.viewerThemeControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.viewerThemeControl select {
+  height: 28px;
+  min-width: 82px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 24px 0 8px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
+.viewerThemeControl select:hover,
+.viewerThemeControl select:focus-visible {
+  border-color: var(--accent);
+  outline: none;
 }
 
 .workspaceModes {

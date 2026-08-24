@@ -42,6 +42,7 @@ Run `npm run package:edge` to create the ZIP submitted to Microsoft Edge Add-ons
 ## Features
 
 - Opens a dedicated **Offline Viewer** from the extension toolbar icon. It analyzes user-selected HAR, Inspector JSON, Firefox SAML-tracer JSON, and Chromium NetLog files without requiring DevTools or a website, while keeping all processing local.
+- Offers persistent **System**, **Light**, and **Dark** themes in Offline Viewer without changing the DevTools panel theme.
 - Shows all traffic captured by DevTools for the active inspected tab.
 - Provides a **Start capture / Stop capture** button to pause or resume processing new network events while keeping existing captured data visible.
 - Hides browser, DevTools, and extension-internal URLs such as `chrome-extension://` by default.
