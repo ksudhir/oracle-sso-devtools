@@ -4,6 +4,8 @@ A clean Manifest V3 Chromium extension for browser-visible enterprise authentica
 
 [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 
+Future enhancement proposals are tracked in [ROADMAP.md](ROADMAP.md).
+
 This is open-source software released under the [MIT License](LICENSE).
 
 ## Install In Chrome
