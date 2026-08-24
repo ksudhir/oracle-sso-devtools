@@ -1,6 +1,6 @@
 # Enterprise Authentication & NetLog Inspector
 
-A clean Manifest V3 Chromium DevTools extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth & NetLog Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR and Firefox SAML-tracer JSON import, and focused Chromium NetLog analysis.
+A clean Manifest V3 Chromium extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth & NetLog Inspector** DevTools panel captures and analyzes live traffic, while the extension toolbar icon opens a separate **Offline Viewer** for HAR, Inspector JSON, Firefox SAML-tracer JSON, and Chromium NetLog files. Both modes inspect OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 evidence with the same analysis engine.
 
 [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 
@@ -18,6 +18,8 @@ For local development and testing:
 4. Select this folder: `oracle-sso-devtools`.
 5. Open DevTools on the tab you want to inspect.
 6. Open the **Auth & NetLog Inspector** panel before starting the login flow.
+
+For offline files, pin the extension and select its toolbar icon. The **Offline Viewer** opens in a normal browser tab without requiring DevTools or an ordinary website first. Choose **Import File** or drop a supported file onto the viewer. Live capture remains available only in the DevTools panel.
 
 Run `npm run package:chrome` to build and verify the ZIP submitted to the Chrome Web Store.
 
@@ -37,6 +39,7 @@ Run `npm run package:edge` to create the ZIP submitted to Microsoft Edge Add-ons
 
 ## Features
 
+- Opens a dedicated **Offline Viewer** from the extension toolbar icon. It analyzes user-selected HAR, Inspector JSON, Firefox SAML-tracer JSON, and Chromium NetLog files without requiring DevTools or a website, while keeping all processing local.
 - Shows all traffic captured by DevTools for the active inspected tab.
 - Provides a **Start capture / Stop capture** button to pause or resume processing new network events while keeping existing captured data visible.
 - Hides browser, DevTools, and extension-internal URLs such as `chrome-extension://` by default.

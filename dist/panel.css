@@ -178,6 +178,22 @@ button:hover,
   background: var(--panel);
 }
 
+.runtimeModeLabel {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.runtimeModeLabel[hidden] {
+  display: none;
+}
+
 .workspaceModes {
   display: flex;
   align-items: end;
@@ -446,7 +462,8 @@ button:disabled {
 }
 
 .shell.isFlowWorkspace,
-.shell.isNetLogWorkspace {
+.shell.isNetLogWorkspace,
+.shell.isOfflineViewerEmpty {
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -457,6 +474,63 @@ button:disabled {
 .shell.isNetLogWorkspace > .paneDivider,
 .shell.isNetLogWorkspace .tabs {
   display: none;
+}
+
+.shell.isOfflineViewerEmpty .requestPane,
+.shell.isOfflineViewerEmpty > .paneDivider,
+.shell.isOfflineViewerEmpty .tabs {
+  display: none;
+}
+
+.shell.isOfflineViewerEmpty .detailPane {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.offlineViewerWelcome {
+  width: min(620px, calc(100% - 40px));
+  margin: auto;
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  text-align: center;
+}
+
+body.isFileDragOver .offlineViewerWelcome {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--panel));
+}
+
+.offlineViewerEyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.offlineViewerWelcome h2 {
+  margin: 10px 0 8px;
+  font-size: 22px;
+}
+
+.offlineViewerWelcome p {
+  margin: 0 auto;
+  max-width: 520px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.offlineViewerImportButton {
+  height: 34px;
+  margin: 20px 0 14px;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.offlineViewerWelcome .offlineViewerPrivacy {
+  font-size: 11px;
 }
 
 .shell.isFlowWorkspace .detailPane,

@@ -10,7 +10,7 @@ Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chrom
 
 ## Full Description
 
-Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting workspace to Microsoft Edge DevTools. It helps identity, middleware, application, and support engineers understand browser-visible exchanges among protected applications, access gateways, identity providers, service providers, authorization servers, and Oracle Access Manager or WebGate deployments.
+Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting workspace to Microsoft Edge DevTools plus a separate Offline Viewer opened from the extension toolbar. It helps identity, middleware, application, and support engineers understand browser-visible exchanges among protected applications, access gateways, identity providers, service providers, authorization servers, and Oracle Access Manager or WebGate deployments.
 
 ### Follow the browser-visible authentication flow
 
@@ -19,6 +19,7 @@ Enterprise Authentication & NetLog Inspector adds a focused authentication troub
 - Review redirects, HTTP status, timing, response size, cookies, headers, and request bodies.
 - Search captured request and response content and filter by protocol.
 - Import HAR files, Inspector JSON exports, Firefox SAML-tracer JSON exports, or Chromium NetLog dumps for offline troubleshooting.
+- Open the toolbar **Offline Viewer** to investigate those files in a normal browser tab without first opening DevTools or navigating to an inspectable website.
 - Export full or sanitized traffic and Markdown assessment reports.
 
 ### SAML, OAuth, and OpenID Connect
@@ -69,11 +70,11 @@ Created by Sudhir Kulkarni
 
 ## Single Purpose
 
-Provide a Microsoft Edge DevTools workspace for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, authorization, and related Chromium NetLog evidence.
+Provide local inspection and troubleshooting of browser-visible enterprise authentication, SSO, federation, authorization, and related Chromium NetLog evidence through Microsoft Edge DevTools and a file-based Offline Viewer.
 
 ## Permission Justification
 
-No additional extension permissions are requested. The `devtools_page` manifest entry registers the inspector in Microsoft Edge DevTools. While DevTools is open, the extension reads request and response evidence exposed for the active inspected tab through Chromium DevTools APIs. This access is necessary to display and correlate the authentication flow selected by the user.
+No additional extension permissions are requested. The `devtools_page` manifest entry registers the live inspector in Microsoft Edge DevTools. While DevTools is open, the extension reads request and response evidence exposed for the active inspected tab through Chromium DevTools APIs. The toolbar action opens a packaged local Offline Viewer and processes only files the user explicitly selects; it does not gain access to website data.
 
 ## Remote Code Declaration
 

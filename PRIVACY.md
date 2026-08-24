@@ -1,6 +1,6 @@
 # Privacy Policy for Enterprise Authentication & NetLog Inspector
 
-This extension is designed for local troubleshooting of enterprise authentication, single sign-on, federation, and authorization traffic inside Chrome Developer Tools.
+This extension is designed for local troubleshooting of enterprise authentication, single sign-on, federation, and authorization traffic through its Chrome DevTools panel and separate Offline Viewer.
 
 ## Data Processing
 
@@ -16,7 +16,7 @@ The extension does not send captured traffic, cookies, tokens, SAML messages, OA
 
 ## User-Controlled Import and Export
 
-Users may manually import HAR, JSON, or Chromium NetLog files for local analysis.
+Users may manually import HAR, JSON, or Chromium NetLog files for local analysis in either the DevTools panel or the Offline Viewer opened from the extension toolbar icon.
 
 Users may manually export captured panel data as JSON or export the selected correlated authentication assessment as Markdown. Exported files are created only when the user explicitly chooses an export action.
 

@@ -14,7 +14,7 @@ Troubleshoot enterprise authentication, SSO, federation, and Chromium NetLog evi
 
 ## Full Store Description
 
-Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting panel to Chrome DevTools. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
+Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting panel to Chrome DevTools plus a separate Offline Viewer opened from the extension toolbar. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
 
 ### One panel for the complete browser-visible authentication flow
 
@@ -25,6 +25,7 @@ Enterprise Authentication & NetLog Inspector adds a focused authentication troub
 - See HTTP method, status meaning, duration, response size, and slow-request emphasis.
 - Search request and response content and filter SAML, OAM/WebGate, or static-resource traffic.
 - Import browser HAR files, panel JSON exports, Firefox SAML-tracer JSON exports, or Chromium NetLog dumps for offline analysis.
+- Open the toolbar **Offline Viewer** to investigate those files in a normal browser tab without first opening DevTools or navigating to an inspectable website.
 - Use a dedicated NetLog Analysis workspace to correlate sources and inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC errors with raw event parameters.
 - Trace authentication challenge exchanges through the browser response, retries, and final HTTP outcome. When NetLog exposes client-token bytes, classify Kerberos versus NTLM fallback locally using NTLMSSP, Kerberos OID, and AP-REQ evidence without displaying the token; distinguish inconclusive, redacted, and challenge-only captures.
 - Trace TLS connections through endpoint setup, handshake, certificate validation, TLS/ALPN negotiation, connection reuse, QUIC fallback, and the final browser-visible outcome.
@@ -107,11 +108,11 @@ Created by Sudhir Kulkarni
 
 ## Single Purpose
 
-This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, and authorization traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, HAR data, and focused Chromium NetLog evidence.
+This extension provides local inspection and troubleshooting of browser-visible enterprise authentication, SSO, federation, authorization, and related Chromium NetLog evidence through a Chrome DevTools panel and file-based Offline Viewer.
 
 ## Permission Justification
 
-No additional extension permissions are requested. The extension uses `devtools_page` to register a DevTools panel and accesses request and response details only through Chrome DevTools APIs for the active inspected tab while DevTools is open. This access is required to display and analyze the authentication flow the user is actively debugging.
+No additional extension permissions are requested. The `devtools_page` manifest entry registers the live inspector in Chrome DevTools. While DevTools is open, the extension reads request and response evidence exposed for the active inspected tab through Chrome DevTools APIs. The toolbar action opens a packaged local Offline Viewer and processes only files the user explicitly selects; it does not gain access to website data.
 
 ## Remote Code Declaration
 

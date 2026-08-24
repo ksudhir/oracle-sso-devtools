@@ -272,9 +272,9 @@
             </ol>
             <h3>Import and analyze</h3>
             <ol>
-              <li>On the analysis computer, navigate to any ordinary <code>http://</code> or <code>https://</code> page before opening DevTools. New Tab and other <code>chrome://</code> pages cannot host the panel.</li>
-              <li>Open DevTools and select <strong>Auth &amp; NetLog Inspector</strong>. The open page does not need to be related to the imported HAR.</li>
-              <li>Select <strong>Import File</strong> and choose the HAR, panel JSON export, or Firefox SAML-tracer JSON export. Use <strong>Load Network HAR</strong> only for entries already available in Chrome's Network model.</li>
+              <li>On the analysis computer, select the extension toolbar icon to open <strong>Offline Viewer</strong>. No website or DevTools window is required.</li>
+              <li>Select <strong>Import File</strong>, or drop the HAR, panel JSON export, or Firefox SAML-tracer JSON export onto the viewer.</li>
+              <li>Use the DevTools panel instead only when comparing the saved evidence with a live inspected tab. <strong>Load Network HAR</strong> applies only to entries already exposed by the browser Network model.</li>
               <li>Wait for the imported request count, then use protocol filters and Flow Analysis as for live traffic.</li>
               <li>If decoded SAML, bodies, cookies, or token evidence is absent, verify that the source HAR retained request/response headers and content.</li>
               <li>Export a sanitized assessment after selecting the relevant transaction.</li>
@@ -296,7 +296,7 @@
             <ol>
               <li>Open <code>chrome://net-export</code>, start logging to disk, and reproduce one clean authentication or connection failure.</li>
               <li>Return to Net Export and stop logging. Protect the JSON file as sensitive diagnostic evidence.</li>
-              <li>Open DevTools on any ordinary HTTP(S) page, select <strong>Auth &amp; NetLog Inspector</strong>, and import the file.</li>
+              <li>Select the extension toolbar icon, open <strong>Offline Viewer</strong>, and import the file. DevTools is optional for saved NetLog analysis.</li>
             </ol>
             <h3>Use NetLog Analysis</h3>
             <ol>

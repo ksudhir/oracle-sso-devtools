@@ -10,6 +10,7 @@ const sourceFiles = [
   "README.md",
   "browser-config.js",
   "manifest.json",
+  "service-worker.js",
   "devtools.html",
   "devtools.js",
   "panel.html",
