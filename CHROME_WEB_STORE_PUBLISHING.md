@@ -119,6 +119,8 @@ Recommended committed screenshots:
 - `store-assets/chrome/screenshots/04-wna-ntlm-x509-auth.png`
 - `store-assets/chrome/screenshots/05-netlog-kerberos-analysis.jpg`
 
+The first screenshot demonstrates the standalone **Offline Viewer** opened from the extension toolbar with an imported synthetic HAR. It must visibly include the Offline Viewer label, imported filename, theme selector, and request analysis without DevTools chrome.
+
 Use the fifth screenshot in every release that includes NetLog functionality. Its caption should explicitly mention:
 
 - Chromium NetLog analysis
@@ -135,11 +137,11 @@ Make sure screenshots contain no real customer names, hostnames, tokens, cookies
 
 Use this single-purpose statement:
 
-> This extension provides a Chrome DevTools panel for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, and authorization traffic, including OAM, WebGate, SAML, OAuth/OIDC, Kerberos/WNA, NTLM, X.509, cookies, headers, redirects, timing, HAR data, and focused Chromium NetLog evidence.
+> This extension provides local inspection and troubleshooting of browser-visible enterprise authentication, SSO, federation, authorization, and Chromium NetLog evidence through a Chrome DevTools panel and file-based Offline Viewer.
 
 Permission justification:
 
-> No additional extension permissions are requested. The extension uses devtools_page to register a DevTools panel and relies on Chrome DevTools APIs for the active inspected tab. Network request and response details are accessed only from the active inspected tab while DevTools is open so users can troubleshoot the SSO flow they are actively debugging.
+> No additional extension permissions are requested. The devtools_page entry registers the live inspector in Chrome DevTools. While DevTools is open, request and response evidence is read only from the active inspected tab through Chrome DevTools APIs. The toolbar action opens a packaged local Offline Viewer and processes only files the user explicitly selects; it does not gain access to website data.
 
 Remote-code declaration:
 

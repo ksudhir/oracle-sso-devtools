@@ -37,6 +37,7 @@
           <strong>Getting Started</strong>
           <a href="#prepare">Prepare</a>
           <a href="#open">Open the panel</a>
+          <a href="#viewer">Offline Viewer</a>
           <a href="#capture">Capture a login</a>
           <a href="#traffic">Read the traffic</a>
           <a href="#evidence">Inspect evidence</a>
@@ -102,6 +103,25 @@
             The extension inspects only the tab to which DevTools is attached. Authentication steps that open a
             separate browser tab are outside that panel's capture unless DevTools is also opened for the new tab.
           </p>
+
+          <h2 id="viewer">Open an offline file without DevTools</h2>
+          <ol>
+            <li>Pin <strong>Enterprise Authentication &amp; NetLog Inspector</strong> from the browser Extensions menu.</li>
+            <li>Select the extension's toolbar icon and choose <strong>Import File</strong>.</li>
+            <li>Open a browser HAR, Inspector JSON export, Firefox SAML-tracer JSON export, or Chromium NetLog JSON file. You can also drop the file anywhere on the viewer.</li>
+            <li>Use the <strong>Theme</strong> menu to follow the system appearance or select a persistent Light or Dark viewer theme.</li>
+            <li>Use Traffic Inspector, Flow Analysis, or NetLog Analysis exactly as you would in the DevTools panel.</li>
+          </ol>
+          <div class="doc-callout">
+            <strong>Viewer versus live panel</strong>
+            The toolbar Offline Viewer works from New Tab and other situations where the DevTools panel cannot be
+            registered. It analyzes saved files only. To capture new browser traffic, open the DevTools panel on the
+            application tab.
+          </div>
+          <figure class="tutorial-figure">
+            <img src="../assets/offline-viewer.png" alt="Standalone Offline Viewer analyzing an imported authentication HAR" width="1280" height="800" />
+            <figcaption><strong>Standalone Offline Viewer</strong><span>The imported filename, theme control, request timeline, and selected evidence remain visible without a DevTools window.</span></figcaption>
+          </figure>
 
           <h2 id="capture">2. Capture a clean login attempt</h2>
           <ol>
@@ -243,7 +263,7 @@
             <li>Confirm that the button says <strong>Stop capture</strong>, which means capture is currently running.</li>
             <li>Select <strong>Reset filters</strong> and temporarily clear <strong>Hide static</strong>.</li>
             <li>Check whether the authentication flow opened a different tab or window.</li>
-            <li>For offline evidence, open any ordinary website to host the DevTools panel, then use <strong>Import File</strong> for HAR, Inspector JSON, Firefox SAML-tracer JSON, or Chromium NetLog. The hosting page does not need to be related to the imported capture.</li>
+            <li>For offline evidence, select the extension toolbar icon to open the dedicated Offline Viewer, then import or drop the HAR, Inspector JSON, Firefox SAML-tracer JSON, or Chromium NetLog file.</li>
             <li>Use <strong>Load Network HAR</strong> only for entries currently exposed by Chrome's Network panel.</li>
           </ul>
           <div class="doc-callout completion-checklist">

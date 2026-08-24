@@ -12,6 +12,7 @@ const assetRoot = path.join(__dirname, isEdge ? "edge" : "chrome");
 const screenshotDir = path.join(assetRoot, "screenshots");
 const promoDir = path.join(assetRoot, "promo");
 const browserConfigPath = path.join(root, isEdge ? "edge/browser-config.js" : "browser-config.js");
+const browserLabel = isEdge ? "Microsoft Edge" : "Google Chrome";
 const devToolsLabel = isEdge ? "Microsoft Edge DevTools" : "Chrome DevTools";
 const promoLabel = isEdge ? "Microsoft Edge DevTools Extension" : "Chrome DevTools Extension";
 const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -24,6 +25,7 @@ const darkCss = [
   "--xml-tag:#d6b8ff;--xml-name:#8bd3dd;--xml-attr:#ffd166;--xml-value:#9be7b0;--xml-comment:#9aa4ad;",
   "--json-key:#d6b8ff;--json-string:#9be7b0;--json-number:#ffd166;--json-literal:#8ab9ff;--json-punctuation:#9aa4ad;--danger:#ff9a91}",
   "body{grid-template-rows:36px 28px auto auto minmax(0,1fr);min-width:0}",
+  "body.marketingViewer{grid-template-rows:36px auto auto minmax(0,1fr)}",
   ".marketingChrome,.marketingDevtools{display:flex;align-items:center;padding:0 12px;background:#111416;color:#aeb7bc;font:11px system-ui;border-bottom:1px solid #30363a}",
   ".marketingChrome{gap:10px;background:#24282b;color:#d9dddf}.marketingChrome strong{color:#fff}",
   ".marketingDevtools{gap:18px}.marketingDevtools .active{color:#72c7d4;border-bottom:2px solid #72c7d4;height:28px;display:flex;align-items:center}",
@@ -112,13 +114,15 @@ function createEntries() {
   ];
 }
 
-function panelPage() {
+function panelPage(viewer = false) {
   const entriesJson = JSON.stringify(createEntries()).replace(/</g, "\\u003c");
-  const mock = "window.chrome={devtools:{network:{onRequestFinished:{addListener:function(){}},getHAR:function(callback){callback({entries:" + entriesJson + "})}},inspectedWindow:{eval:function(_code,callback){if(callback)callback(null,null)}}}};";
+  const mock = "window.__marketingEntries=" + entriesJson + ";window.chrome={devtools:{network:{onRequestFinished:{addListener:function(){}},getHAR:function(callback){callback({entries:window.__marketingEntries})}},inspectedWindow:{eval:function(_code,callback){if(callback)callback(null,null)}}}};";
   let html = fs.readFileSync(path.join(root, "panel.html"), "utf8");
   html = html.replace('href="panel.css"', 'href="/panel.css"');
   html = html.replace("</head>", "<style>" + darkCss + "</style></head>");
-  html = html.replace("<body>", `<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>${devToolsLabel}</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth &amp; NetLog Inspector</span></div>`);
+  html = viewer
+    ? html.replace("<body>", `<body class="marketingViewer"><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>${browserLabel}</strong><span>Standalone Offline Viewer · imported-authentication.har</span></div>`)
+    : html.replace("<body>", `<body><div class="marketingChrome"><span>●</span><span>●</span><span>●</span><strong>${devToolsLabel}</strong><span>portal.example.com</span></div><div class="marketingDevtools"><span>Elements</span><span>Console</span><span>Sources</span><span>Network</span><span>Application</span><span>Security</span><span class="active">Auth &amp; NetLog Inspector</span></div>`);
   html = html.replace('<script src="browser-config.js"></script>', '<script src="/browser-config.js"></script>');
   html = html.replace('<script src="panel.js"></script>', "<script>" + mock + '</script><script src="/panel.js"></script>');
   return html;
@@ -169,7 +173,8 @@ async function main() {
     if (pathname === "/netlog-proof.jpg") return send("image/jpeg", fs.readFileSync(path.join(screenshotDir, "05-netlog-kerberos-analysis.jpg")));
     if (pathname === "/promo-small") return send("text/html", promoPage(true));
     if (pathname === "/promo-marquee") return send("text/html", promoPage(false));
-    return send("text/html", panelPage());
+    if (pathname === "/viewer") return send("text/html", panelPage(true));
+    return send("text/html", panelPage(false));
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const port = server.address().port;
@@ -327,10 +332,30 @@ async function main() {
     [8, "Flow Analysis", "05-oam-webgate-diagnostics.png", "oam", ".oamFlowDetails > summary"]
   ];
   for (const [row, tab, filename, protocol, detailsSelector] of shots) {
-    await page.goto("http://127.0.0.1:" + port + "/panel");
+    const isViewerScreenshot = filename === "01-complete-sso-traffic.png";
+    await page.goto("http://127.0.0.1:" + port + (isViewerScreenshot ? "/viewer?mode=viewer" : "/panel"));
+    if (isViewerScreenshot) {
+      await page.evaluate(async () => {
+        state.entries = await Promise.all(window.__marketingEntries.map(normalizeHarEntry));
+        state.selectedId = state.entries[3].id;
+        state.captureSource = "Imported file: imported-authentication.har";
+        state.hideStatic = false;
+        render({ preserveFlowScroll: false });
+      });
+    }
     await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
     await page.locator(".requestRow").nth(row).click();
     await page.getByRole("button", { name: tab, exact: true }).click();
+    if (isViewerScreenshot) {
+      const viewerState = await page.evaluate(() => ({
+        badge: document.querySelector("#runtimeModeLabel")?.textContent.trim(),
+        captureHidden: getComputedStyle(document.querySelector("#captureButton").closest(".toolbarGroup")).display === "none",
+        source: document.querySelector("#captureSourceLabel")?.textContent.trim()
+      }));
+      if (viewerState.badge !== "Offline Viewer" || !viewerState.captureHidden || !viewerState.source.includes("imported-authentication.har")) {
+        throw new Error("Offline Viewer store screenshot did not render the standalone imported-file state.");
+      }
+    }
     if (protocol) await page.locator(`[data-flow-protocol="${protocol}"]`).click();
     if (protocol === "wna") await page.locator(".flowChoice").filter({ hasText: "Failed" }).click();
     if (detailsSelector) await page.locator(detailsSelector).click();
@@ -369,7 +394,7 @@ async function main() {
   if (!isEdge) {
     const websiteAssetDir = path.join(root, "website", "assets");
     const websiteCopies = new Map([
-      ["01-complete-sso-traffic.png", "traffic-inspector.png"],
+      ["01-complete-sso-traffic.png", "offline-viewer.png"],
       ["02-saml-federation-analysis.png", "saml-analysis.png"],
       ["03-oidc-flow-analysis.png", "oidc-analysis.png"],
       ["04-wna-ntlm-x509-auth.png", "wna-x509-analysis.png"],
@@ -378,6 +403,13 @@ async function main() {
     for (const [sourceName, destinationName] of websiteCopies) {
       fs.copyFileSync(path.join(screenshotDir, sourceName), path.join(websiteAssetDir, destinationName));
     }
+    await page.goto("http://127.0.0.1:" + port + "/panel");
+    await page.waitForFunction(() => document.querySelectorAll(".requestRow").length === 10);
+    await page.locator(".requestRow").nth(3).click();
+    await page.getByRole("button", { name: "Request", exact: true }).click();
+    const liveTrafficAsset = path.join(websiteAssetDir, "traffic-inspector.png");
+    await page.screenshot({ path: liveTrafficAsset });
+    await flatten(liveTrafficAsset);
   }
   fs.rmSync(path.join(screenshotDir, "05-oam-webgate-diagnostics.png"), { force: true });
   const netlogSource = path.join(__dirname, "source-screenshots", "netlog-http-authentication-trace-dark.jpg");

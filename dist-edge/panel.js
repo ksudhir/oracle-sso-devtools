@@ -12,13 +12,22 @@ const browserProfile = Object.freeze({
   ...DEFAULT_BROWSER_PROFILE,
   ...(globalThis.AUTH_FLOW_INSPECTOR_BROWSER_PROFILE || {})
 });
+const runtimeMode = new URLSearchParams(globalThis.location?.search || "").get("mode") === "viewer"
+  ? "viewer"
+  : "devtools";
+const runtimeCapabilities = Object.freeze({
+  offlineViewer: runtimeMode === "viewer",
+  liveCapture: runtimeMode === "devtools" && Boolean(globalThis.chrome?.devtools?.network),
+  networkHar: runtimeMode === "devtools" && Boolean(globalThis.chrome?.devtools?.network?.getHAR),
+  inspectedPageActions: runtimeMode === "devtools" && Boolean(globalThis.chrome?.devtools?.inspectedWindow)
+});
 
 const state = {
   entries: [],
   selectedId: null,
   workspaceMode: "traffic",
   activeTab: "request",
-  isCapturing: true,
+  isCapturing: runtimeCapabilities.liveCapture,
   protocolFilters: [],
   hideStatic: true,
   searchText: "",
@@ -26,7 +35,7 @@ const state = {
   selectedFlowKey: null,
   flowNavigatorWidth: null,
   flowScrollPositions: { navigator: 0, assessment: 0 },
-  captureSource: "Live DevTools traffic",
+  captureSource: runtimeCapabilities.offlineViewer ? "Offline Viewer" : "Live DevTools traffic",
   netLog: null,
   netLogCategory: "relevant",
   netLogSearch: "",
@@ -41,6 +50,7 @@ const MIN_REQUEST_PANE_WIDTH = 260;
 const MIN_DETAIL_PANE_WIDTH = 360;
 const DIVIDER_WIDTH = 8;
 const FLOW_NAV_WIDTH_STORAGE_KEY = "oamSamlOauth.flowNavigatorWidth";
+const VIEWER_THEME_STORAGE_KEY = "authInspector.offlineViewerTheme";
 const MIN_FLOW_NAVIGATOR_WIDTH = 220;
 const MIN_FLOW_ASSESSMENT_WIDTH = 320;
 const FLOW_DIVIDER_WIDTH = 7;
@@ -79,6 +89,55 @@ const importStatus = document.querySelector("#importStatus");
 const paneDivider = document.querySelector("#paneDivider");
 const tabButtons = [...document.querySelectorAll(".tab")];
 const toolbarMenus = [...document.querySelectorAll(".toolbarMenu")];
+const runtimeModeLabel = document.querySelector("#runtimeModeLabel");
+const viewerThemeControl = document.querySelector("#viewerThemeControl");
+const viewerThemeSelect = document.querySelector("#viewerThemeSelect");
+
+configureRuntimeMode();
+
+function configureRuntimeMode() {
+  if (!runtimeCapabilities.offlineViewer) return;
+  document.body?.classList?.add("isOfflineViewer");
+  document.title = "Offline Viewer · Enterprise Authentication & NetLog Inspector";
+  runtimeModeLabel.hidden = false;
+  viewerThemeControl.hidden = false;
+  applyViewerTheme(readViewerThemePreference());
+  captureButton.closest?.(".toolbarGroup")?.setAttribute("hidden", "");
+  loadNetworkHarButton.hidden = true;
+  toolsMenu.hidden = true;
+}
+
+viewerThemeSelect.addEventListener("change", () => {
+  if (!runtimeCapabilities.offlineViewer) return;
+  applyViewerTheme(viewerThemeSelect.value, true);
+});
+
+function applyViewerTheme(theme, shouldPersist = false) {
+  const normalizedTheme = ["light", "dark"].includes(theme) ? theme : "system";
+  viewerThemeSelect.value = normalizedTheme;
+  if (normalizedTheme === "system") {
+    document.documentElement?.removeAttribute?.("data-theme");
+  } else {
+    document.documentElement?.setAttribute?.("data-theme", normalizedTheme);
+  }
+  if (shouldPersist) persistViewerThemePreference(normalizedTheme);
+}
+
+function readViewerThemePreference() {
+  try {
+    return globalThis.localStorage?.getItem(VIEWER_THEME_STORAGE_KEY) || "system";
+  } catch {
+    return "system";
+  }
+}
+
+function persistViewerThemePreference(theme) {
+  try {
+    globalThis.localStorage?.setItem(VIEWER_THEME_STORAGE_KEY, theme);
+  } catch {
+    // The theme still applies for this tab when persistent storage is unavailable.
+  }
+}
 
 document.addEventListener?.("click", (event) => {
   closeToolbarMenusExcept(event.target.closest?.(".toolbarMenu") || null);
@@ -88,6 +147,25 @@ document.addEventListener?.("keydown", (event) => {
   if (event.key === "Escape") closeToolbarMenusExcept(null);
 });
 
+document.addEventListener?.("dragover", (event) => {
+  if (!runtimeCapabilities.offlineViewer) return;
+  event.preventDefault();
+  document.body?.classList?.add("isFileDragOver");
+});
+
+document.addEventListener?.("dragleave", (event) => {
+  if (!runtimeCapabilities.offlineViewer || event.relatedTarget) return;
+  document.body?.classList?.remove("isFileDragOver");
+});
+
+document.addEventListener?.("drop", (event) => {
+  if (!runtimeCapabilities.offlineViewer) return;
+  event.preventDefault();
+  document.body?.classList?.remove("isFileDragOver");
+  const [file] = event.dataTransfer?.files || [];
+  if (file) importDiagnosticFile(file);
+});
+
 function closeToolbarMenusExcept(activeMenu, menus = toolbarMenus) {
   menus.forEach((menu) => {
     if (menu !== activeMenu) menu.open = false;
@@ -95,6 +173,12 @@ function closeToolbarMenusExcept(activeMenu, menus = toolbarMenus) {
 }
 
 detailOutput.addEventListener("click", (event) => {
+  const openImportButton = event.target.closest("[data-open-import]");
+  if (openImportButton) {
+    openImportPicker();
+    return;
+  }
+
   const openRequestButton = event.target.closest("[data-open-entry-id]");
   if (openRequestButton) {
     state.selectedId = openRequestButton.dataset.openEntryId;
@@ -498,8 +582,8 @@ let liveCaptureRenderTimer = null;
 let lastFlowUserScrollAt = 0;
 let flowScrollRestorationPending = false;
 
-if (chrome?.devtools?.network?.onRequestFinished) {
-  chrome.devtools.network.onRequestFinished.addListener((request) => {
+if (globalThis.chrome?.devtools?.network?.onRequestFinished) {
+  globalThis.chrome.devtools.network.onRequestFinished.addListener((request) => {
     request.getContent(async (body, encoding) => {
       if (!state.isCapturing) return;
 
@@ -538,6 +622,7 @@ function flushLiveCaptureRender() {
 }
 
 captureButton.addEventListener("click", () => {
+  if (!runtimeCapabilities.liveCapture) return;
   state.isCapturing = !state.isCapturing;
   render();
 });
@@ -552,7 +637,7 @@ clearButton.addEventListener("click", () => {
   state.netLogAuthTraceIndex = null;
   state.netLogTlsTraceIndex = null;
   state.netLogInvestigationIndex = null;
-  state.captureSource = "Live DevTools traffic";
+  state.captureSource = runtimeCapabilities.offlineViewer ? "Offline Viewer" : "Live DevTools traffic";
   setImportStatus("");
   render();
 });
@@ -841,14 +926,15 @@ loadNetworkHarButton.addEventListener("click", async () => {
 });
 
 importButton.addEventListener("click", () => {
-  importInput.value = "";
-  setImportStatus("Choose a HAR, JSON, or Chromium NetLog file...");
-  if (typeof importInput.showPicker === "function") {
-    importInput.showPicker();
-  } else {
-    importInput.click();
-  }
+  openImportPicker();
 });
+
+function openImportPicker() {
+  importInput.value = "";
+  setImportStatus("Choose a HAR, SAML-tracer JSON, Inspector JSON, or Chromium NetLog file...");
+  if (typeof importInput.showPicker === "function") importInput.showPicker();
+  else importInput.click();
+}
 
 importInput.addEventListener("input", () => {
   handleImportSelection();
@@ -1044,6 +1130,10 @@ function getCurrentFlowNavigatorWidth(workspace) {
 async function handleImportSelection() {
   const [file] = importInput.files;
   if (!file) return;
+  await importDiagnosticFile(file);
+}
+
+async function importDiagnosticFile(file) {
 
   const importKey = `${file.name}:${file.size}:${file.lastModified}`;
   if (activeImportKey === importKey) return;
@@ -1113,7 +1203,7 @@ function stripJsonBom(text) {
 }
 
 queueMicrotask(() => {
-  loadCurrentDevToolsHar("startup");
+  if (runtimeCapabilities.networkHar) loadCurrentDevToolsHar("startup");
 });
 
 protocolFilterInputs.forEach((input) => {
@@ -1156,7 +1246,11 @@ resetFiltersButton.addEventListener("click", () => {
 
 scrubButton.addEventListener("click", () => {
   toolsMenu.open = false;
-  chrome.devtools.inspectedWindow.eval(
+  if (!runtimeCapabilities.inspectedPageActions) {
+    setDetailText("Inspected-page actions are not available in Offline Viewer mode.");
+    return;
+  }
+  globalThis.chrome.devtools.inspectedWindow.eval(
     `[...document.querySelectorAll("a")].forEach((anchor) => anchor.target = "_self");`,
     (_, error) => {
       if (error) {
@@ -1577,12 +1671,12 @@ async function normalizeHarEntries(entries) {
 }
 
 async function loadCurrentDevToolsHar(mode) {
-  if (!chrome?.devtools?.network?.getHAR) {
+  if (!globalThis.chrome?.devtools?.network?.getHAR) {
     if (mode === "manual") setDetailText("DevTools HAR API is not available in this context.");
     return;
   }
 
-  chrome.devtools.network.getHAR(async (harLog) => {
+  globalThis.chrome.devtools.network.getHAR(async (harLog) => {
     try {
       const harEntries = harLog?.entries || harLog?.log?.entries || [];
       if (!harEntries.length) {
@@ -1898,6 +1992,7 @@ function render({ preserveFlowScroll = true } = {}) {
   const timingStats = getTimingStats(visibleEntries);
   shell.classList.toggle("isFlowWorkspace", isFlowWorkspace);
   shell.classList.toggle("isNetLogWorkspace", isNetLogWorkspace);
+  shell.classList.toggle("isOfflineViewerEmpty", runtimeCapabilities.offlineViewer && !state.entries.length && !state.netLog);
   detailOutput.classList.toggle("isFlowAnalysis", isFlowWorkspace);
   detailOutput.classList.toggle("isNetLogAnalysis", isNetLogWorkspace);
   document.body?.classList?.toggle("isNetLogMode", isNetLogWorkspace);
@@ -3882,11 +3977,17 @@ async function renderDetails(version = renderVersion) {
 
   const selected = state.entries.find((entry) => entry.id === state.selectedId);
   if (!selected) {
+    if (runtimeCapabilities.offlineViewer && !state.netLog && state.workspaceMode === "traffic") {
+      commitDetailHtml(version, renderOfflineViewerEmptyState());
+      return;
+    }
     commitDetailText(version, state.entries.length
       ? "No visible request selected."
       : state.workspaceMode === "flow"
         ? "Capture or import authentication traffic to build a flow assessment."
-        : "Open an authentication flow while DevTools is open to capture traffic.");
+        : runtimeCapabilities.offlineViewer
+          ? "Import authentication evidence to begin offline analysis."
+          : "Open an authentication flow while DevTools is open to capture traffic.");
     return;
   }
 
@@ -3909,6 +4010,18 @@ async function renderDetails(version = renderVersion) {
   } else {
     commitDetailHtml(version, renderResponseTable(selected));
   }
+}
+
+function renderOfflineViewerEmptyState() {
+  return [
+    `<section class="offlineViewerWelcome">`,
+    `<span class="offlineViewerEyebrow">Offline analysis</span>`,
+    `<h2>Open a diagnostic capture</h2>`,
+    `<p>Import or drop a browser HAR, Inspector JSON export, Firefox SAML-tracer JSON export, or Chromium NetLog dump.</p>`,
+    `<button class="offlineViewerImportButton" type="button" data-open-import>Choose file</button>`,
+    `<p class="offlineViewerPrivacy">Files are processed locally in this extension and are not uploaded.</p>`,
+    `</section>`
+  ].join("");
 }
 
 function renderRequestTable(entry) {
@@ -4052,7 +4165,7 @@ function renderAbout() {
       ["Created by", "Sudhir Kulkarni"],
       ["Contact", "ksudhir@gmail.com"],
       ["Browser package", browserProfile.browserName],
-      ["Developer tools", browserProfile.devToolsName]
+      ["Runtime", runtimeCapabilities.offlineViewer ? "Offline Viewer" : browserProfile.devToolsName]
     ], true),
     renderInfoCard("Chromium NetLog Analysis", [
       ["Purpose", `Focused authentication and connection diagnostics from ${browserProfile.netExportUrl} JSON dumps`],

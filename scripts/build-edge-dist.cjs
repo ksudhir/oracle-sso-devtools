@@ -10,6 +10,7 @@ const fileMappings = new Map([
   ["README.md", "edge/README.md"],
   ["browser-config.js", "edge/browser-config.js"],
   ["manifest.json", "manifest.json"],
+  ["service-worker.js", "service-worker.js"],
   ["devtools.html", "devtools.html"],
   ["devtools.js", "devtools.js"],
   ["panel.html", "panel.html"],

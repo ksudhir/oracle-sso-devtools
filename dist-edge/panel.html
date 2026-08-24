@@ -8,6 +8,15 @@
   </head>
   <body>
     <header class="toolbar">
+      <span id="runtimeModeLabel" class="runtimeModeLabel" hidden>Offline Viewer</span>
+      <label id="viewerThemeControl" class="viewerThemeControl" hidden>
+        <span>Theme</span>
+        <select id="viewerThemeSelect" aria-label="Offline Viewer theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
       <div class="toolbarGroup" aria-label="Capture controls">
         <button id="captureButton" class="captureButton isCapturing" type="button">Stop capture</button>
         <button id="clearButton" type="button">Clear</button>

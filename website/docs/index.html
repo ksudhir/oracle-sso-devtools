@@ -38,6 +38,7 @@
           <a href="#install">Install</a>
           <a href="#offline">Install offline</a>
           <a href="#capture">Capture traffic</a>
+          <a href="#viewer">Offline Viewer</a>
           <a href="#import">Import Files</a>
           <a href="#inspect">Inspect requests</a>
           <a href="#flows">Flow Analysis</a>
@@ -137,6 +138,20 @@
             double-chevron overflow menu.
           </div>
 
+          <h2 id="viewer">Open the Offline Viewer</h2>
+          <p>
+            Select the extension's toolbar icon to open a separate file-analysis workspace in a normal browser tab.
+            The viewer does not require DevTools, an inspectable website, or access to the current page. Choose
+            <strong>Import File</strong> or drop a HAR, Inspector JSON export, Firefox SAML-tracer JSON export, or
+            Chromium NetLog JSON file onto the viewer. Choose System, Light, or Dark from the viewer's
+            <strong>Theme</strong> menu; the selection is remembered locally. All analysis remains local.
+          </p>
+          <div class="doc-callout">
+            <strong>Saved evidence only</strong>
+            Offline Viewer does not capture live requests and therefore omits Start/Stop capture, Load Network HAR,
+            and inspected-page actions. Use the DevTools panel when recording a new login attempt.
+          </div>
+
           <h2 id="capture">Capture live traffic</h2>
           <ol>
             <li>Navigate to the normal application page that will begin the authentication attempt.</li>
@@ -167,11 +182,10 @@
             <strong>NetLog Analysis</strong> workspace.
           </p>
           <div class="doc-callout">
-            <strong>Opening the panel for offline analysis</strong>
-            Even when analyzing a HAR from another system, Chrome still requires the DevTools extension to be
-            hosted by an inspectable tab. Open any ordinary <code>http://</code> or <code>https://</code> page,
-            open DevTools, select <strong>Auth &amp; NetLog Inspector</strong>, and then choose <strong>Import File</strong>.
-            The open webpage does not need to match any host in the HAR.
+            <strong>Recommended offline workflow</strong>
+            Select the extension toolbar icon and import the file in Offline Viewer. You may still import the same
+            file from the DevTools panel when comparing it with live traffic, but that panel requires an ordinary
+            <code>http://</code> or <code>https://</code> page.
           </div>
           <ul>
             <li>Keep request and response headers when exporting a HAR for authentication analysis.</li>

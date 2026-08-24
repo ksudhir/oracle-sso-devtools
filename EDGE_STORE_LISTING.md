@@ -10,7 +10,15 @@ Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chrom
 
 ## Full Description
 
-Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting workspace to Microsoft Edge DevTools. It helps identity, middleware, application, and support engineers understand browser-visible exchanges among protected applications, access gateways, identity providers, service providers, authorization servers, and Oracle Access Manager or WebGate deployments.
+Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting workspace to Microsoft Edge DevTools plus a separate Offline Viewer opened from the extension toolbar. It helps identity, middleware, application, and support engineers understand browser-visible exchanges among protected applications, access gateways, identity providers, service providers, authorization servers, and Oracle Access Manager or WebGate deployments.
+
+### Live capture and standalone offline analysis
+
+- Capture and process new browser authentication traffic in the Microsoft Edge DevTools panel.
+- Select the extension toolbar icon to open **Offline Viewer** in a normal browser tab, including from New Tab where DevTools panels are unavailable.
+- Import or drop HAR, Inspector JSON, Firefox SAML-tracer JSON, and Chromium NetLog files without navigating to a website or opening DevTools.
+- Use the same Traffic Inspector, Flow Analysis, and NetLog Analysis workspaces for live and imported evidence.
+- Choose a persistent System, Light, or Dark appearance in Offline Viewer.
 
 ### Follow the browser-visible authentication flow
 
@@ -19,6 +27,7 @@ Enterprise Authentication & NetLog Inspector adds a focused authentication troub
 - Review redirects, HTTP status, timing, response size, cookies, headers, and request bodies.
 - Search captured request and response content and filter by protocol.
 - Import HAR files, Inspector JSON exports, Firefox SAML-tracer JSON exports, or Chromium NetLog dumps for offline troubleshooting.
+- Open the toolbar **Offline Viewer** to investigate those files in a normal browser tab without first opening DevTools or navigating to an inspectable website.
 - Export full or sanitized traffic and Markdown assessment reports.
 
 ### SAML, OAuth, and OpenID Connect
@@ -69,11 +78,11 @@ Created by Sudhir Kulkarni
 
 ## Single Purpose
 
-Provide a Microsoft Edge DevTools workspace for inspecting and troubleshooting browser-visible enterprise authentication, SSO, federation, authorization, and related Chromium NetLog evidence.
+Provide local inspection and troubleshooting of browser-visible enterprise authentication, SSO, federation, authorization, and related Chromium NetLog evidence through Microsoft Edge DevTools and a file-based Offline Viewer.
 
 ## Permission Justification
 
-No additional extension permissions are requested. The `devtools_page` manifest entry registers the inspector in Microsoft Edge DevTools. While DevTools is open, the extension reads request and response evidence exposed for the active inspected tab through Chromium DevTools APIs. This access is necessary to display and correlate the authentication flow selected by the user.
+No additional extension permissions are requested. The `devtools_page` manifest entry registers the live inspector in Microsoft Edge DevTools. While DevTools is open, the extension reads request and response evidence exposed for the active inspected tab through Chromium DevTools APIs. The toolbar action opens a packaged local Offline Viewer and processes only files the user explicitly selects; it does not gain access to website data.
 
 ## Remote Code Declaration
 
@@ -97,7 +106,7 @@ Use no more than seven:
 
 ## Screenshot Captions
 
-1. **Complete authentication traffic view** - Follow OAM, WebGate, SAML, OAuth/OIDC, Okta, Microsoft Entra ID, Kerberos, NTLM, and X.509 evidence with status, timing, size, and provider tags.
+1. **Standalone Offline Viewer** - Open a saved HAR from the extension toolbar and inspect complete OAM, SAML, OAuth/OIDC, Okta, Entra, WNA/NTLM, and X.509 evidence without opening DevTools.
 2. **Decoded SAML details** - Read formatted federation details, deployment-specific values, bindings, assertions, attributes, and certificate metadata.
 3. **Correlated OIDC flow analysis** - Connect authorization, callback, token, UserInfo, discovery, and JWKS evidence with state, nonce, PKCE, audience, issuer, and lifetime checks.
 4. **Windows authentication and X.509** - Inspect Negotiate/SPNEGO, Kerberos/WNA, NTLM fallback, retries, credential-collection endpoints, and forwarded client-certificate evidence.

@@ -16,7 +16,7 @@
         "path": "screenshots/01-complete-sso-traffic.png",
         "width": 1280,
         "height": 800,
-        "topic": "Microsoft Edge DevTools authentication traffic with protocol and provider recognition"
+        "topic": "Microsoft Edge Offline Viewer analyzing an imported HAR with complete authentication and provider evidence"
       },
       {
         "path": "screenshots/02-saml-federation-analysis.png",

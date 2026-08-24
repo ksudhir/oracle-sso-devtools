@@ -1,8 +1,8 @@
 [
   {
-    "id": "complete-sso-traffic",
+    "id": "offline-viewer",
     "index": 1,
-    "title": "Complete Authentication Traffic",
+    "title": "Standalone Offline Viewer",
     "src": "screenshots/01-complete-sso-traffic.png",
     "href": "screenshots/01-complete-sso-traffic.png"
   },

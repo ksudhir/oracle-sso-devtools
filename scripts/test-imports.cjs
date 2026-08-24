@@ -48,6 +48,7 @@ const context = vm.createContext({
   setTimeout,
   clearTimeout,
   queueMicrotask() {},
+  location: { search: "?mode=viewer" },
   document: {
     querySelector: () => element,
     querySelectorAll: () => [],
@@ -65,6 +66,8 @@ const context = vm.createContext({
 
 const panelPath = path.join(__dirname, "..", "panel.js");
 vm.runInContext(fs.readFileSync(panelPath, "utf8"), context, { filename: panelPath });
+assert.equal(vm.runInContext("runtimeCapabilities.offlineViewer", context), true);
+assert.equal(vm.runInContext("runtimeCapabilities.liveCapture", context), false);
 
 async function main() {
   context.testSamlTracerExport = {
@@ -114,6 +117,16 @@ async function main() {
   assert.match(context.testEntries[1].requestBody, /SAMLResponse=%7Bhash%3Aredacted%7D/u);
   assert.equal(context.testEntries[1].importFormat, "SAML-tracer");
   assert.ok(Date.parse(context.testEntries[0].capturedAt) < Date.parse(context.testEntries[1].capturedAt));
+
+  context.testImportFile = {
+    name: "saml-tracer-demo.json",
+    size: 1024,
+    lastModified: 1,
+    async text() { return JSON.stringify(context.testSamlTracerExport); }
+  };
+  await vm.runInContext("importDiagnosticFile(testImportFile)", context);
+  assert.equal(vm.runInContext("state.captureSource", context), "Imported file: saml-tracer-demo.json");
+  assert.equal(vm.runInContext("state.entries.length", context), 2);
 
   const fixturePath = process.argv[2];
   if (fixturePath) {

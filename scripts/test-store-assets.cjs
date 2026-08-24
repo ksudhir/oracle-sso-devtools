@@ -21,6 +21,9 @@ async function main() {
 
     const manifest = readJson(path.join(assetRoot, "marketing-assets.json"));
     if (manifest.browser !== label) fail(`${browser} marketing manifest browser must be ${label}.`);
+    if (!manifest.assets.screenshots[0]?.topic.includes("Offline Viewer")) {
+      fail(`${browser} first screenshot must document the standalone Offline Viewer.`);
+    }
     for (const asset of [...manifest.assets.screenshots, ...manifest.assets.promoTiles]) {
       const assetPath = path.join(assetRoot, asset.path);
       if (!fs.existsSync(assetPath)) fail(`${browser} manifest references missing file: ${asset.path}`);

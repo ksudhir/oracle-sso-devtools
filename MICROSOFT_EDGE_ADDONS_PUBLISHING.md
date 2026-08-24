@@ -25,6 +25,8 @@
 6. Provide the public privacy-policy URL:
    `https://ksudhir.github.io/oracle-sso-devtools/privacy/`
 7. Upload the Edge-branded screenshots and promotional tiles from `store-assets/edge/`.
+
+The first screenshot demonstrates the standalone **Offline Viewer** opened from the Edge toolbar with an imported synthetic HAR. It should visibly include the Offline Viewer label, imported filename, theme selector, and request analysis without DevTools chrome.
 8. Add no more than the seven search terms listed in `EDGE_STORE_LISTING.md`.
 9. Submit the extension for certification.
 
