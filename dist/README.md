@@ -1,6 +1,6 @@
 # Enterprise Authentication & NetLog Inspector
 
-A clean Manifest V3 Chromium DevTools extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth & NetLog Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR/JSON import, and focused Chromium NetLog analysis.
+A clean Manifest V3 Chromium DevTools extension for browser-visible enterprise authentication and SSO troubleshooting in Google Chrome and Microsoft Edge. The **Auth & NetLog Inspector** panel inspects OAM/WebGate, Okta, Microsoft Entra ID, SAML/FED, OAuth/OIDC, Kerberos/WNA, NTLM, and X.509 traffic with decoded protocol data, cookies, redirects, timing, response size, HAR and Firefox SAML-tracer JSON import, and focused Chromium NetLog analysis.
 
 [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/authentication-flow-inspe/abehjmkaocpjkkkmnohgfpmhdpkolnha) | [Getting Started](https://ksudhir.github.io/oracle-sso-devtools/getting-started/) | [Project website](https://ksudhir.github.io/oracle-sso-devtools/)
 

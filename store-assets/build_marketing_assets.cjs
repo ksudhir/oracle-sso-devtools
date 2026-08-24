@@ -8,7 +8,7 @@ const sharp = require("sharp");
 
 const root = path.resolve(__dirname, "..");
 const isEdge = process.argv.includes("--edge");
-const assetRoot = isEdge ? path.join(__dirname, "edge") : __dirname;
+const assetRoot = path.join(__dirname, isEdge ? "edge" : "chrome");
 const screenshotDir = path.join(assetRoot, "screenshots");
 const promoDir = path.join(assetRoot, "promo");
 const browserConfigPath = path.join(root, isEdge ? "edge/browser-config.js" : "browser-config.js");
@@ -379,8 +379,20 @@ async function main() {
       fs.copyFileSync(path.join(screenshotDir, sourceName), path.join(websiteAssetDir, destinationName));
     }
   }
-  await sharp(path.join(__dirname, "screenshots", "netlog-http-authentication-trace-dark.jpg"))
-    .extend({ top: 40, bottom: 40, left: 0, right: 0, background: "#171a1c" })
+  fs.rmSync(path.join(screenshotDir, "05-oam-webgate-diagnostics.png"), { force: true });
+  const netlogSource = path.join(__dirname, "source-screenshots", "netlog-http-authentication-trace-dark.jpg");
+  const netlogMetadata = await sharp(netlogSource).metadata();
+  const netlogHeader = Buffer.from(`
+    <svg width="${netlogMetadata.width}" height="80" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#171a1c"/>
+      <text x="20" y="31" fill="#72c7d4" font-family="Arial, sans-serif" font-size="15" font-weight="700">${devToolsLabel}</text>
+      <text x="20" y="57" fill="#eef1f2" font-family="Arial, sans-serif" font-size="19" font-weight="700">Enterprise Authentication &amp; NetLog Inspector</text>
+      <line x1="0" y1="79" x2="${netlogMetadata.width}" y2="79" stroke="#343b40"/>
+    </svg>
+  `);
+  await sharp(netlogSource)
+    .extend({ top: 80, bottom: 0, left: 0, right: 0, background: "#171a1c" })
+    .composite([{ input: netlogHeader, top: 0, left: 0 }])
     .flatten({ background: "#171a1c" })
     .jpeg({ quality: 92, chromaSubsampling: "4:4:4" })
     .toFile(path.join(screenshotDir, "05-netlog-kerberos-analysis.jpg"));

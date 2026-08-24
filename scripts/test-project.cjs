@@ -8,6 +8,7 @@ const checks = [
   ["JavaScript syntax", ["--check", "panel.js"]],
   ["Import compatibility", ["scripts/test-imports.cjs"]],
   ["Flow analysis", ["scripts/test-flow-analysis.cjs"]],
+  ["Browser-specific store assets", ["scripts/test-store-assets.cjs"]],
   ["Chrome distribution", ["scripts/build-dist.cjs", "--check"]],
   ["Microsoft Edge distribution", ["scripts/build-edge-dist.cjs", "--check"]]
 ];

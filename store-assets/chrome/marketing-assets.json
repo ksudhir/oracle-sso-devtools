@@ -1,11 +1,12 @@
 {
   "product": "Enterprise Authentication & NetLog Inspector",
-  "version": "3.0.1",
+  "browser": "Google Chrome",
+  "version": "5.1",
   "reviewStatus": "store-ready",
-  "copySource": "../STORE_LISTING.md",
+  "copySource": "../../STORE_LISTING.md",
   "assets": {
     "icon": {
-      "path": "../icons/icon128.png",
+      "path": "../../icons/icon128.png",
       "width": 128,
       "height": 128,
       "format": "PNG"
@@ -67,8 +68,10 @@
     }
   },
   "generation": {
-    "screenshotsAndPromo": "store-assets/build_marketing_assets.cjs",
-    "video": "store-assets/video/create_promo_video.swift"
+    "command": "node store-assets/build_marketing_assets.cjs",
+    "renderer": "Chromium through Playwright",
+    "browserProfile": "../../browser-config.js",
+    "video": "../video/create_promo_video.swift"
   },
   "provenance": {
     "productUI": "Rendered deterministically from the repository panel HTML, CSS, and JavaScript",

@@ -20,7 +20,7 @@
 1. Sign in to [Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview).
 2. Reserve the product name **Enterprise Authentication & NetLog Inspector**.
 3. Create a new extension submission.
-4. Upload `enterprise-auth-netlog-inspector-edge-v3.0.1.zip`.
+4. Upload `enterprise-auth-netlog-inspector-edge-v5.1.zip`.
 5. Complete the properties and store listing with `EDGE_STORE_LISTING.md`.
 6. Provide the public privacy-policy URL:
    `https://ksudhir.github.io/oracle-sso-devtools/privacy/`

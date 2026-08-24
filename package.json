@@ -1,6 +1,6 @@
 {
   "name": "authentication-flow-inspector",
-  "version": "3.0.1",
+  "version": "5.1",
   "private": true,
   "license": "MIT",
   "description": "Chromium DevTools extension for troubleshooting browser-visible authentication flows and NetLog evidence.",
@@ -11,6 +11,8 @@
     "check:edge": "node scripts/build-edge-dist.cjs --check",
     "package:chrome": "node scripts/package-chrome.cjs",
     "package:edge": "node scripts/package-edge.cjs",
+    "package:store:chrome": "node scripts/package-store-assets.cjs chrome",
+    "package:store:edge": "node scripts/package-store-assets.cjs edge",
     "test": "node scripts/test-project.cjs",
     "start": "node server.js"
   },

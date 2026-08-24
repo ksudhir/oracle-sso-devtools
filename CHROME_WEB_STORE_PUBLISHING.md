@@ -5,9 +5,9 @@ This guide covers publishing and updating **Enterprise Authentication & NetLog I
 ## Current Package Information
 
 - Extension name: `Enterprise Authentication & NetLog Inspector`
-- Version: `3.0.1`
+- Version: `5.1`
 - Package directory: `dist/`
-- Upload archive: `enterprise-auth-netlog-inspector-chrome-v3.0.1.zip`
+- Upload archive: `enterprise-auth-netlog-inspector-chrome-v5.1.zip`
 - Privacy policy: `PRIVACY.md`
 - Public privacy-policy URL: <https://ksudhir.github.io/oracle-sso-devtools/privacy/>
 
@@ -52,7 +52,7 @@ Before packaging, update and verify the canonical root `manifest.json`, then run
 - Only necessary permissions are declared.
 - The manifest is valid JSON and contains no comments.
 
-The current feature release is version `3.0.1`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `3.0.2` or `3.1.0`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
+The current feature release is version `5.1`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `5.1.1` or `5.2`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
 
 ## 4. Create a Clean ZIP Archive
 
@@ -66,8 +66,8 @@ npm run package:chrome
 Check the package:
 
 ```bash
-unzip -l enterprise-auth-netlog-inspector-chrome-v3.0.1.zip
-unzip -p enterprise-auth-netlog-inspector-chrome-v3.0.1.zip manifest.json
+unzip -l enterprise-auth-netlog-inspector-chrome-v5.1.zip
+unzip -p enterprise-auth-netlog-inspector-chrome-v5.1.zip manifest.json
 ```
 
 Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screenshots, or store-promotion assets in the extension ZIP.
@@ -76,7 +76,7 @@ Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screensh
 
 1. Open the Chrome Web Store Developer Dashboard.
 2. For the first release, click **New item**.
-3. Upload `enterprise-auth-netlog-inspector-chrome-v3.0.1.zip`.
+3. Upload `enterprise-auth-netlog-inspector-chrome-v5.1.zip`.
 4. For an existing item, open it, select **Package**, and click **Upload new package**.
 
 Keep using the same Web Store item for future production releases. Creating another item for the same extension can be treated as repetitive content.
@@ -106,16 +106,18 @@ Upload the prepared assets:
 
 - Store icon: `icons/icon128.png`
 - Screenshots: up to five JPEG or 24-bit PNG images, each 1280x800 or 640x400, without alpha
-- Small promo tile: `store-assets/promo/small-promo-tile-440x280.png`
-- Marquee promo tile: `store-assets/promo/marquee-promo-tile-1400x560.png`
+- Small promo tile: `store-assets/chrome/promo/small-promo-tile-440x280.png`
+- Marquee promo tile: `store-assets/chrome/promo/marquee-promo-tile-1400x560.png`
+
+Run `npm run package:store:chrome` to create a browser-specific review ZIP containing only the Chrome screenshots and promo tiles. This is separate from the extension package uploaded in the **Package** section.
 
 Recommended committed screenshots:
 
-- `store-assets/screenshots/01-complete-sso-traffic.png`
-- `store-assets/screenshots/02-saml-federation-analysis.png`
-- `store-assets/screenshots/03-oidc-flow-analysis.png`
-- `store-assets/screenshots/04-wna-ntlm-x509-auth.png`
-- `store-assets/screenshots/05-netlog-kerberos-analysis.jpg`
+- `store-assets/chrome/screenshots/01-complete-sso-traffic.png`
+- `store-assets/chrome/screenshots/02-saml-federation-analysis.png`
+- `store-assets/chrome/screenshots/03-oidc-flow-analysis.png`
+- `store-assets/chrome/screenshots/04-wna-ntlm-x509-auth.png`
+- `store-assets/chrome/screenshots/05-netlog-kerberos-analysis.jpg`
 
 Use the fifth screenshot in every release that includes NetLog functionality. Its caption should explicitly mention:
 

@@ -145,7 +145,7 @@ Highlights:
 - Inspect JWT claims and active or expired token state.
 - Identify Negotiate/SPNEGO, Kerberos, NTLM, and WNA credential-collection requests.
 - Highlight OAM/WebGate cookies and FED endpoints.
-- Import HAR files for offline troubleshooting.
+- Import HAR files and Firefox SAML-tracer JSON exports for offline troubleshooting, retaining decoded SAML XML supplied by the source export.
 - Inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC events from Chromium NetLog dumps.
 - Classify browser-visible Negotiate client tokens as Kerberos, NTLM fallback, undetermined SPNEGO, challenge only, or redacted without displaying token values.
 - Keep captured authentication data local to the browser extension.

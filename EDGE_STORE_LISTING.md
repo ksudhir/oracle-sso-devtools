@@ -109,4 +109,5 @@ Use no more than seven:
 - Screenshots: `store-assets/edge/screenshots/`
 - Small promotional tile: `store-assets/edge/promo/small-promo-tile-440x280.png`
 - Large promotional tile: `store-assets/edge/promo/marquee-promo-tile-1400x560.png`
-- Submission package: `enterprise-auth-netlog-inspector-edge-v3.0.1.zip`
+- Submission package: `enterprise-auth-netlog-inspector-edge-v5.1.zip`
+- Store artwork bundle: run `npm run package:store:edge` to create a ZIP containing only Microsoft Edge screenshots and promo tiles.
