@@ -1,7 +1,7 @@
 {
   "product": "Enterprise Authentication & NetLog Inspector",
   "browser": "Google Chrome",
-  "version": "5.1",
+  "version": "5.1.1",
   "reviewStatus": "store-ready",
   "copySource": "../../STORE_LISTING.md",
   "assets": {

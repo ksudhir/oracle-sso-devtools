@@ -131,7 +131,7 @@ function panelPage(viewer = false) {
 function promoPage(small) {
   const width = small ? 440 : 1400;
   const height = small ? 280 : 560;
-  const chips = (small ? ["SAML", "OIDC", "WNA", "NTLM", "X.509", "NetLog"] : ["OAM / WebGate", "SAML / FED", "OAuth / OIDC", "Okta", "Microsoft Entra", "Kerberos / WNA", "NTLM", "X.509", "NetLog"])
+  const chips = ["Live capture", "Offline Viewer", "Flow Analysis", "NetLog diagnostics"]
     .map((item) => '<span class="chip">' + item + "</span>").join("");
   const proof = small ? "" : '<div class="proof"><img src="/netlog-proof.jpg"></div>';
   return '<!doctype html><html><head><meta charset="utf-8"><style>' +
@@ -150,7 +150,7 @@ function promoPage(small) {
     ".footer{position:absolute;left:" + (small ? 28 : 80) + "px;bottom:" + (small ? 18 : 38) + "px;color:#71838e;font-size:" + (small ? 10 : 14) + "px}" +
     `</style></head><body><div class="tile"><div class="rail"></div><div class="content"><div class="brand"><img src="/icon128.png"><div class="eyebrow">${promoLabel}</div></div>` +
     "<h1>" + (small ? "Enterprise Authentication &amp; NetLog Inspector" : "See the complete authentication flow") + "</h1><p>" +
-    (small ? "Troubleshoot browser-visible identity flows" : "Inspect OAM, SAML, OAuth/OIDC, Okta, Entra, Kerberos/WNA, X.509, HAR, and Chromium NetLog evidence.") +
+    (small ? "Troubleshoot browser-visible identity flows" : "Investigate browser authentication failures with live and offline diagnostic evidence.") +
     '</p><div class="chips">' + chips + "</div></div>" + proof + '<div class="footer">Open source · Local analysis · Browser-visible traffic</div></div></body></html>';
 }
 

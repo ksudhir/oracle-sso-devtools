@@ -5,15 +5,15 @@ This guide covers publishing and updating **Enterprise Authentication & NetLog I
 ## Current Package Information
 
 - Extension name: `Enterprise Authentication & NetLog Inspector`
-- Version: `5.1`
+- Version: `5.1.1`
 - Package directory: `dist/`
-- Upload archive: `enterprise-auth-netlog-inspector-chrome-v5.1.zip`
+- Upload archive: `enterprise-auth-netlog-inspector-chrome-v5.1.1.zip`
 - Privacy policy: `PRIVACY.md`
 - Public privacy-policy URL: <https://ksudhir.github.io/oracle-sso-devtools/privacy/>
 
 Manifest summary:
 
-> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
+> Investigate browser authentication failures with live capture, offline analysis, and correlated diagnostic evidence.
 
 ## 1. Prepare the Google Developer Account
 
@@ -52,7 +52,7 @@ Before packaging, update and verify the canonical root `manifest.json`, then run
 - Only necessary permissions are declared.
 - The manifest is valid JSON and contains no comments.
 
-The current feature release is version `5.1`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `5.1.1` or `5.2`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
+The current compliance release is version `5.1.1`. For later releases, increase the version in both `package.json` and the root `manifest.json`, for example, to `5.1.2` or `5.2`, then regenerate `dist/`. Chrome rejects an uploaded package if its version is not higher than the previously uploaded version.
 
 ## 4. Create a Clean ZIP Archive
 
@@ -66,8 +66,8 @@ npm run package:chrome
 Check the package:
 
 ```bash
-unzip -l enterprise-auth-netlog-inspector-chrome-v5.1.zip
-unzip -p enterprise-auth-netlog-inspector-chrome-v5.1.zip manifest.json
+unzip -l enterprise-auth-netlog-inspector-chrome-v5.1.1.zip
+unzip -p enterprise-auth-netlog-inspector-chrome-v5.1.1.zip manifest.json
 ```
 
 Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screenshots, or store-promotion assets in the extension ZIP.
@@ -76,7 +76,7 @@ Do not include `.git`, `.DS_Store`, private keys, HAR files, test data, screensh
 
 1. Open the Chrome Web Store Developer Dashboard.
 2. For the first release, click **New item**.
-3. Upload `enterprise-auth-netlog-inspector-chrome-v5.1.zip`.
+3. Upload `enterprise-auth-netlog-inspector-chrome-v5.1.1.zip`.
 4. For an existing item, open it, select **Package**, and click **Upload new package**.
 
 Keep using the same Web Store item for future production releases. Creating another item for the same extension can be treated as repetitive content.
@@ -89,7 +89,7 @@ Use the following title:
 
 Use the package summary:
 
-> Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
+> Investigate browser authentication failures with live capture, offline analysis, and correlated diagnostic evidence.
 
 Use the complete approved copy in `STORE_LISTING.md` for the full description, screenshot captions, single-purpose statement, permission justification, remote-code declaration, and YouTube metadata.
 
@@ -129,7 +129,7 @@ Use the fifth screenshot in every release that includes NetLog functionality. It
 - Final HTTP outcome
 - Recommended next check
 
-The full description must retain the dedicated **Chromium NetLog authentication and connection diagnostics** section from `STORE_LISTING.md`. Do not reduce NetLog to a generic “JSON import” statement; it is a primary workspace with protocol-aware investigation tools.
+Paste only the text under **Full Store Description** in `STORE_LISTING.md`. Keep the description task-oriented and written in natural prose. Do not append the YouTube tags, screenshot captions, protocol inventories, endpoint lists, cookie lists, or other keyword collections to the Store description.
 
 Make sure screenshots contain no real customer names, hostnames, tokens, cookies, email addresses, certificate data, or other confidential information.
 
@@ -242,7 +242,9 @@ Uploading an update does not immediately replace the currently published version
 - [ ] ZIP has `manifest.json` at its root
 - [ ] ZIP contains no `.DS_Store`, secrets, HAR files, or private keys
 - [ ] Screenshots and promo images contain no confidential data
-- [ ] Store description contains the dedicated Chromium NetLog diagnostics section
+- [ ] Store description is copied only from the Full Store Description section
+- [ ] No suggested tags, protocol inventory, endpoint list, or cookie list was pasted into the description
+- [ ] Repeated product and protocol terms remain below Google's keyword-spam threshold
 - [ ] Fifth screenshot clearly demonstrates NetLog authentication tracing
 - [ ] Store listing is accurate
 - [ ] Single-purpose statement is accurate

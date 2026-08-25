@@ -106,9 +106,10 @@ const chromeBrowserProfile = fs.readFileSync(path.join(__dirname, "..", "browser
 const edgeBrowserProfile = fs.readFileSync(path.join(__dirname, "..", "edge", "browser-config.js"), "utf8");
 assert.equal(manifest.name, "Enterprise Authentication & NetLog Inspector");
 assert.ok(manifest.description.length <= 132);
-assert.match(manifest.description, /Troubleshoot SAML/u);
-assert.match(manifest.description, /Chromium NetLog authentication evidence/u);
-assert.match(manifest.description, /SAML, OAuth\/OIDC, OAM\/WebGate, Kerberos\/WNA, NTLM, X\.509/u);
+assert.equal(
+  manifest.description,
+  "Investigate browser authentication failures with live capture, offline analysis, and correlated diagnostic evidence."
+);
 assert.equal(manifest.background.service_worker, "service-worker.js");
 assert.equal(manifest.action.default_title, "Open Offline Authentication Viewer");
 assert.deepEqual(manifest.permissions, []);

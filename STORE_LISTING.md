@@ -6,101 +6,29 @@ Enterprise Authentication & NetLog Inspector
 
 ## Package Summary
 
-Troubleshoot SAML, OAuth/OIDC, OAM/WebGate, Kerberos/WNA, NTLM, X.509, and Chromium NetLog authentication evidence.
+Investigate browser authentication failures with live capture, offline analysis, and correlated diagnostic evidence.
 
 ## Short Promotional Description
 
-Troubleshoot enterprise authentication, SSO, federation, and Chromium NetLog evidence directly in Chrome DevTools. Correlate OAM, SAML, OAuth/OIDC, Okta, Entra ID, Kerberos/WNA, NTLM, and X.509.
+Follow browser authentication exchanges, isolate where a login changes or fails, and retain the evidence needed for further investigation.
 
 ## Full Store Description
 
-Enterprise Authentication & NetLog Inspector adds a focused authentication troubleshooting panel to Chrome DevTools plus a separate Offline Viewer opened from the extension toolbar. It helps identity, middleware, application, and support engineers understand what happened between the browser, WebGate, Oracle Access Manager, identity providers, service providers, authorization servers, and protected applications.
+Enterprise Authentication & NetLog Inspector helps identity, application, and support engineers investigate browser-visible login failures. It combines live Chrome DevTools capture with a standalone Offline Viewer for saved diagnostic files.
 
-### Live capture and standalone offline analysis
+Use the Traffic Inspector to follow requests, responses, redirects, headers, cookies, timing, and content size from the first protected resource to the final application return. Flow Analysis groups related exchanges into authentication attempts, identifies incomplete transitions, and keeps each conclusion linked to the supporting request evidence.
 
-- Capture and process new browser authentication traffic in the Chrome DevTools panel.
-- Select the extension toolbar icon to open **Offline Viewer** in a normal browser tab, including from New Tab where DevTools panels are unavailable.
-- Import or drop HAR, Inspector JSON, Firefox SAML-tracer JSON, and Chromium NetLog files without navigating to a website or opening DevTools.
-- Use the same Traffic Inspector, Flow Analysis, and NetLog Analysis workspaces for live and imported evidence.
-- Choose a persistent System, Light, or Dark appearance in Offline Viewer.
+The inspector understands common enterprise sign-in patterns, including federation messages, authorization redirects and tokens, access-gateway traffic, integrated Windows authentication, and forwarded client certificates. It can decode structured messages and token claims, highlight expiration state, recognize provider errors, and surface correlation identifiers that engineers can use when searching server-side logs.
 
-### One panel for the complete browser-visible authentication flow
+The Offline Viewer opens from the extension toolbar in a normal browser tab. It accepts HAR files, Inspector exports, Firefox SAML-tracer JSON, and Chromium NetLog captures, so an engineer can review customer evidence without first navigating to a website or opening DevTools. Imported data uses the same request and flow views as a live capture.
 
-- Capture requests and responses from the active inspected tab.
-- Start or stop processing without clearing the existing trace.
-- Follow redirects across hosts while preserving host-specific URL colors.
-- Receive prioritized next actions tied to the exact browser-visible evidence when a flow fails or requires review.
-- See HTTP method, status meaning, duration, response size, and slow-request emphasis.
-- Search request and response content and filter SAML, OAM/WebGate, or static-resource traffic.
-- Import browser HAR files, panel JSON exports, Firefox SAML-tracer JSON exports, or Chromium NetLog dumps for offline analysis.
-- Open the toolbar **Offline Viewer** to investigate those files in a normal browser tab without first opening DevTools or navigating to an inspectable website.
-- Use a dedicated NetLog Analysis workspace to correlate sources and inspect authentication, DNS, proxy, TLS, socket, HTTP/2, and QUIC errors with raw event parameters.
-- Trace authentication challenge exchanges through the browser response, retries, and final HTTP outcome. When NetLog exposes client-token bytes, classify Kerberos versus NTLM fallback locally using NTLMSSP, Kerberos OID, and AP-REQ evidence without displaying the token; distinguish inconclusive, redacted, and challenge-only captures.
-- Trace TLS connections through endpoint setup, handshake, certificate validation, TLS/ALPN negotiation, connection reuse, QUIC fallback, and the final browser-visible outcome.
-- Open a contextual investigation from every NetLog finding, including DNS, proxy, socket, HTTP, HTTP/2, and QUIC failures, with linked source evidence and category-specific next actions.
-- Export captured sessions as JSON for repeatable troubleshooting.
-- Export sanitized or full-diagnostic Markdown assessment reports with evidence, prioritized next actions, timelines, correlation keys, and protocol-specific log guidance.
+NetLog Analysis organizes low-level Chromium events into focused findings. Engineers can trace an HTTP authentication exchange, review connection and certificate failures, follow related DNS or proxy events, and inspect the underlying source timeline. Where the capture contains sufficient client-token evidence, the inspector distinguishes Kerberos from NTLM fallback without displaying reusable token values.
 
-### Chromium NetLog authentication and connection diagnostics
+Additional capabilities include content search, protocol filters, static-resource suppression, slow-request emphasis, formatted request and response tables, and exportable Markdown assessments. Reports are available in sanitized and full-diagnostic forms for different support situations.
 
-- Import NetLog JSON captured from `chrome://net-export` and analyze it locally in a dedicated **NetLog Analysis** workspace.
-- Start with categorized findings for authentication, DNS, proxy, TLS, sockets, HTTP, HTTP/2, and QUIC instead of manually searching a large raw event dump.
-- Follow linked Chromium sources and event timelines while retaining unknown fields as expandable raw evidence.
-- Open **Trace exchange** for HTTP authentication evidence to follow the server challenge, browser authorization, retries, continuation, and final HTTP outcome.
-- Classify browser-visible Negotiate client-token evidence as Kerberos, NTLM fallback, undetermined SPNEGO, challenge only, or redacted using NTLMSSP, Kerberos mechanism OID, and AP-REQ indicators. Reusable token values remain hidden.
-- Open **Trace TLS connection** to review endpoint setup, handshake events, certificate-validation evidence, TLS version, cipher, key-exchange group, ALPN negotiation, connection reuse, QUIC fallback, and the final visible outcome.
-- Use a contextual investigation action on every DNS, proxy, socket, HTTP, HTTP/2, QUIC, and uncategorized finding to isolate related evidence and receive category-specific next actions.
-- Distinguish missing or redacted browser evidence from a confirmed success or failure; the analyzer does not invent fields that the NetLog did not capture.
+All processing runs locally inside the extension. Captured traffic and imported files are not sent to the developer or third parties. Diagnostic files can contain sensitive information, so users should protect them and use sanitized exports when full values are unnecessary.
 
-### Oracle OAM and WebGate
-
-- Identify OAM, WebGate, and FED traffic using URLs, headers, bodies, and cookies.
-- Recognize `/oam/server`, `/fed/sp`, `/fed/idp`, `obrar.cgi`, `obreq.cgi`, `obrareq.cgi`, and credential-collection endpoints.
-- Highlight `OAM_ID`, `OAMAuthnCookie`, `ObSSOCookie`, `ORA_OSFS_SESSION`, and related authentication artifacts.
-- Correlate the browser-visible OAM/WebGate flow in Flow Analysis, with expandable OAM Details for request IDs, cookie transitions, redirect loops, failures, and the final application return.
-- Switch between a request-focused Traffic Inspector and a full-width Flow Analysis workspace for correlated session assessment.
-- Flag ECID and RID values on failing requests when Oracle correlation headers are visible, with guidance to use the ECID for further OAM, WebGate, OHS, WebLogic, identity-domain, and server-log troubleshooting.
-
-### SAML federation
-
-- Detect SAMLRequest and SAMLResponse values in URLs, forms, bodies, and redirect headers.
-- Decode HTTP-POST and HTTP-Redirect binding messages when browser support permits.
-- Format and color decoded SAML XML for faster inspection.
-- Summarize issuer, destination, bindings, NameID policy, conditions, audience, subject, session, attributes, status, signatures, and assertion details.
-- Extract embedded X.509 certificate subject, issuer, serial number, validity dates, and thumbprints.
-
-### OAuth and OpenID Connect
-
-- Extract OAuth/OIDC parameters and Bearer tokens from URLs, fragments, headers, forms, and JSON bodies.
-- Decode JWT headers and claims, including issuer, subject, audience, scopes, timestamps, and token identifiers.
-- Highlight active, expiring, expired, and not-yet-valid token states.
-- Correlate OIDC authorization, callback, token, UserInfo, discovery, and JWKS traffic using state when available.
-- Check browser-visible state, nonce, PKCE, audience, issuer, and token lifetime signals.
-- Clearly distinguish decoded token content from cryptographic signature validation.
-
-### Okta and Microsoft Entra ID
-
-- Recognize Okta and Microsoft Entra ID using confidence-based combinations of official authority domains, provider endpoints, headers, issuer metadata, cookies, and error formats.
-- Extract Okta organization, authorization-server ID, provider errors, and `X-Okta-Request-Id` when browser-visible.
-- Extract Microsoft Entra tenant information, `AADSTS` errors, trace ID, correlation ID, and provider request ID when browser-visible.
-- Direct troubleshooting toward the Okta System Log or Microsoft Entra sign-in logs using the captured provider correlation evidence.
-
-### Windows Native Authentication and X.509
-
-- Identify browser-visible `WWW-Authenticate`, `Authorization`, and `Proxy-Authenticate` challenges.
-- Recognize Negotiate/SPNEGO, Kerberos, and NTLM schemes.
-- Highlight NTLM prominently when a flow falls back from expected Kerberos/WNA behavior.
-- Tag `/oam/CredCollectServlet/WNA` and `/oam/CredCollectServlet/X509` requests.
-- Display forwarded client-certificate headers and parse certificate material when available.
-- Correlate the protected-resource request, WNA challenge, browser response, protocol selection, repeated 401s, final authorization, and session-cookie outcome in Flow Analysis with expandable WNA Details.
-
-### Privacy by design
-
-All analysis runs locally inside the extension. Captured traffic, cookies, tokens, SAML messages, authentication headers, and imported HAR or Chromium NetLog data are not sent to the developer or to third parties. Users remain responsible for protecting imported and exported traces because authentication and network data can be sensitive.
-
-### Important scope
-
-The extension analyzes traffic visible to Chrome DevTools. Server-to-server exchanges, domain-controller traffic, Kerberos ticket caches, private signing keys, and backend logs are outside that browser-visible scope. JWT and certificate information is decoded and summarized; cryptographic trust validation is not performed.
+The extension analyzes only evidence visible to the browser. It does not capture backend exchanges, domain-controller traffic, private keys, or server logs, and it does not perform cryptographic trust validation.
 
 Product website: https://ksudhir.github.io/oracle-sso-devtools/
 
@@ -128,7 +56,7 @@ No. All JavaScript, HTML, CSS, icons, and processing logic are packaged inside t
 
 ## Screenshot Captions
 
-1. **Standalone Offline Viewer** — Open a saved HAR from the extension toolbar and inspect complete OAM, SAML, OAuth/OIDC, Okta, Entra, WNA/NTLM, and X.509 evidence without opening DevTools.
+1. **Standalone Offline Viewer** — Open a saved diagnostic capture from the extension toolbar and investigate it without opening DevTools.
 2. **Decoded SAML intelligence** — Read formatted federation details, deployment-specific values, bindings, assertions, attributes, and certificate metadata.
 3. **Correlated OIDC flow analysis** — Connect Okta, Microsoft Entra ID, and standards-based authorization, callback, token, UserInfo, discovery, and JWKS traffic with state, nonce, PKCE, audience, issuer, and lifetime checks.
 4. **Windows authentication and X.509** — Inspect Negotiate/SPNEGO, Kerberos/WNA, NTLM fallback, credential-collection endpoints, and forwarded client-certificate headers.
